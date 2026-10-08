@@ -78,7 +78,9 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * package ({@code .../platform/schema/release/<uuid>.xmi#//Configuration}). Promoting a new
  * version of such an object into the stage holding the seeded one was then refused as a
  * different object (409). The loader now loads and resolves the whole folder first and only
- * then gives the packages their nsURIs, and storing an object leaves it where it was.
+ * then gives the packages their nsURIs, and storing an object leaves it where it was. An
+ * instance referring to a class by the file of its package ({@code link.xmi}) keeps that
+ * reference on the seeded package as well.
  * </p>
  */
 @RequireEMF
@@ -215,6 +217,18 @@ public class InitialModelLoaderInheritedPackageSeedingIntegrationTest {
         assertNotNull(north, "The instance of the child's model should be seeded into " + SCOPE);
         assertEquals(AREA_NS + "#//AreaConfiguration", north.getObjectType(),
                 "The object type of a class extending another folder's class names it by nsURI");
+
+        // An instance referring to a class by the file of its package: the href is resolved while
+        // the package is still addressed by that file, so it binds the seeded package rather than
+        // a second copy read from the file, and the stored reference names it by nsURI (#351).
+        assertNotNull(awaitObject(dimcityAware, "link", 10000), "The linking instance should be seeded");
+        @SuppressWarnings("unchecked")
+        WritableScopeService<EObject> dimcityService = dimcityAware.waitForService(5000);
+        EObject link = dimcityService.getContentFromStageForRegistry(REGISTRY, RELEASE, "link");
+        assertNotNull(link, "The linking instance can be read back");
+        EObject target = (EObject) link.eGet(link.eClass().getEStructuralFeature("target"), false);
+        assertEquals(AREA_NS + "#//AreaConfiguration", EcoreUtil.getURI(target).toString(),
+                "A reference into a package file names the class by its package's nsURI");
 
         // The workflow of the issue: a new version of the seeded object goes into draft -
         // recorded as a REST upload records it - and is promoted over the seeded one.

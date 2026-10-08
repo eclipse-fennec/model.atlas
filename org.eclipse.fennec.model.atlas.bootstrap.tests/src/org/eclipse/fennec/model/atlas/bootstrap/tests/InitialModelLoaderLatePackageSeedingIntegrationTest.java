@@ -54,6 +54,7 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
+import org.osgi.service.condition.Condition;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.annotation.Property;
@@ -67,7 +68,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
 
 /**
  * OSGi integration test for seeding an instance whose EPackage arrives
- * <em>after</em> the {@code InitialModelLoader} has activated (issue #351).
+ * <em>after</em> the {@code InitialModelLoader} is configured (issue #351).
  *
  * <p>
  * {@link InitialModelLoaderRegistrySeedingIntegrationTest} covers the case where
@@ -76,22 +77,23 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * test covers the other production case: the package ships in a bundle. Nothing
  * orders that bundle ahead of the bootstrap — in the resolved runtimes the start
  * levels follow the alphabet, and in the hand-written ones the model bundles get
- * no start level at all — so the instance can be read before its package exists.
+ * no start level at all — so without help the instance would be read before its
+ * package exists.
  * </p>
  *
  * <p>
- * The registry survives that order by itself: {@code schemaPackage} is a
- * mandatory reference, so Declarative Services holds the registry back until the
- * package is registered and activates it the moment it is (issue #169). The
- * loader must be just as patient with the files it reads.
+ * The deployment names the package in the {@code InitialModelLoaderRequiredModels}
+ * configuration, and the loader only starts once the package's bundle has
+ * registered the {@link Condition} with its nsURI, as every Fennec EMF model
+ * bundle does after registering its EPackage.
  * </p>
  *
  * <p>
  * The fixture therefore seeds {@code carol.xmi} alone, with no {@code .ecore}
- * beside it, and registers the package as an {@link EPackage} service only once
- * the loader has had its chance to read the file. The assertion is the seeded
- * object, not the loader's own state: a component that activates and quietly
- * drops the file would otherwise look healthy.
+ * beside it, and registers the package and its condition only after the loader
+ * has been configured. The assertion is the seeded object, not the loader's own
+ * state: a component that activates and quietly drops the file would otherwise
+ * look healthy.
  * </p>
  */
 @RequireEMF
@@ -145,6 +147,8 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
     static final String NS_URI = "http://test.fennec.eclipse.org/bootstrap/late/person/1.0.0";
 
     private static final String LOADER_PID = "InitialModelLoader";
+    private static final String REQUIRED_MODELS_PID = "InitialModelLoaderRequiredModels";
+    private static final String READY_CONDITION = "atlas.initial.models.ready";
     private static final String STAGE = CommonTestAnnotations.STAGE_RELEASE;
     private static final String MODEL_ENTRY = "/test-data/late-package-seeding/late-person.ecore";
 
@@ -174,11 +178,17 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
     Path tempDir;
 
     private Configuration loaderConfiguration;
+    private Configuration requiredModelsConfiguration;
     private ServiceRegistration<EPackage> packageRegistration;
     private ServiceRegistration<EPackageConfigurator> configuratorRegistration;
+    private ServiceRegistration<Condition> conditionRegistration;
 
     @AfterEach
     void resetConfiguration() throws IOException {
+        if (requiredModelsConfiguration != null) {
+            requiredModelsConfiguration.delete();
+            requiredModelsConfiguration = null;
+        }
         if (loaderConfiguration != null) {
             loaderConfiguration.delete();
             loaderConfiguration = null;
@@ -187,6 +197,8 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
         packageRegistration = null;
         unregisterQuietly(configuratorRegistration);
         configuratorRegistration = null;
+        unregisterQuietly(conditionRegistration);
+        conditionRegistration = null;
     }
 
     @Test
@@ -194,20 +206,28 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
     public void instanceIsSeededWhenItsPackageArrivesLate(@InjectBundleContext BundleContext context,
             @InjectService(cardinality = 0) ServiceAware<ConfigurationAdmin> cmAware,
             @InjectService(cardinality = 0, timeout = 30000,
-                    filter = "(atlas.scope=" + SCOPE_NAME + ")") ServiceAware<WritableScopeService> scopeAware)
+                    filter = "(atlas.scope=" + SCOPE_NAME + ")") ServiceAware<WritableScopeService> scopeAware,
+            @InjectService(cardinality = 0, filter = "(osgi.condition.id=" + READY_CONDITION
+                    + ")") ServiceAware<Condition> readyAware)
             throws Exception {
 
         copyTestData(context, "late-package-seeding/seed", tempDir);
-        applyLoaderConfiguration(cmAware.waitForService(5000), tempDir);
+        ConfigurationAdmin cm = cmAware.waitForService(5000);
+        applyRequiredModelsConfiguration(cm);
+        applyLoaderConfiguration(cm, tempDir);
 
-        // The package is not registered yet, so the registry cannot activate and neither can the
-        // scope. Waiting for it to stay absent is also what gives the loader its turn: by the time
-        // this returns, it has read - or failed to read - carol.xmi.
+        // The package is not registered yet: the loader has to wait for it, and neither the
+        // registry nor the scope can come up.
         assertNull(scopeAware.waitForService(5000),
                 "The scope must not come up before the package its registry is rooted in");
+        assertNull(readyAware.getService(),
+                "The loader's condition must not be there before the required package");
 
         // The model bundle starts.
         registerLatePackage(context);
+
+        assertNotNull(readyAware.waitForService(10000),
+                "The loader's condition should come up once the required package is registered");
 
         assertNotNull(scopeAware.waitForService(30000),
                 "The scope service should appear once the package its registry needs is registered");
@@ -255,6 +275,10 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
         configuratorRegistration = context.registerService(EPackageConfigurator.class,
                 new DynamicEPackageConfigurator(ePackage), properties);
         packageRegistration = context.registerService(EPackage.class, ePackage, properties);
+        // last, as a generated model bundle does: the package is there once its condition is
+        Dictionary<String, Object> conditionProperties = new Hashtable<>();
+        conditionProperties.put(Condition.CONDITION_ID, ePackage.getNsURI());
+        conditionRegistration = context.registerService(Condition.class, Condition.INSTANCE, conditionProperties);
     }
 
     private static void unregisterQuietly(ServiceRegistration<?> registration) {
@@ -287,6 +311,13 @@ public class InitialModelLoaderLatePackageSeedingIntegrationTest {
             Thread.sleep(250);
         }
         return null;
+    }
+
+    private void applyRequiredModelsConfiguration(ConfigurationAdmin cm) throws IOException {
+        requiredModelsConfiguration = cm.getConfiguration(REQUIRED_MODELS_PID, "?");
+        Dictionary<String, Object> properties = new Hashtable<>();
+        properties.put("required.models", new String[] { NS_URI });
+        requiredModelsConfiguration.update(properties);
     }
 
     private void applyLoaderConfiguration(ConfigurationAdmin cm, Path folder) throws IOException {

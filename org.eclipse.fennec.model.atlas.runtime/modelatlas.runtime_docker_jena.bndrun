@@ -65,8 +65,9 @@
 # corpus.ecore and a context carries LegalAct corpora, so both have to be present or a seeded file
 # does not load. inventory.model is here for the same reason (issue #351): an Inventory is seeded
 # as data, and RegistryServiceImpl's schemaPackage reference is mandatory, so without the bundle a
-# compliance-inventory registry never activates and the scope it belongs to fails to start. Unlike
-# context.ecore it cross-references no other compliance model, so it travels alone.
+# compliance-inventory registry never activates and the scope it belongs to fails to start. It
+# cross-references context.ecore (ContextRef, CategoryRef, RequirementRef), so it needs the
+# context and corpus models named here as well.
 -runrequires.docker.jena: \
 	bnd.identity;id='org.eclipse.fennec.codec.ods',\
 	bnd.identity;id='org.eclipse.fennec.compliance.report.history.model',\
@@ -216,14 +217,16 @@
 	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)';startlevel=1134,\
 	org.objectweb.asm.util;version='[9.10.1,9.10.2)';startlevel=1135,\
 	org.osgi.service.component;version='[1.5.1,1.5.2)';startlevel=1136,\
-	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1137,\
-	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1138,\
-	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1139,\
-	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1140,\
-	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1141,\
-	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1142,\
-	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1143,\
-	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1144,\
-	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1145,\
-	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1146,\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1147
+	org.osgi.service.event;version='[1.4.1,1.4.2)';startlevel=1137,\
+	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1138,\
+	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1139,\
+	org.osgi.service.servlet;version='[2.0.0,2.0.1)';startlevel=1140,\
+	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1141,\
+	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1142,\
+	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1143,\
+	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1144,\
+	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1145,\
+	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1146,\
+	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1147,\
+	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1148,\
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1149
