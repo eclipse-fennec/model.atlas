@@ -91,7 +91,7 @@
         "atlas.scope": "dimcity",
         "scope.description": "DIM City Scope",
         "scope.parent": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory))",
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
@@ -361,6 +361,88 @@
         ],
         "root.eclass.uri": [
             "https://org.eclipse/fennec/compliance/context/1.0.0#//ComplianceContext"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~compliance-crosswalks": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/context/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "compliance-crosswalks",
+        "registry.description": "The Registry holding the Crosswalks: the mappings from the requirements of one compliance context to another",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/context/1.0.0#//Crosswalk"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~compliance-inventory": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/inventory/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "compliance-inventory",
+        "registry.description": "The Registry holding the Inventory of an information domain: its assets, protection needs, measures, processing activities and risk methodology",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/inventory/1.0.0#//Inventory"
         ],
         "resourceSet.target": "(emf.name=ecore)"
     },

@@ -18,6 +18,12 @@
 # list: the fennec-gdpr bundles now import org.eclipse.fennec.model.compliance.report, so nothing
 # in this runtime reads the old EPackage.
 #
+# inventory.model stands beside them for the compliance-inventory registry (issue #351). Nothing
+# in this runtime requires it - an Inventory is seeded as data, so the only thing that needs its
+# EPackage is the registry that stores it, and RegistryServiceImpl's schemaPackage reference is
+# mandatory, so without the bundle such a registry never activates and the scope fails to start.
+# Unlike context.ecore it cross-references no other compliance model, so it travels alone.
+#
 # The GDPR review document (AP4/AP5 of the ODS plan) and the ODS codec it is downloaded through.
 # This file is '-resolve: never', so unlike the docker jena runtime the closure is named by hand:
 # codec.ods needs codec.tabular, codec.tabular.model and SODS, and gdpr.history needs action.api
@@ -30,6 +36,7 @@
 	org.eclipse.fennec.compliance.report.model,\
 	org.eclipse.fennec.compliance.context.model,\
 	org.eclipse.fennec.compliance.corpus.model,\
+	org.eclipse.fennec.compliance.inventory.model,\
 	org.eclipse.fennec.model.atlas.runtime.config.local.jena,\
 	org.eclipse.fennec.gdpr.action,\
 	org.eclipse.fennec.gdpr.check,\
