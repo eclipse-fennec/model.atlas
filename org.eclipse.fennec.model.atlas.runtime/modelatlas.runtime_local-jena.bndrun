@@ -16,7 +16,8 @@
 # a ComplianceReport naming the ContextRefs it was made against, and context.ecore cross-references
 # corpus.ecore, so three model bundles stand where one did. gdpr.report.model is gone from this
 # list: the fennec-gdpr bundles now import org.eclipse.fennec.model.compliance.report, so nothing
-# in this runtime reads the old EPackage.
+# in this runtime reads the old EPackage. compliance.inventory.model (issue #351) carries the
+# Inventory a compliance-inventory registry holds; it imports the context and corpus packages.
 #
 # The GDPR review document (AP4/AP5 of the ODS plan) and the ODS codec it is downloaded through.
 # This file is '-resolve: never', so unlike the docker jena runtime the closure is named by hand:
@@ -30,6 +31,7 @@
 	org.eclipse.fennec.compliance.report.model,\
 	org.eclipse.fennec.compliance.context.model,\
 	org.eclipse.fennec.compliance.corpus.model,\
+	org.eclipse.fennec.compliance.inventory.model,\
 	org.eclipse.fennec.model.atlas.runtime.config.local.jena,\
 	org.eclipse.fennec.gdpr.action,\
 	org.eclipse.fennec.gdpr.check,\
