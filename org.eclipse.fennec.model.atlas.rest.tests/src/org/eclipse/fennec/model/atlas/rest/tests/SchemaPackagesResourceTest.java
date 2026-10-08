@@ -397,12 +397,14 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		// Opaque UUID — no meaning derivable from the id shape anymore
 		java.util.UUID.fromString(objectId);
 
+		// Followed rather than matched: a /scope/... Location loses the REST base path (#335)
 		String location = response.getHeaderString("Location");
 		assertNotNull(location, "created response must carry a Location header");
-		assertTrue(location.contains("/schema/stages/" + TestAnnotations.STAGE_DRAFT),
-				"Location should point at the stage listing endpoint, was: " + location);
-		assertTrue(location.contains("nsUri=" + java.net.URLEncoder.encode(TEST_PACKAGE_NSURI, java.nio.charset.StandardCharsets.UTF_8)),
-				"Location should carry the percent-encoded nsUri query, was: " + location);
+		assertTrue(location.startsWith(BASE_URL + "/"), "The Location is absolute below the REST base, was: " + location);
+		Response metadata = restClient.target(location).request("application/xmi").get();
+		assertStatus(200, metadata, "The Location '" + location + "' must lead to the package");
+		assertEquals(objectId, extractObjectId(metadata.readEntity(String.class)),
+				"The Location '" + location + "' names the uploaded package");
 	}
 
 	@Test
