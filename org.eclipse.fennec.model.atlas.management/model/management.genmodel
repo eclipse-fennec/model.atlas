@@ -11,6 +11,16 @@
   <foreignModel>management.ecore</foreignModel>
   <genPackages prefix="Management" basePackage="org.eclipse.fennec.model.atlas.mgmt"
       resource="XMI" disposableProviderFactory="true" ecorePackage="management.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticSeverity">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/INFO"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/WARNING"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/ERROR"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticStatus">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/OPEN"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/ACKNOWLEDGED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/RESOLVED"/>
+    </genEnums>
     <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//ObjectStatus">
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/DRAFT"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/APPROVED"/>
@@ -35,16 +45,6 @@
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/COMPLETED"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/FAILED"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/CANCELLED"/>
-    </genEnums>
-    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticSeverity">
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/INFO"/>
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/WARNING"/>
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/ERROR"/>
-    </genEnums>
-    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticStatus">
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/OPEN"/>
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/ACKNOWLEDGED"/>
-      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/RESOLVED"/>
     </genEnums>
     <genDataTypes ecoreDataType="management.ecore#//Instant"/>
     <genDataTypes ecoreDataType="management.ecore#//Promise">

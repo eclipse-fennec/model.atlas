@@ -157,7 +157,7 @@ public class AtlasScopeService implements ScopeService<EPackage>, ReadableScopeS
 	 */
 	@Override
 	public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage, String objectId,
-			Map<String, Object> properties) {
+			Map<String, String> properties) {
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.updateProperties(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId,
 				properties);

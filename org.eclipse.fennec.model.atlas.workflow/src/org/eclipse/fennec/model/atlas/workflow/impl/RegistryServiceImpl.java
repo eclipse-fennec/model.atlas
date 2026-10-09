@@ -546,7 +546,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
-            Map<String, Object> properties) {
+            Map<String, String> properties) {
 
         return promiseFactory.submit(() -> {
             requireNonNull(objectId, "Object ID cannot be null");
@@ -691,7 +691,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * reports by finding nothing — so no type test is needed here.
      * </p>
      */
-    private void propagateDcatFlag(String scope, String stage, Map<String, Object> properties,
+    private void propagateDcatFlag(String scope, String stage, Map<String, String> properties,
             ObjectMetadata metadata) {
         if (!properties.containsKey(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY)) {
             return;
@@ -705,10 +705,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         if (nsUri == null) {
             return;
         }
-        Object flag = properties.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
-        // Read defensively: properties is String -> EJavaObject, so a stored string "true" must not
-        // read as false and a null must not throw.
-        boolean dcat = flag instanceof Boolean bool ? bool.booleanValue() : Boolean.parseBoolean(String.valueOf(flag));
+        // A property is text now (issue #354), so the flag is parsed rather than cast; a null or
+        // an unparseable value reads as not asserted rather than throwing.
+        boolean dcat = Boolean.parseBoolean(properties.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY));
         registrations.updateDcatFlag(scope, stage, nsUri.toString(), dcat);
     }
 

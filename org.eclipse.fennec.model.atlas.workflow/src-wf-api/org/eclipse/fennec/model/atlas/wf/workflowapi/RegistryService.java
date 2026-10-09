@@ -48,10 +48,10 @@ public interface RegistryService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Merge entries into the properties map of an object's metadata for a certain stage and scope, without touching the object's content. Entries present in the argument are set; keys absent from the argument are left untouched. Returns the stored ObjectMetadata.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" propertiesMapType="org.eclipse.fennec.model.atlas.mgmt.management.StringToObjectMapEntry&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EJavaObject&gt;"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" propertiesMapType="org.eclipse.fennec.model.atlas.mgmt.management.StringToObjectMapEntry&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EString&gt;"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId, Map<String, Object> properties);
+	Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId, Map<String, String> properties);
 
 	/**
 	 * <!-- begin-user-doc -->

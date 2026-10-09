@@ -262,7 +262,7 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 	@DisplayName("O13: a dcat=true metadata flag reaches every registered service's properties")
 	public void dcatFlagIsProjectedOntoServiceProperties() {
 		ObjectMetadata md = metadata(SCOPE, "release");
-		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.TRUE);
+		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, "true");
 
 		assertTrue(service.registerEPackage(newPersonPackage(), md));
 
@@ -286,27 +286,30 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 	}
 
 	@Test
-	@DisplayName("O13: the flag is read defensively — the string \"true\" counts as true")
-	public void stringValuedDcatFlagIsHonoured() {
-		// ObjectMetadata.properties is String -> EJavaObject, so both the boolean and the string
-		// are storable and only one of them is what the upload path writes. A metadata record
-		// written by hand, by an older client or by a JSON round-trip may well carry the string.
+	@DisplayName("O13: the metadata flag is text, the service property is a Boolean")
+	public void theStoredFlagIsTextAndTheServicePropertyIsNot() {
+		// Since issue #354 a metadata property is text, so that it can be read and edited where it
+		// is stored. What the publisher's tracker filters on is a service property, and that one is
+		// still a Boolean - the two are different things, and this is where the one becomes the
+		// other.
 		ObjectMetadata md = metadata(SCOPE, "release");
 		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, "true");
 
 		assertTrue(service.registerEPackage(newPersonPackage(), md));
 
+		assertEquals("true", md.getProperties().get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
+				"the metadata keeps the text it was given");
 		for (Dictionary<String, ?> dict : capturedRegistrationProperties()) {
 			assertEquals(Boolean.TRUE, dict.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
-					"a string-valued flag must be read as true");
+					"but the service property the filter tests is a Boolean");
 		}
 	}
 
 	@Test
-	@DisplayName("O13: a non-boolean, non-\"true\" value is false rather than an error")
+	@DisplayName("O13: a value that is not \"true\" is false rather than an error")
 	public void garbageDcatFlagIsFalse() {
 		ObjectMetadata md = metadata(SCOPE, "release");
-		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, 42);
+		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, "42");
 
 		assertTrue(service.registerEPackage(newPersonPackage(), md),
 				"a nonsense flag must not break registration — the package still has to be servable");

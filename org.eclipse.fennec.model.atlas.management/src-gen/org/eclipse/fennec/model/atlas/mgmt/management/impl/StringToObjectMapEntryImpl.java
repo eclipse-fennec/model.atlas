@@ -40,7 +40,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
  *
  * @generated
  */
-public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container implements BasicEMap.Entry<String,Object> {
+public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container implements BasicEMap.Entry<String,String> {
 	/**
 	 * The default value of the '{@link #getTypedKey() <em>Key</em>}' attribute.
 	 * <!-- begin-user-doc -->
@@ -69,7 +69,7 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * @generated
 	 * @ordered
 	 */
-	protected static final Object VALUE_EDEFAULT = null;
+	protected static final String VALUE_EDEFAULT = null;
 
 	/**
 	 * The cached value of the '{@link #getTypedValue() <em>Value</em>}' attribute.
@@ -79,7 +79,7 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * @generated
 	 * @ordered
 	 */
-	protected Object value = VALUE_EDEFAULT;
+	protected String value = VALUE_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -126,7 +126,7 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public Object getTypedValue() {
+	public String getTypedValue() {
 		return value;
 	}
 
@@ -135,8 +135,8 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public void setTypedValue(Object newValue) {
-		Object oldValue = value;
+	public void setTypedValue(String newValue) {
+		String oldValue = value;
 		value = newValue;
 		if (eNotificationRequired())
 			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.STRING_TO_OBJECT_MAP_ENTRY__VALUE, oldValue, value));
@@ -170,7 +170,7 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 				setTypedKey((String)newValue);
 				return;
 			case ManagementPackage.STRING_TO_OBJECT_MAP_ENTRY__VALUE:
-				setTypedValue(newValue);
+				setTypedValue((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -285,7 +285,7 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * @generated
 	 */
 	@Override
-	public Object getValue() {
+	public String getValue() {
 		return getTypedValue();
 	}
 
@@ -295,8 +295,8 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * @generated
 	 */
 	@Override
-	public Object setValue(Object value) {
-		Object oldValue = getValue();
+	public String setValue(String value) {
+		String oldValue = getValue();
 		setTypedValue(value);
 		return oldValue;
 	}
@@ -307,9 +307,9 @@ public class StringToObjectMapEntryImpl extends MinimalEObjectImpl.Container imp
 	 * @generated
 	 */
 	@SuppressWarnings("unchecked")
-	public EMap<String, Object> getEMap() {
+	public EMap<String, String> getEMap() {
 		EObject container = eContainer();
-		return container == null ? null : (EMap<String, Object>)container.eGet(eContainmentFeature());
+		return container == null ? null : (EMap<String, String>)container.eGet(eContainmentFeature());
 	}
 
 } //StringToObjectMapEntryImpl

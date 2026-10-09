@@ -357,7 +357,8 @@ public class SchemaPackagesResource {
                     if (dcat != null) {
                         metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
                                 existingMetadata.getObjectId(),
-                                Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
+                                Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
+                                        Boolean.toString(dcat))).getValue();
                     }
                     ePackageIndex.index(metadata, ePackage);
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
@@ -381,10 +382,11 @@ public class SchemaPackagesResource {
             metadata.setVersion(resolvedVersion);
             metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
             metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, validatedNsUri);
-            // Stored as a Boolean, not a String: `properties` is String -> EJavaObject, so both
-            // are storable and only one is what the publisher tests. Absent means false.
+            // "true"/"false", not a Boolean: a property is text, so that it can be read and edited
+            // in the stored metadata and by a client that is not Java (issue #354). The publisher
+            // parses it. Absent means false.
             metadata.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
-                    Boolean.TRUE.equals(dcat));
+                    Boolean.toString(Boolean.TRUE.equals(dcat)));
 
             metadata = scopeService.uploadToStageForRegistry(schemaRegistry(scopeService), stageName, ePackage, metadata).getValue();
             ePackageIndex.index(metadata, ePackage);
@@ -617,11 +619,12 @@ public class SchemaPackagesResource {
      * changed a publisher when they did not.
      *
      * <p>
-     * Only {@code dcat} for now. It is deliberately a typed parameter rather than a generic
-     * {@code property=key=value}: {@code properties} is {@code String -> EJavaObject}, so a
-     * string-valued editor would store {@code "true"} where the publisher's service filter tests
-     * {@code Boolean.TRUE}, and the flag would look set while publishing nothing. The per-model DCAT
-     * metadata of §6 joins this list the same way, one typed parameter at a time.
+     * Only {@code dcat} for now. It stays a typed parameter rather than a generic
+     * {@code property=key=value} so that a request naming an unknown key is refused instead of
+     * stored: the type of a value is the business of whoever knows what the key means, and a
+     * generic editor knows nothing. (It is no longer about storage - a property value is text
+     * since issue #354, and the publisher parses the flag.) The per-model DCAT metadata of §6
+     * joins this list the same way, one typed parameter at a time.
      * </p>
      */
     private static final Set<String> EDITABLE_METADATA_PARAMS = Set.of("dcat");
@@ -724,7 +727,7 @@ public class SchemaPackagesResource {
 
             ObjectMetadata metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
                     existingMetadata.getObjectId(),
-                    Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
+                    Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.toString(dcat))).getValue();
             if (metadata == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))

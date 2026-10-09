@@ -516,7 +516,7 @@ class GDPRReportHistoryStageActionTest {
 
 		@Override
 		public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage,
-				String objectId, Map<String, Object> properties) {
+				String objectId, Map<String, String> properties) {
 			throw new UnsupportedOperationException();
 		}
 

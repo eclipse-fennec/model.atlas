@@ -246,7 +246,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
-			Map<String, Object> properties) {
+			Map<String, String> properties) {
 		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
 	}
 

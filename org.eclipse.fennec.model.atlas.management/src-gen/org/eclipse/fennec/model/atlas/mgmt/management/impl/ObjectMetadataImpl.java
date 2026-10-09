@@ -328,7 +328,7 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 * @ordered
 	 */
-	protected EMap<String, Object> properties;
+	protected EMap<String, String> properties;
 
 	/**
 	 * The default value of the '{@link #getLastChangeUser() <em>Last Change User</em>}' attribute.
@@ -891,9 +891,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
-	public EMap<String, Object> getProperties() {
+	public EMap<String, String> getProperties() {
 		if (properties == null) {
-			properties = new EcoreEMap<String,Object>(ManagementPackage.Literals.STRING_TO_OBJECT_MAP_ENTRY, StringToObjectMapEntryImpl.class, this, ManagementPackage.OBJECT_METADATA__PROPERTIES);
+			properties = new EcoreEMap<String,String>(ManagementPackage.Literals.STRING_TO_OBJECT_MAP_ENTRY, StringToObjectMapEntryImpl.class, this, ManagementPackage.OBJECT_METADATA__PROPERTIES);
 		}
 		return properties;
 	}
