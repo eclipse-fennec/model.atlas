@@ -879,9 +879,16 @@ final class FlowAnalysis {
 	/**
 	 * Carries the citations of one review finding into this one.
 	 * <p>
-	 * The identifier, the quote and the source reference are copied unchanged - they were checked
-	 * when the review was written and they still say exactly what they said. Only {@code relevance}
-	 * grows, by the one clause saying how the data this provision is about travels here.
+	 * The citation is copied whole and only {@code relevance} grows, by the one clause saying how
+	 * the data this provision is about travels here. Whole, and not field by field: what makes a
+	 * citation checkable is that a reader can find what was cited, and that takes the context, the
+	 * corpus within it - one context may hold several - the identifier, the quote and the source
+	 * reference together. Copying the fields this analysis happened to know about dropped the
+	 * context and the corpus from every citation in every report it wrote, and would drop the next
+	 * field the model gains just as quietly.
+	 * <p>
+	 * A copy, never the review's own instance: {@code Finding.evidence} is a containment reference,
+	 * so recording it would take the citation out of the review this analysis rests on.
 	 * <p>
 	 * <b>What counts as a duplicate.</b> The whole of what would be written: the identifier, the
 	 * quote, and the relevance as it ends up - what the reviewer wrote plus the clause this
@@ -909,11 +916,7 @@ final class FlowAnalysis {
 			if (!seen.add(source.getCitationId() + ID_SEPARATOR + source.getQuote() + ID_SEPARATOR + relevance)) {
 				continue;
 			}
-			Evidence evidence = REPORTS.createEvidence();
-			evidence.setCitationId(source.getCitationId());
-			evidence.setQuote(source.getQuote());
-			evidence.setSourceRef(source.getSourceRef());
-			evidence.setVerbatim(source.isVerbatim());
+			Evidence evidence = EcoreUtil.copy(source);
 			evidence.setRelevance(relevance);
 			finding.getEvidence().add(evidence);
 		}

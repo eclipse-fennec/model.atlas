@@ -249,6 +249,8 @@ public class QvtFlowAnalysisTest {
 		assertEquals(1, carried.getEvidence().size(), "the combination's own citation, not its members'");
 		Evidence evidence = carried.getEvidence().get(0);
 		assertEquals("Rec.26", evidence.getCitationId());
+		assertEquals("gdpr", evidence.getContextId());
+		assertEquals(Reviews.CORPUS_ID, evidence.getCorpusId());
 		assertEquals("singling out", evidence.getQuote(), "the quote, byte for byte");
 		assertTrue(evidence.getRelevance().startsWith("The reviewer's relevance for CF-001."),
 				evidence.getRelevance());
@@ -391,6 +393,10 @@ public class QvtFlowAnalysisTest {
 		assertEquals("data concerning health", evidence.getQuote(), "and the quote, byte for byte");
 		assertEquals("celex:02016R0679-20160504#Art.9(1)", evidence.getSourceRef());
 		assertTrue(evidence.isVerbatim());
+		// A citation is only checkable if a reader can find what was cited. One context may hold
+		// several corpora, so naming the context without the corpus does not locate the provision.
+		assertEquals("gdpr", evidence.getContextId(), "the context whose corpus was quoted");
+		assertEquals(Reviews.CORPUS_ID, evidence.getCorpusId(), "and which corpus of it");
 		assertTrue(evidence.getRelevance().startsWith("The reviewer's relevance for //Patient/diagnosis."),
 				"what the reviewer wrote comes first: " + evidence.getRelevance());
 		assertTrue(evidence.getRelevance().contains("writes into " + CONTACTS_COMMENT),

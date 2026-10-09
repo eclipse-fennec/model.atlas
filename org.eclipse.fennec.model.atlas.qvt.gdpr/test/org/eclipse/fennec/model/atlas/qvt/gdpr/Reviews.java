@@ -51,6 +51,9 @@ final class Reviews {
 	static final String CLINIC_FP = "fp1:5b87b0c624cead5c040e43d78ec02112c588f1531311354d7ea0cf1c425843cb";
 	static final String CONTACTS_FP = "fp1:0bbb2a335cb6fbf49dbabde6b628abbecfe4f92f3675de534284dc7a4f3d84ca";
 
+	/** The corpus within that context the citations were read out of. */
+	static final String CORPUS_ID = "gdpr-regulation";
+
 	/** The version of the GDPR context both reviews were made against. */
 	static final String CONTEXT_VERSION = "20160504";
 
@@ -164,13 +167,7 @@ final class Reviews {
 		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setRationale("The reviewer's reason for " + uriFragment + ".");
-		Evidence evidence = REPORTS.createEvidence();
-		evidence.setCitationId(citationId);
-		evidence.setQuote(quote);
-		evidence.setVerbatim(true);
-		evidence.setSourceRef("celex:02016R0679-20160504#" + citationId);
-		evidence.setRelevance("The reviewer's relevance for " + uriFragment + ".");
-		finding.getEvidence().add(evidence);
+		finding.getEvidence().add(evidence(citationId, quote, "The reviewer's relevance for " + uriFragment + "."));
 		feature.getFindings().add(finding);
 		classifier.getFeatureEvaluations().add(feature);
 		return feature;
@@ -191,18 +188,29 @@ final class Reviews {
 		combination.getCategories().add(categoryRef(category));
 		combination.setRationale("The reviewer's reason for " + id + ".");
 		combination.getDetectedBy().add(DetectionSignal.FEATURE_COMBINATION);
-		Evidence evidence = REPORTS.createEvidence();
-		evidence.setCitationId(citationId);
-		evidence.setQuote(quote);
-		evidence.setVerbatim(true);
-		evidence.setSourceRef("celex:02016R0679-20160504#" + citationId);
-		evidence.setRelevance("The reviewer's relevance for " + id + ".");
-		combination.getEvidence().add(evidence);
+		combination.getEvidence().add(evidence(citationId, quote, "The reviewer's relevance for " + id + "."));
 		for (FeatureEvaluation member : members) {
 			combination.getFeatures().add(member);
 		}
 		report.getCombinations().add(combination);
 		return combination;
+	}
+
+	/**
+	 * One citation as a review records it: the context and the corpus it was read out of as well as
+	 * the identifier and the quote. One context may hold several corpora, which is why the corpus is
+	 * named and not inferred.
+	 */
+	private static Evidence evidence(String citationId, String quote, String relevance) {
+		Evidence evidence = REPORTS.createEvidence();
+		evidence.setContextId("gdpr");
+		evidence.setCorpusId(CORPUS_ID);
+		evidence.setCitationId(citationId);
+		evidence.setQuote(quote);
+		evidence.setVerbatim(true);
+		evidence.setSourceRef("celex:02016R0679-20160504#" + citationId);
+		evidence.setRelevance(relevance);
+		return evidence;
 	}
 
 	/** A combination-kind reference: the same shape, a different taxonomy of the same context. */
