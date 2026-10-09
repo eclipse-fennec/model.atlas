@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,23 +30,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
@@ -55,6 +61,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.Version;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -521,6 +530,120 @@ public class AtlasSchemaRegistryServiceTest {
 
 			verify(registryService, times(1)).updateCache(any(ObjectMetadata.class));
 		}
+	}
+
+	@Nested
+	@DisplayName("System schema metadata (#359)")
+	class SystemSchemaMetadataTests {
+
+		@Test
+		@DisplayName("A mirrored package carries version, contentHash, fingerprint and lastChangeTime")
+		void mirroredPackageCarriesTheUploadMetadata() {
+			EPackage pkg = ePackage("Compiled", "http://www.eclipse.org/fennec/m2x/compiled/1.0");
+
+			ObjectMetadata metadata = mirrorOf(pkg);
+
+			assertEquals("1.0.0", metadata.getVersion(), "the version comes from the nsURI, as for an upload");
+			assertEquals(AbstractEObjectStorageService.computeContentHash(pkg), metadata.getContentHash());
+			assertNotNull(metadata.getContentHash());
+			assertEquals(FingerprintHelper.fingerprint(pkg), metadata.getFingerprint());
+			assertNotNull(metadata.getFingerprint());
+			assertNotNull(metadata.getLastChangeTime());
+			assertEquals(metadata.getUploadTime(), metadata.getLastChangeTime());
+			assertEquals("system", metadata.getUploadUser());
+		}
+
+		@Test
+		@DisplayName("The version a package declares wins over its nsURI")
+		void declaredVersionWins() {
+			EPackage pkg = ePackage("Declared", "http://test/declared/9.9");
+			EAnnotation annotation = EcoreFactory.eINSTANCE.createEAnnotation();
+			annotation.setSource("Version");
+			annotation.getDetails().put("value", "2.5.0");
+			pkg.getEAnnotations().add(annotation);
+
+			assertEquals("2.5.0", mirrorOf(pkg).getVersion());
+		}
+
+		@Test
+		@DisplayName("Without a version of its own, a package takes its bundle's, without the qualifier")
+		void bundleVersionIsTheFallback() {
+			Bundle bundle = mock(Bundle.class);
+			when(bundle.getVersion()).thenReturn(new Version(3, 4, 5, "202610090800"));
+
+			assertEquals("3.4.5",
+					AtlasSchemaRegistryService.versionOf(ePackage("NoVersion", "http://test/noversion"), bundle));
+			assertNull(AtlasSchemaRegistryService.versionOf(ePackage("NoVersion", "http://test/noversion"), null),
+					"no version and no bundle: nothing to report");
+		}
+
+		@Test
+		@DisplayName("A package's own version is preferred over its bundle's")
+		void packageVersionBeatsBundleVersion() {
+			Bundle bundle = mock(Bundle.class);
+
+			assertEquals("1.0.0",
+					AtlasSchemaRegistryService.versionOf(ePackage("Versioned", "http://test/versioned/1.0"), bundle));
+			verify(bundle, never()).getVersion();
+		}
+
+		@Test
+		@DisplayName("The shipped time is the bundle's build time when bnd stamped one")
+		void shippedAtIsTheBuildTime() {
+			Bundle bundle = mock(Bundle.class);
+			Hashtable<String, String> headers = new Hashtable<>();
+			headers.put(AtlasSchemaRegistryService.BND_LAST_MODIFIED, "1760000000000");
+			when(bundle.getHeaders("")).thenReturn(headers);
+
+			assertEquals(Instant.ofEpochMilli(1760000000000L), AtlasSchemaRegistryService.shippedAt(bundle));
+			verify(bundle, never()).getLastModified();
+		}
+
+		@Test
+		@DisplayName("Without a build time, the shipped time is when the bundle was installed")
+		void shippedAtFallsBackToTheInstallTime() {
+			Bundle bundle = mock(Bundle.class);
+			when(bundle.getHeaders("")).thenReturn(new Hashtable<>());
+			when(bundle.getLastModified()).thenReturn(1750000000000L);
+
+			assertEquals(Instant.ofEpochMilli(1750000000000L), AtlasSchemaRegistryService.shippedAt(bundle));
+		}
+
+		@Test
+		@DisplayName("A dynamic package has no shipping bundle")
+		void dynamicPackageHasNoShippingBundle() {
+			assertNull(AtlasSchemaRegistryService.shippingBundle(ePackage("Dynamic", "http://test/dynamic")));
+		}
+
+		@Test
+		@DisplayName("Re-mirroring unchanged content yields the same hash and fingerprint")
+		void unchangedContentKeepsItsIdentity() {
+			ObjectMetadata first = mirrorOf(ePackage("Stable", "http://test/stable/1.0"));
+			ObjectMetadata second = new AtlasSchemaRegistryServiceTest().mirrorOfFreshService(
+					ePackage("Stable", "http://test/stable/1.0"));
+
+			assertEquals(first.getContentHash(), second.getContentHash());
+			assertEquals(first.getFingerprint(), second.getFingerprint());
+		}
+
+		private ObjectMetadata mirrorOf(EPackage pkg) {
+			service.bindStaticEPackageRegistry(registryWith(pkg));
+			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+			verify(registryService).updateCache(captor.capture());
+			verify(ePackageIndex).index(same(captor.getValue()), same(pkg));
+			return captor.getValue();
+		}
+	}
+
+	/** Mirrors {@code pkg} through a service of its own, as a restart would. */
+	private ObjectMetadata mirrorOfFreshService(EPackage pkg) {
+		@SuppressWarnings("unchecked")
+		EObjectRegistryService<EObject> freshRegistry = mock(EObjectRegistryService.class);
+		AtlasSchemaRegistryService fresh = new AtlasSchemaRegistryService(freshRegistry, mock(EPackageLuceneIndex.class));
+		fresh.bindStaticEPackageRegistry(registryWith(pkg));
+		ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+		verify(freshRegistry).updateCache(captor.capture());
+		return captor.getValue();
 	}
 
 	private static EPackage ePackage(String name, String nsUri) {

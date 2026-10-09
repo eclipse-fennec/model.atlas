@@ -13,11 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.util.regex.Pattern;
-
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
 import org.osgi.framework.Version;
 
 import jakarta.ws.rs.WebApplicationException;
@@ -57,6 +54,12 @@ import jakarta.ws.rs.core.Response.Status;
  * </p>
  *
  * <p>
+ * The rule itself is {@link EPackageVersions}, shared with the bootstrap loader and the
+ * atlas schema registry (issue #359); this class adds the {@code ?version=} parameter and
+ * answers an invalid declaration with a bad request.
+ * </p>
+ *
+ * <p>
  * This knows nothing about HTTP beyond how it reports a bad request, so it can be unit-tested
  * without a running container.
  * </p>
@@ -64,19 +67,6 @@ import jakarta.ws.rs.core.Response.Status;
  * @see <a href="https://github.com/eclipse-fennec/model.atlas/issues/180">issue #180</a>
  */
 final class PackageVersions {
-
-	/** Annotation source a model declares its version under; {@code emf.osgi}'s convention. */
-	private static final String VERSION_ANNOTATION_SOURCE = "Version";
-
-	/** Detail key holding the declared version, e.g. {@code <details key="value" value="1.2.0"/>}. */
-	private static final String VERSION_ANNOTATION_DETAIL = "value";
-
-	/**
-	 * What a URI segment has to look like before it is read as a version:
-	 * {@code major.minor}, optionally {@code .micro} and an OSGi qualifier. Being
-	 * <em>parseable</em> is not enough — that is what let years and spec numbers through.
-	 */
-	private static final Pattern VERSION_SHAPED = Pattern.compile("\\d+\\.\\d+(\\.\\d+(\\.[\\p{Alnum}_-]+)?)?");
 
 	private PackageVersions() {
 	}
@@ -119,22 +109,14 @@ final class PackageVersions {
 	 *                                 than quietly ignored
 	 */
 	static String declaredVersion(EPackage ePackage) {
-		if (ePackage == null) {
+		String declared = EPackageVersions.declared(ePackage);
+		if (declared == null) {
 			return null;
 		}
-		EAnnotation annotation = ePackage.getEAnnotation(VERSION_ANNOTATION_SOURCE);
-		if (annotation == null) {
-			return null;
-		}
-		String declared = annotation.getDetails().get(VERSION_ANNOTATION_DETAIL);
-		if (declared == null || declared.isBlank()) {
-			return null;
-		}
-		String trimmed = declared.trim();
-		parseOrReject(trimmed, String.format(
+		parseOrReject(declared, String.format(
 				"The package declares the version '%s' in its Version annotation, which is not a valid version",
 				declared));
-		return trimmed;
+		return declared;
 	}
 
 	/**
@@ -144,23 +126,7 @@ final class PackageVersions {
 	 * @return the version, or {@code null} when the last segment is not version-shaped
 	 */
 	static Version fromNsUri(String nsUri) {
-		if (nsUri == null || nsUri.isBlank()) {
-			return null;
-		}
-		try {
-			String[] segments = URI.createURI(nsUri).segments();
-			if (segments.length == 0) {
-				return null;
-			}
-			String last = segments[segments.length - 1];
-			if (last == null || !VERSION_SHAPED.matcher(last).matches()) {
-				return null;
-			}
-			return Version.parseVersion(last);
-		} catch (RuntimeException e) {
-			// An unparseable URI carries no version; the nsURI itself is validated elsewhere.
-			return null;
-		}
+		return EPackageVersions.fromNsUri(nsUri);
 	}
 
 	private static void parseOrReject(String version, String message) {

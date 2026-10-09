@@ -20,25 +20,34 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.impl.EPackageImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
+import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
+import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.Version;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -59,6 +68,11 @@ property = {
 		"registry.type=SCHEMA"
 		})
 public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
+
+	private static final Logger LOGGER = Logger.getLogger(AtlasSchemaRegistryService.class.getName());
+
+	/** Manifest header bnd stamps with the build time of a bundle, in epoch milliseconds. */
+	static final String BND_LAST_MODIFIED = "Bnd-LastModified";
 	
 	private final Registry registryObject;
 
@@ -456,10 +470,68 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		metadata.setScope(WorkflowConstants.ATLAS_SCOPE_NAME);
 		metadata.setRegistry(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME);
 		metadata.setStage(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME);
-		metadata.setUploadTime(Instant.now());
 		metadata.setUploadUser("system");
 		metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, ePackage.getNsURI());
+		// A system schema never passes the storage path that fills these for an upload, and the
+		// mirror is rebuilt on every start, so they are derived here - from the package and the
+		// bundle shipping it, which keeps them stable across restarts (issue #359).
+		Bundle shipping = shippingBundle(ePackage);
+		Instant shipped = shippedAt(shipping);
+		metadata.setUploadTime(shipped);
+		metadata.setLastChangeTime(shipped);
+		metadata.setVersion(versionOf(ePackage, shipping));
+		metadata.setContentHash(AbstractEObjectStorageService.computeContentHash(ePackage));
+		metadata.setFingerprint(FingerprintHelper.fingerprint(ePackage));
 		return metadata;
+	}
+
+	/**
+	 * The bundle a package ships in: the one its generated class comes from. A dynamic package
+	 * is a plain {@link EPackageImpl}, whose class belongs to EMF rather than to whoever
+	 * registered it, so it has no shipping bundle.
+	 */
+	static Bundle shippingBundle(EPackage ePackage) {
+		if (ePackage.getClass() == EPackageImpl.class) {
+			return null;
+		}
+		return FrameworkUtil.getBundle(ePackage.getClass());
+	}
+
+	/**
+	 * When the shipped content came to be, as a time that survives a restart: the build time
+	 * bnd stamped into the bundle, else when the bundle was installed or last updated. Without
+	 * a shipping bundle there is nothing stable to point at, so it is now.
+	 */
+	static Instant shippedAt(Bundle bundle) {
+		if (bundle == null) {
+			return Instant.now();
+		}
+		String built = bundle.getHeaders("").get(BND_LAST_MODIFIED);
+		if (built != null) {
+			try {
+				return Instant.ofEpochMilli(Long.parseLong(built.trim()));
+			} catch (NumberFormatException e) {
+				LOGGER.log(Level.FINE, () -> "Ignoring the unreadable " + BND_LAST_MODIFIED + " '" + built
+						+ "' of bundle " + bundle.getSymbolicName());
+			}
+		}
+		long installed = bundle.getLastModified();
+		return installed > 0 ? Instant.ofEpochMilli(installed) : Instant.now();
+	}
+
+	/**
+	 * The version the package states or its nsURI carries - the rule an upload applies - and
+	 * failing both, that of the bundle shipping it, without its build qualifier.
+	 */
+	static String versionOf(EPackage ePackage, Bundle shipping) {
+		String version = EPackageVersions.of(ePackage, declared -> LOGGER.warning(() -> ePackage.getNsURI()
+				+ " declares the version '" + declared + "' in its Version annotation, which is not a valid version"
+				+ " - ignoring it"));
+		if (version != null || shipping == null) {
+			return version;
+		}
+		Version bundleVersion = shipping.getVersion();
+		return new Version(bundleVersion.getMajor(), bundleVersion.getMinor(), bundleVersion.getMicro()).toString();
 	}
 	
 	private void validateStage(String stageName) {
