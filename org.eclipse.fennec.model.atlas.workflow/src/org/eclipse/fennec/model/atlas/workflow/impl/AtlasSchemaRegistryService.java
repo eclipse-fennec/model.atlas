@@ -491,6 +491,8 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 * registered it, so it has no shipping bundle.
 	 */
 	static Bundle shippingBundle(EPackage ePackage) {
+		// Deliberately == and not instanceof: only the plain dynamic class must not be attributed
+		// to EMF's own bundle. A generated package subclasses EPackageImpl and is its own bundle's.
 		if (ePackage.getClass() == EPackageImpl.class) {
 			return null;
 		}
