@@ -1028,6 +1028,30 @@ public class AbstractEObjectStorageServiceTest {
     }
 
     @Test
+    @DisplayName("A package whose class extends both an Ecore class and a sibling still hashes (#359)")
+    public void testComputeContentHash_MixedCrossAndSameDocumentSuperTypes() {
+        EPackage mixed = EcoreFactory.eINSTANCE.createEPackage();
+        mixed.setName("mixed");
+        mixed.setNsURI("http://test.com/mixed/1.0");
+        mixed.setNsPrefix("mixed");
+        org.eclipse.emf.ecore.EClass base = EcoreFactory.eINSTANCE.createEClass();
+        base.setName("Base");
+        org.eclipse.emf.ecore.EClass special = EcoreFactory.eINSTANCE.createEClass();
+        special.setName("Special");
+        // One super type in another document, one in this one: EMF then writes the whole list as
+        // hrefs, including one back into the document being hashed, which needs a URI to resolve.
+        special.getESuperTypes().add(EcorePackage.Literals.EMODEL_ELEMENT);
+        special.getESuperTypes().add(base);
+        mixed.getEClassifiers().add(base);
+        mixed.getEClassifiers().add(special);
+
+        String hash = AbstractEObjectStorageService.computeContentHash(mixed);
+
+        assertNotNull(hash, "a same-document href must not make hashing fail");
+        assertEquals(hash, AbstractEObjectStorageService.computeContentHash(mixed), "and the hash must be stable");
+    }
+
+    @Test
     public void testComputeContentHash_NullReturnsNull() {
         String hash = AbstractEObjectStorageService.computeContentHash(null);
         assertNull(hash, "Null object should return null hash");

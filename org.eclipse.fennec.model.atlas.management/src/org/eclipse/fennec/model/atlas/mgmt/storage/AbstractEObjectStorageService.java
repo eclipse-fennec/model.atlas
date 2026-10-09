@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -325,7 +326,18 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     }
 
     /**
+     * The URI of the throwaway resource an object is serialized into for hashing. Constant, so
+     * the hash of unchanged content does not depend on where it came from.
+     */
+    private static final URI CONTENT_HASH_RESOURCE_URI = URI.createURI("content-hash.xmi");
+
+    /**
      * Computes a SHA-256 content hash of an EObject by serializing it to XMI.
+     * <p>
+     * The resource needs a URI: a reference list that mixes targets in another document with
+     * targets in this one - an EClass extending an Ecore class and a sibling - is written as
+     * hrefs throughout, including one back into this document, and an href cannot be built
+     * against a resource without a URI (issue #359).
      *
      * @param object the EObject to hash
      * @return the hex-encoded SHA-256 hash, or null if computation fails
@@ -336,7 +348,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         }
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Resource resource = new XMIResourceImpl();
+            Resource resource = new XMIResourceImpl(CONTENT_HASH_RESOURCE_URI);
             resource.getContents().add(EcoreUtil.copy(object));
             resource.save(baos, Collections.emptyMap());
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(baos.toByteArray());
