@@ -366,6 +366,24 @@ final class FlowAnalysis {
 				COMBINATION_TAXONOMY, LINKAGE));
 	}
 
+	/**
+	 * Records who raised a finding: this analysis, always.
+	 * <p>
+	 * {@code STATIC_ANALYSIS} and never the origin of the review a finding was carried over from.
+	 * What travels along a flow is the category and the citation; the claim that a person or an
+	 * agent looked at something does not, because the thing being claimed here - that this field
+	 * reaches that one, and what follows from it - is the rule table's statement and nobody else's.
+	 * <p>
+	 * Unset is not the same as unstated. {@code ReportOrigin} is an EMF enum whose default literal
+	 * is {@code UNKNOWN}, so a finding that never set this reads as one whose origin nobody
+	 * recorded - on a report whose entire claim is that it was derived mechanically, and in the
+	 * field the model keeps that claim in. The reviews stamp {@code AI_AGENT} on every finding of
+	 * theirs for the same reason.
+	 */
+	private static void raisedHere(Finding finding) {
+		finding.setOrigin(ReportOrigin.STATIC_ANALYSIS);
+	}
+
 	private static CategoryRef categoryRef(String contextId, String contextVersion, String taxonomyId,
 			String categoryId) {
 		CategoryRef ref = CONTEXTS.createCategoryRef();
@@ -532,6 +550,7 @@ final class FlowAnalysis {
 			List<Flow> flows, Map<Flow, FlowEvaluation> evaluations, ComplianceReport report) {
 		CombinationFinding combination = REPORTS.createCombinationFinding();
 		combination.setId(Rule.COMBINATION_CARRIED.code() + ":" + reviewed.getId() + ID_SEPARATOR + targetClass);
+		raisedHere(combination);
 		// Carried over whole, both of them: the kind of combination and the category of the set are
 		// the reviewer's, and the analyser is in no position to assert either from a dataflow. A
 		// copy, because categories are contained - the reference itself belongs to the review.
@@ -781,6 +800,7 @@ final class FlowAnalysis {
 			evaluation.setSourceNsURI(nsURI);
 			Finding finding = REPORTS.createFinding();
 			finding.setId(Rule.NOT_PROPAGATED.code() + ":" + nsURI);
+			raisedHere(finding);
 			dataCategory(finding, unreadFeatures.stream().map(ReviewIndex::worstCategory)
 					.reduce(null, ReviewIndex::stronger), unreadFeatures);
 			// Not a risk: it is the absence of one, so it is recorded at the lowest level that is
@@ -842,6 +862,7 @@ final class FlowAnalysis {
 		}
 		dataCategory(finding, category, contributing.stream().map(contributor -> featureOf(contributor, byNsURI))
 				.filter(feature -> feature != null).toList());
+		raisedHere(finding);
 		finding.setRelevanceLevel(relevance);
 		// The signal is the transformation itself: the analyser read no name, no type and no
 		// documentation, it read where the value goes.

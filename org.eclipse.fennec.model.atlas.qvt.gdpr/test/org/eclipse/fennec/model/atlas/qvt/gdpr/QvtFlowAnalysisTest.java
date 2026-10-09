@@ -329,6 +329,27 @@ public class QvtFlowAnalysisTest {
 	}
 
 	@Test
+	@DisplayName("every finding says it was raised by the analyser and not by anybody")
+	public void everyFindingNamesItsOrigin() {
+		ComplianceReport report = analyse();
+
+		// STATIC_ANALYSIS, which is what this is: a rule table applied to a compiled unit and to
+		// stored reviews, with no agent and no person in it. The reviews' own AI_AGENT stays on the
+		// reviews - what is carried over from them is the category and the citation, never the
+		// claim about who raised a finding, because the finding here is this analyser's.
+		//
+		// Finding.origin exists to tell apart, within one revision, what a person raised from what
+		// was raised for them. Unset reads as UNKNOWN, which on a report whose whole claim is that
+		// it was derived mechanically says nothing in the place that claim belongs.
+		List<Finding> findings = new ArrayList<>(report.getCombinations());
+		report.getEvaluations().forEach(evaluation -> findings.addAll(evaluation.getFindings()));
+		assertFalse(findings.isEmpty());
+		for (Finding finding : findings) {
+			assertEquals(ReportOrigin.STATIC_ANALYSIS, finding.getOrigin(), finding.getId());
+		}
+	}
+
+	@Test
 	@DisplayName("carrying a category over does not take it out of the review")
 	public void theReviewKeepsItsOwnCategories() {
 		ComplianceReport clinic = Reviews.clinic();
