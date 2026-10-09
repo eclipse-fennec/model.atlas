@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +42,8 @@ import org.eclipse.fennec.m2x.model.imperativeocl.ImperativeOclPackage;
 import org.eclipse.fennec.m2x.model.ocl.OclPackage;
 import org.eclipse.fennec.m2x.model.qvtoperational.QvtOperationalPackage;
 import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
 import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
 import org.eclipse.fennec.model.compliance.report.CombinationFinding;
 import org.eclipse.fennec.model.compliance.report.Evaluation;
@@ -301,6 +304,78 @@ public class QvtFlowAnalysisTest {
 				"the first feature behind the citation: " + relevances);
 		assertTrue(relevances.stream().anyMatch(text -> text.contains("//Physician/email")),
 				"and the second one: " + relevances);
+	}
+
+	@Test
+	@DisplayName("every category names the context it was claimed against")
+	public void everyCategoryNamesItsContext() {
+		ComplianceReport report = analyse();
+
+		// CategoryRef extends ContextRef, whose contextId is mandatory. A category minted from the
+		// surviving id alone had neither the context nor its version, so every finding this
+		// analyser wrote was invalid against the model it was written in.
+		List<CategoryRef> refs = new ArrayList<>();
+		report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+				.forEach(finding -> refs.addAll(finding.getCategories()));
+		report.getCombinations().forEach(combination -> refs.addAll(combination.getCategories()));
+		assertFalse(refs.isEmpty());
+		for (CategoryRef ref : refs) {
+			assertEquals("gdpr", ref.getContextId(), ref.getTaxonomyId() + "/" + ref.getCategoryId());
+			assertEquals(Reviews.CONTEXT_VERSION, ref.getContextVersion(),
+					ref.getTaxonomyId() + "/" + ref.getCategoryId());
+		}
+	}
+
+	@Test
+	@DisplayName("carrying a category over does not take it out of the review")
+	public void theReviewKeepsItsOwnCategories() {
+		ComplianceReport clinic = Reviews.clinic();
+		FeatureEvaluation diagnosis = featureOf(clinic, "//Patient/diagnosis");
+
+		FlowAnalysis.analyse(unit, Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()),
+				RAN_AT);
+
+		// Finding.categories is a containment reference: recording the review's own instance would
+		// move it, and the review this analysis rests on would come out of it short of a category.
+		assertEquals(List.of("SPECIAL_CATEGORY"), ReviewIndex.categoriesOf(diagnosis.getFindings().get(0)),
+				"the review still asserts what it asserted before it was read");
+		assertEquals(List.of("QUASI_IDENTIFIER_SET", "DIRECT_IDENTIFIER"),
+				clinic.getCombinations().get(0).getCategories().stream().map(CategoryRef::getCategoryId).toList(),
+				"and so does the combination the carried-over one was copied from");
+	}
+
+	@Test
+	@DisplayName("the kind of a combination is stated against the context of the source reviews")
+	public void theCombinationKindTakesTheSourceContext() {
+		ComplianceReport report = analyse();
+
+		CombinationFinding aggregation = combination(report, RuleCatalogue.Rule.AGGREGATION);
+		CategoryRef kind = aggregation.getCategories().stream()
+				.filter(ref -> "combination-kinds".equals(ref.getTaxonomyId())).findFirst().orElseThrow();
+		// LINKAGE is the analyser's own statement, so there is no reviewer's reference to copy. It
+		// belongs to the source side all the same: everything behind the combination - which fields
+		// are classified, as what, on what citation - was read from the source review.
+		assertEquals("gdpr", kind.getContextId());
+		assertEquals(Reviews.CONTEXT_VERSION, kind.getContextVersion());
+	}
+
+	@Test
+	@DisplayName("a kind nobody can place in one context is left off rather than guessed")
+	public void anAmbiguousContextLeavesTheKindOff() {
+		ComplianceReport clinic = Reviews.clinic();
+		ContextRef second = ContextFactory.eINSTANCE.createContextRef();
+		second.setContextId("bdsg");
+		second.setContextVersion("20190625");
+		clinic.getContexts().add(second);
+
+		ComplianceReport report = FlowAnalysis.analyse(unit,
+				Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()), RAN_AT);
+
+		CombinationFinding aggregation = combination(report, RuleCatalogue.Rule.AGGREGATION);
+		assertTrue(kindsOf(aggregation).isEmpty(),
+				"which of the two contexts the kind belongs to is not derivable from a dataflow");
+		assertEquals(List.of("SPECIAL_CATEGORY"), ReviewIndex.categoriesOf(aggregation),
+				"the data category still stands: it came from a review and carries its own context");
 	}
 
 	@Test

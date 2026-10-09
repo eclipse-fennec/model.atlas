@@ -247,6 +247,35 @@ final class ReviewIndex {
 	}
 
 	/**
+	 * The reference a review used for one category of one feature, or {@code null} where it made no
+	 * such claim.
+	 * <p>
+	 * A category travels through this analysis as an id, because that is what the severity ordering
+	 * compares - but an id is not the whole of what the reviewer wrote. The reference also names
+	 * the context and the version of it the claim was made against, and {@code contextId} is
+	 * mandatory on it. So a finding that carries a category over goes back to the reference that
+	 * asserted it rather than minting one from the surviving string.
+	 *
+	 * @param feature    the feature, or {@code null}
+	 * @param categoryId the category id, or {@code null}
+	 * @return the reference as the review holds it - still contained by the review, so a caller
+	 *         that records it has to copy it
+	 */
+	static CategoryRef refFor(FeatureEvaluation feature, String categoryId) {
+		if (feature == null || categoryId == null) {
+			return null;
+		}
+		for (Finding finding : feature.getFindings()) {
+			for (CategoryRef ref : finding.getCategories()) {
+				if (TAXONOMY.equals(ref.getTaxonomyId()) && categoryId.equals(ref.getCategoryId())) {
+					return ref;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Every citation the review made about one feature.
 	 * <p>
 	 * These are what a flow finding is evidenced with, and they are the reason the analyser needs

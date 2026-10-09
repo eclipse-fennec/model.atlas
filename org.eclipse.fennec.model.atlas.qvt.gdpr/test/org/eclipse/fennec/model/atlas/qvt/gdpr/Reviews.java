@@ -51,6 +51,9 @@ final class Reviews {
 	static final String CLINIC_FP = "fp1:5b87b0c624cead5c040e43d78ec02112c588f1531311354d7ea0cf1c425843cb";
 	static final String CONTACTS_FP = "fp1:0bbb2a335cb6fbf49dbabde6b628abbecfe4f92f3675de534284dc7a4f3d84ca";
 
+	/** The version of the GDPR context both reviews were made against. */
+	static final String CONTEXT_VERSION = "20160504";
+
 	/** The purpose a person entered on the diagnosis field, and the reason one rule fires at all. */
 	static final String DIAGNOSIS_PURPOSE = "Stored to support the treating physician";
 
@@ -133,7 +136,7 @@ final class Reviews {
 		report.setSubject(subject);
 		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
 		context.setContextId("gdpr");
-		context.setContextVersion("20160504");
+		context.setContextVersion(CONTEXT_VERSION);
 		report.getContexts().add(context);
 		report.setLanguage("EN");
 		return report;
@@ -206,6 +209,7 @@ final class Reviews {
 	static CategoryRef kindRef(String kindId) {
 		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
 		ref.setContextId("gdpr");
+		ref.setContextVersion(CONTEXT_VERSION);
 		ref.setTaxonomyId("combination-kinds");
 		ref.setCategoryId(kindId);
 		return ref;
@@ -218,6 +222,7 @@ final class Reviews {
 	static CategoryRef categoryRef(String categoryId) {
 		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
 		ref.setContextId("gdpr");
+		ref.setContextVersion(CONTEXT_VERSION);
 		ref.setTaxonomyId("data-categories");
 		ref.setCategoryId(categoryId);
 		return ref;
