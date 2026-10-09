@@ -460,9 +460,17 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 * The two timestamps are not read off the package, because they are not about it: they are
 	 * about this registry's history with it, and the only record of that is what the shared
 	 * registry already holds. A schema that is there with the same fingerprint keeps both - it was
-	 * not uploaded again and it did not change, and a restart is not an event in its life. One
-	 * whose fingerprint moved keeps the time it was first seen and gets a new change time. Only a
-	 * schema nobody has recorded before is stamped with now.
+	 * not uploaded again and it did not change. One whose fingerprint moved keeps the time it was
+	 * first seen and gets a new change time. Only a schema nobody has recorded before is stamped
+	 * with now.
+	 * <p>
+	 * <b>Within one run of the framework, not across two.</b> The static registry re-announces its
+	 * contents whenever a package arrives or is replaced, and every announcement reconciles the
+	 * whole mirror - so without this, a package that nobody touched had its uploadTime moved by any
+	 * other package being installed. That is fixed. A restart is not: the shared registry answers
+	 * {@code getMetadata} from an in-memory cache, which is empty when this component first binds,
+	 * so what a previous run recorded cannot be read back and every schema is stamped again. The
+	 * fingerprint is what a client should compare across starts until that is addressed.
 	 */
 	private ObjectMetadata createMetadata(EPackage ePackage) {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
@@ -484,10 +492,16 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	/**
 	 * Carries the timestamps of what is already recorded about this schema, where anything is.
 	 * <p>
-	 * {@code uploadTime} used to be {@code now} on every mirror, so every restart made every system
-	 * schema look newly uploaded even though the runtime shipped the same bundles. The registry
-	 * outlives a restart, so the question "have I seen this before, and was it this?" has an
-	 * answer, and the fingerprint computed a moment ago is what answers the second half of it.
+	 * {@code uploadTime} used to be {@code now} on every mirror, and a mirror happens on every
+	 * reconcile - so a schema nobody touched looked newly uploaded each time any other package was
+	 * installed. Asking what is already recorded answers "have I seen this before", and the
+	 * fingerprint computed a moment ago answers "and was it this".
+	 * <p>
+	 * It can only answer for this run. {@code getMetadata} reads the shared registry's in-memory
+	 * cache - its Lucene-backed finders resolve their hits through the same cache - and that cache
+	 * starts empty, so the first mirror after a start finds nothing however much a previous run
+	 * wrote. Keeping the timestamps across a restart needs the registry to serve what its index
+	 * holds, which is not this component's to decide.
 	 */
 	private void timestamps(ObjectMetadata metadata, String objectId) {
 		Instant now = Instant.now();
