@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,10 +42,13 @@ import org.eclipse.fennec.m2x.model.imperativeocl.ImperativeOclPackage;
 import org.eclipse.fennec.m2x.model.ocl.OclPackage;
 import org.eclipse.fennec.m2x.model.qvtoperational.QvtOperationalPackage;
 import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
 import org.eclipse.fennec.model.compliance.report.CombinationFinding;
 import org.eclipse.fennec.model.compliance.report.Evaluation;
-import org.eclipse.fennec.model.compliance.report.Evaluation;
 import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
 import org.eclipse.fennec.model.compliance.report.Finding;
 import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
 import org.eclipse.fennec.model.compliance.report.FlowKind;
@@ -210,13 +214,191 @@ public class QvtFlowAnalysisTest {
 		assertEquals(1, notPropagated.size(),
 				"one finding about the set; one per feature buries a real metamodel under INFO rows");
 
-		Finding finding = notPropagated.get(0);
+		Finding finding = notPropagated(report);
 		assertEquals(RelevanceLevel.LOW, finding.getRelevanceLevel(),
 				"it is evidence for a minimisation argument, not a risk");
 		assertTrue(finding.getRationale().contains("//Patient/birthDate"), finding.getRationale());
 		assertTrue(finding.getRationale().contains("//Physician/name"), finding.getRationale());
 		assertFalse(finding.getRationale().contains("//Patient/fullName"),
 				"a feature the transformation does read is not among them");
+	}
+
+	@Test
+	@DisplayName("a combination the review raised is reassembled when every member travels")
+	public void aReviewedCombinationThatTravelsIsCarriedOver() {
+		ComplianceReport report = analyse();
+
+		// The clinic reviewer raised CF-001 over id, fullName and email. The mapping writes them
+		// into reference, displayName and contactEmail - three different fields, so the aggregation
+		// rule cannot see it, and one class, which is what reassembles the set in a target record.
+		CombinationFinding carried = combination(report, RuleCatalogue.Rule.COMBINATION_CARRIED);
+		assertEquals(3, carried.getFeatures().size(), "one flow per member of the reviewed set");
+		assertEquals(List.of("//Contact/reference", "//Contact/displayName", "//Contact/contactEmail"),
+				carried.getFeatures().stream().map(FlowEvaluation.class::cast)
+						.map(FlowEvaluation::getTargetFeature).toList(),
+				"and they are the flows that land in //Contact");
+
+		assertEquals(List.of("QUASI_IDENTIFIER_SET"), kindsOf(carried),
+				"the reviewer's kind, carried over: the analyser is not in a position to assert one");
+		assertEquals(List.of("DIRECT_IDENTIFIER"), ReviewIndex.categoriesOf(carried),
+				"and the reviewer's category of the set");
+		assertEquals(RelevanceLevel.HIGH, carried.getRelevanceLevel(), "carried over from the review");
+		assertTrue(carried.getRationale().contains("//Contact"), carried.getRationale());
+		assertTrue(carried.getRationale().contains("//Patient/fullName"), carried.getRationale());
+
+		assertEquals(1, carried.getEvidence().size(), "the combination's own citation, not its members'");
+		Evidence evidence = carried.getEvidence().get(0);
+		assertEquals("Rec.26", evidence.getCitationId());
+		assertEquals("gdpr", evidence.getContextId());
+		assertEquals(Reviews.CORPUS_ID, evidence.getCorpusId());
+		assertEquals("singling out", evidence.getQuote(), "the quote, byte for byte");
+		assertTrue(evidence.getRelevance().startsWith("The reviewer's relevance for CF-001."),
+				evidence.getRelevance());
+	}
+
+	@Test
+	@DisplayName("a combination whose members do not all travel is not reassembled")
+	public void aCombinationThatIsBrokenUpIsNotCarriedOver() {
+		ComplianceReport clinic = Reviews.clinic();
+		// birthDate is read by no mapping, so a set it belongs to is not reassembled anywhere.
+		CombinationFinding reviewed = clinic.getCombinations().get(0);
+		reviewed.getFeatures().add(featureOf(clinic, "//Patient/birthDate"));
+
+		ComplianceReport report = FlowAnalysis.analyse(unit,
+				Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()), RAN_AT);
+
+		assertTrue(report.getCombinations().stream()
+				.noneMatch(found -> found.getId().startsWith(RuleCatalogue.Rule.COMBINATION_CARRIED.code())),
+				"a set the transformation breaks up is not a set the transformation rebuilds");
+	}
+
+	@Test
+	@DisplayName("pseudonymised data that travels is still data that travels")
+	public void aPseudonymIsCarriedLikeAnythingElse() {
+		ComplianceReport clinic = Reviews.clinic();
+		// Rec. 26 is explicit that pseudonymised data is personal data as long as the additional
+		// information exists, and the reviewer said so about this field. A flow of it is a flow.
+		FeatureEvaluation email = featureOf(clinic, "//Patient/email");
+		email.getFindings().get(0).getCategories().clear();
+		email.getFindings().get(0).getCategories().add(Reviews.categoryRef("PSEUDONYMISED"));
+
+		ComplianceReport report = FlowAnalysis.analyse(unit,
+				Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()), RAN_AT);
+
+		FlowEvaluation flow = flow(report, "//Patient/email", "//Contact/contactEmail");
+		assertEquals(RelevanceLevel.HIGH, flow.getRelevanceLevel(), "the review's relevance, as before");
+		Finding propagation = finding(flow, RuleCatalogue.Rule.PROPAGATION);
+		assertNotNull(propagation, "a HIGH row with no finding on it is a row that says nothing");
+		assertEquals(List.of("PSEUDONYMISED"), ReviewIndex.categoriesOf(propagation),
+				"and it says what the review said, not something stronger");
+	}
+
+	@Test
+	@DisplayName("every unread feature is named by a citation of its own, not only the first of them")
+	public void whatIsNotPropagatedKeepsEveryReviewersWords() {
+		ComplianceReport report = analyse();
+
+		Finding finding = notPropagated(report);
+		List<String> relevances = finding.getEvidence().stream().map(Evidence::getRelevance).toList();
+		// //Physician/name and //Physician/email cite Art.4(1) with the same quote. Dropping the
+		// second as a duplicate loses the one thing a reader needs: that it was reviewed at all.
+		assertTrue(relevances.stream().anyMatch(text -> text.contains("//Physician/name")),
+				"the first feature behind the citation: " + relevances);
+		assertTrue(relevances.stream().anyMatch(text -> text.contains("//Physician/email")),
+				"and the second one: " + relevances);
+	}
+
+	@Test
+	@DisplayName("every category names the context it was claimed against")
+	public void everyCategoryNamesItsContext() {
+		ComplianceReport report = analyse();
+
+		// CategoryRef extends ContextRef, whose contextId is mandatory. A category minted from the
+		// surviving id alone had neither the context nor its version, so every finding this
+		// analyser wrote was invalid against the model it was written in.
+		List<CategoryRef> refs = new ArrayList<>();
+		report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+				.forEach(finding -> refs.addAll(finding.getCategories()));
+		report.getCombinations().forEach(combination -> refs.addAll(combination.getCategories()));
+		assertFalse(refs.isEmpty());
+		for (CategoryRef ref : refs) {
+			assertEquals("gdpr", ref.getContextId(), ref.getTaxonomyId() + "/" + ref.getCategoryId());
+			assertEquals(Reviews.CONTEXT_VERSION, ref.getContextVersion(),
+					ref.getTaxonomyId() + "/" + ref.getCategoryId());
+		}
+	}
+
+	@Test
+	@DisplayName("every finding says it was raised by the analyser and not by anybody")
+	public void everyFindingNamesItsOrigin() {
+		ComplianceReport report = analyse();
+
+		// STATIC_ANALYSIS, which is what this is: a rule table applied to a compiled unit and to
+		// stored reviews, with no agent and no person in it. The reviews' own AI_AGENT stays on the
+		// reviews - what is carried over from them is the category and the citation, never the
+		// claim about who raised a finding, because the finding here is this analyser's.
+		//
+		// Finding.origin exists to tell apart, within one revision, what a person raised from what
+		// was raised for them. Unset reads as UNKNOWN, which on a report whose whole claim is that
+		// it was derived mechanically says nothing in the place that claim belongs.
+		List<Finding> findings = new ArrayList<>(report.getCombinations());
+		report.getEvaluations().forEach(evaluation -> findings.addAll(evaluation.getFindings()));
+		assertFalse(findings.isEmpty());
+		for (Finding finding : findings) {
+			assertEquals(ReportOrigin.STATIC_ANALYSIS, finding.getOrigin(), finding.getId());
+		}
+	}
+
+	@Test
+	@DisplayName("carrying a category over does not take it out of the review")
+	public void theReviewKeepsItsOwnCategories() {
+		ComplianceReport clinic = Reviews.clinic();
+		FeatureEvaluation diagnosis = featureOf(clinic, "//Patient/diagnosis");
+
+		FlowAnalysis.analyse(unit, Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()),
+				RAN_AT);
+
+		// Finding.categories is a containment reference: recording the review's own instance would
+		// move it, and the review this analysis rests on would come out of it short of a category.
+		assertEquals(List.of("SPECIAL_CATEGORY"), ReviewIndex.categoriesOf(diagnosis.getFindings().get(0)),
+				"the review still asserts what it asserted before it was read");
+		assertEquals(List.of("QUASI_IDENTIFIER_SET", "DIRECT_IDENTIFIER"),
+				clinic.getCombinations().get(0).getCategories().stream().map(CategoryRef::getCategoryId).toList(),
+				"and so does the combination the carried-over one was copied from");
+	}
+
+	@Test
+	@DisplayName("the kind of a combination is stated against the context of the source reviews")
+	public void theCombinationKindTakesTheSourceContext() {
+		ComplianceReport report = analyse();
+
+		CombinationFinding aggregation = combination(report, RuleCatalogue.Rule.AGGREGATION);
+		CategoryRef kind = aggregation.getCategories().stream()
+				.filter(ref -> "combination-kinds".equals(ref.getTaxonomyId())).findFirst().orElseThrow();
+		// LINKAGE is the analyser's own statement, so there is no reviewer's reference to copy. It
+		// belongs to the source side all the same: everything behind the combination - which fields
+		// are classified, as what, on what citation - was read from the source review.
+		assertEquals("gdpr", kind.getContextId());
+		assertEquals(Reviews.CONTEXT_VERSION, kind.getContextVersion());
+	}
+
+	@Test
+	@DisplayName("a kind nobody can place in one context is left off rather than guessed")
+	public void anAmbiguousContextLeavesTheKindOff() {
+		ComplianceReport clinic = Reviews.clinic();
+		ContextRef second = ContextFactory.eINSTANCE.createContextRef();
+		second.setContextId("bdsg");
+		second.setContextVersion("20190625");
+		clinic.getContexts().add(second);
+
+		ComplianceReport report = FlowAnalysis.analyse(unit,
+				Map.of(Reviews.CLINIC_FP, clinic, Reviews.CONTACTS_FP, Reviews.contacts()), RAN_AT);
+
+		CombinationFinding aggregation = combination(report, RuleCatalogue.Rule.AGGREGATION);
+		assertTrue(kindsOf(aggregation).isEmpty(),
+				"which of the two contexts the kind belongs to is not derivable from a dataflow");
+		assertEquals(List.of("SPECIAL_CATEGORY"), ReviewIndex.categoriesOf(aggregation),
+				"the data category still stands: it came from a review and carries its own context");
 	}
 
 	@Test
@@ -232,6 +414,10 @@ public class QvtFlowAnalysisTest {
 		assertEquals("data concerning health", evidence.getQuote(), "and the quote, byte for byte");
 		assertEquals("celex:02016R0679-20160504#Art.9(1)", evidence.getSourceRef());
 		assertTrue(evidence.isVerbatim());
+		// A citation is only checkable if a reader can find what was cited. One context may hold
+		// several corpora, so naming the context without the corpus does not locate the provision.
+		assertEquals("gdpr", evidence.getContextId(), "the context whose corpus was quoted");
+		assertEquals(Reviews.CORPUS_ID, evidence.getCorpusId(), "and which corpus of it");
 		assertTrue(evidence.getRelevance().startsWith("The reviewer's relevance for //Patient/diagnosis."),
 				"what the reviewer wrote comes first: " + evidence.getRelevance());
 		assertTrue(evidence.getRelevance().contains("writes into " + CONTACTS_COMMENT),
@@ -345,6 +531,22 @@ public class QvtFlowAnalysisTest {
 	private static Finding finding(Evaluation evaluation, RuleCatalogue.Rule rule) {
 		return evaluation.getFindings().stream().filter(found -> found.getId().startsWith(rule.code())).findFirst()
 				.orElse(null);
+	}
+
+	/** The one aggregated finding about everything no mapping reads. */
+	private static Finding notPropagated(ComplianceReport report) {
+		return report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+				.filter(found -> found.getId().startsWith(RuleCatalogue.Rule.NOT_PROPAGATED.code())).findFirst()
+				.orElseThrow(() -> new AssertionError("no not-propagated finding in the report"));
+	}
+
+	/** One feature evaluation of a review, by the fragment it is indexed under. */
+	private static FeatureEvaluation featureOf(ComplianceReport review, String uriFragment) {
+		return review.getEvaluations().stream().filter(ClassifierEvaluation.class::isInstance)
+				.map(ClassifierEvaluation.class::cast)
+				.flatMap(classifier -> classifier.getFeatureEvaluations().stream())
+				.filter(feature -> uriFragment.equals(feature.getUriFragment())).findFirst()
+				.orElseThrow(() -> new AssertionError("no " + uriFragment + " in the review"));
 	}
 
 	private static CombinationFinding combination(ComplianceReport report, RuleCatalogue.Rule rule) {

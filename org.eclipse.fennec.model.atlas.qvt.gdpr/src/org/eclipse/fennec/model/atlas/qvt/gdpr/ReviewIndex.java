@@ -23,6 +23,7 @@ import java.util.Set;
 import org.eclipse.fennec.model.compliance.context.CategoryRef;
 import org.eclipse.fennec.model.compliance.context.ContextRef;
 import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
 import org.eclipse.fennec.model.compliance.report.Evaluation;
 import org.eclipse.fennec.model.compliance.report.Evidence;
 import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
@@ -48,14 +49,25 @@ final class ReviewIndex {
 	static final String TAXONOMY = "data-categories";
 
 	/**
-	 * The categories that mean personal data is involved. {@code PSEUDONYMISED} and
-	 * {@code ANONYMOUS} are deliberately not among them: they are what a field looks like after the
-	 * measure worked, so a flow carrying one of those is not a flow of identifiable data - but they
-	 * do rank above {@code NOT_PERSONAL_DATA} in {@link #SEVERITY}, because losing pseudonymisation
-	 * along the way is still worth seeing.
+	 * The categories that mean personal data is involved.
+	 * <p>
+	 * {@code PSEUDONYMISED} is among them, and {@code ANONYMOUS} is not. The two look alike in a
+	 * taxonomy and are opposites here: anonymisation is the measure that took the data out of the
+	 * Regulation, while pseudonymisation is a safeguard <em>within</em> it - Rec. 26 says in as
+	 * many words that pseudonymised data which could be attributed to a person with additional
+	 * information is information about an identifiable person. A reviewer who writes
+	 * {@code PSEUDONYMISED} on a field is saying it still holds personal data, so a flow of it is a
+	 * flow like any other. Leaving it out cost the pseudonym field of a pseudonymisation
+	 * transformation every finding it should have had, which is the one field such a report exists
+	 * to talk about.
+	 * <p>
+	 * It stays below {@code PERSONAL_DATA} in {@link #SEVERITY} all the same: the safeguard is real
+	 * and the ordering is of how much the category constrains processing, not of whether the
+	 * Regulation applies.
 	 */
-	static final Set<String> PERSONAL = Set.of("PERSONAL_DATA", "DIRECT_IDENTIFIER", "QUASI_IDENTIFIER",
-			"ONLINE_IDENTIFIER", "LOCATION_DATA", "SPECIAL_CATEGORY", "CRIMINAL_CONVICTION_DATA", "CHILD_DATA");
+	static final Set<String> PERSONAL = Set.of("PERSONAL_DATA", "PSEUDONYMISED", "DIRECT_IDENTIFIER",
+			"QUASI_IDENTIFIER", "ONLINE_IDENTIFIER", "LOCATION_DATA", "SPECIAL_CATEGORY",
+			"CRIMINAL_CONVICTION_DATA", "CHILD_DATA");
 
 	/**
 	 * Weakest to strongest, which is the order two classifications are compared in - for the worst
@@ -124,6 +136,40 @@ final class ReviewIndex {
 	/** Every feature the review has an entry for, in the order the review lists them. */
 	Collection<String> fragments() {
 		return byFragment.keySet();
+	}
+
+	/**
+	 * The combinations the reviewer raised over several features of this model.
+	 * <p>
+	 * They are the one thing in a review that no single feature's entry carries, and the one thing
+	 * a flow analysis cannot arrive at on its own: that two fields are joinable is a judgement
+	 * about the data, not about the dataflow. The analyser reads them to find out whether the
+	 * transformation rebuilds a set somebody already described.
+	 */
+	List<CombinationFinding> combinations() {
+		return report.getCombinations();
+	}
+
+	/**
+	 * The features a combination is over, as the fragments a flow is joined on.
+	 * <p>
+	 * {@code CombinationFinding.features} is a non-containment reference into the same document, so
+	 * a member is the review's own {@code FeatureEvaluation} and carries the fragment directly. A
+	 * member that is not a feature evaluation, or one left unresolved by a loader, contributes
+	 * nothing - and a combination that lost a member is deliberately not completed from what is
+	 * left: the set the reviewer described is the whole of it or it is not that set.
+	 *
+	 * @param combination the reviewed combination, never {@code null}
+	 * @return the members' uri fragments in the order the review listed them, possibly empty
+	 */
+	static List<String> membersOf(CombinationFinding combination) {
+		List<String> members = new ArrayList<>();
+		for (Evaluation member : combination.getFeatures()) {
+			if (member instanceof FeatureEvaluation feature && feature.getUriFragment() != null) {
+				members.add(feature.getUriFragment());
+			}
+		}
+		return members;
 	}
 
 	/* ------------------------------------------------------------------ reading an evaluation */
@@ -198,6 +244,35 @@ final class ReviewIndex {
 			return first;
 		}
 		return first.getValue() >= second.getValue() ? first : second;
+	}
+
+	/**
+	 * The reference a review used for one category of one feature, or {@code null} where it made no
+	 * such claim.
+	 * <p>
+	 * A category travels through this analysis as an id, because that is what the severity ordering
+	 * compares - but an id is not the whole of what the reviewer wrote. The reference also names
+	 * the context and the version of it the claim was made against, and {@code contextId} is
+	 * mandatory on it. So a finding that carries a category over goes back to the reference that
+	 * asserted it rather than minting one from the surviving string.
+	 *
+	 * @param feature    the feature, or {@code null}
+	 * @param categoryId the category id, or {@code null}
+	 * @return the reference as the review holds it - still contained by the review, so a caller
+	 *         that records it has to copy it
+	 */
+	static CategoryRef refFor(FeatureEvaluation feature, String categoryId) {
+		if (feature == null || categoryId == null) {
+			return null;
+		}
+		for (Finding finding : feature.getFindings()) {
+			for (CategoryRef ref : finding.getCategories()) {
+				if (TAXONOMY.equals(ref.getTaxonomyId()) && categoryId.equals(ref.getCategoryId())) {
+					return ref;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
