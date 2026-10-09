@@ -92,6 +92,10 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 	@Override
 	public Object createFromString(EDataType eDataType, String initialValue) {
 		switch (eDataType.getClassifierID()) {
+			case ManagementPackage.DIAGNOSTIC_SEVERITY:
+				return createDiagnosticSeverityFromString(eDataType, initialValue);
+			case ManagementPackage.DIAGNOSTIC_STATUS:
+				return createDiagnosticStatusFromString(eDataType, initialValue);
 			case ManagementPackage.OBJECT_STATUS:
 				return createObjectStatusFromString(eDataType, initialValue);
 			case ManagementPackage.PACKAGE_STATUS:
@@ -100,10 +104,6 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 				return createStorageBackendTypeFromString(eDataType, initialValue);
 			case ManagementPackage.GENERATION_STATUS:
 				return createGenerationStatusFromString(eDataType, initialValue);
-			case ManagementPackage.DIAGNOSTIC_SEVERITY:
-				return createDiagnosticSeverityFromString(eDataType, initialValue);
-			case ManagementPackage.DIAGNOSTIC_STATUS:
-				return createDiagnosticStatusFromString(eDataType, initialValue);
 			case ManagementPackage.INSTANT:
 				return createInstantFromString(eDataType, initialValue);
 			default:
@@ -119,6 +119,10 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 	@Override
 	public String convertToString(EDataType eDataType, Object instanceValue) {
 		switch (eDataType.getClassifierID()) {
+			case ManagementPackage.DIAGNOSTIC_SEVERITY:
+				return convertDiagnosticSeverityToString(eDataType, instanceValue);
+			case ManagementPackage.DIAGNOSTIC_STATUS:
+				return convertDiagnosticStatusToString(eDataType, instanceValue);
 			case ManagementPackage.OBJECT_STATUS:
 				return convertObjectStatusToString(eDataType, instanceValue);
 			case ManagementPackage.PACKAGE_STATUS:
@@ -127,10 +131,6 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 				return convertStorageBackendTypeToString(eDataType, instanceValue);
 			case ManagementPackage.GENERATION_STATUS:
 				return convertGenerationStatusToString(eDataType, instanceValue);
-			case ManagementPackage.DIAGNOSTIC_SEVERITY:
-				return convertDiagnosticSeverityToString(eDataType, instanceValue);
-			case ManagementPackage.DIAGNOSTIC_STATUS:
-				return convertDiagnosticStatusToString(eDataType, instanceValue);
 			case ManagementPackage.INSTANT:
 				return convertInstantToString(eDataType, instanceValue);
 			default:
@@ -176,7 +176,7 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public Map.Entry<String, Object> createStringToObjectMapEntry() {
+	public Map.Entry<String, String> createStringToObjectMapEntry() {
 		StringToObjectMapEntryImpl stringToObjectMapEntry = new StringToObjectMapEntryImpl();
 		return stringToObjectMapEntry;
 	}
@@ -212,6 +212,46 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 	public ObjectMetadataContainer createObjectMetadataContainer() {
 		ObjectMetadataContainerImpl objectMetadataContainer = new ObjectMetadataContainerImpl();
 		return objectMetadataContainer;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public DiagnosticSeverity createDiagnosticSeverityFromString(EDataType eDataType, String initialValue) {
+		DiagnosticSeverity result = DiagnosticSeverity.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertDiagnosticSeverityToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public DiagnosticStatus createDiagnosticStatusFromString(EDataType eDataType, String initialValue) {
+		DiagnosticStatus result = DiagnosticStatus.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertDiagnosticStatusToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
 	}
 
 	/**
@@ -291,46 +331,6 @@ public class ManagementFactoryImpl extends EFactoryImpl implements ManagementFac
 	 * @generated
 	 */
 	public String convertGenerationStatusToString(EDataType eDataType, Object instanceValue) {
-		return instanceValue == null ? null : instanceValue.toString();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public DiagnosticSeverity createDiagnosticSeverityFromString(EDataType eDataType, String initialValue) {
-		DiagnosticSeverity result = DiagnosticSeverity.get(initialValue);
-		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
-		return result;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public String convertDiagnosticSeverityToString(EDataType eDataType, Object instanceValue) {
-		return instanceValue == null ? null : instanceValue.toString();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public DiagnosticStatus createDiagnosticStatusFromString(EDataType eDataType, String initialValue) {
-		DiagnosticStatus result = DiagnosticStatus.get(initialValue);
-		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
-		return result;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public String convertDiagnosticStatusToString(EDataType eDataType, Object instanceValue) {
 		return instanceValue == null ? null : instanceValue.toString();
 	}
 

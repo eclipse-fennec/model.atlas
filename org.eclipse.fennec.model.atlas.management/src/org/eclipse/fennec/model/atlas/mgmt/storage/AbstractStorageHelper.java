@@ -544,7 +544,11 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 
             // Resolve all proxies to ensure containment references (like properties EMap)
             // are properly loaded
-            ObjectMetadata metadata = (ObjectMetadata) eObject;
+            // A property stored before they were text is hex-encoded Java serialization, and an
+            // nsUri that reads as hex is one no package can be found by. Decoded as it is loaded,
+            // so a record migrates by being read and written and nobody has to run a pass over the
+            // storage (issue #354).
+            ObjectMetadata metadata = MetadataProperties.decodeLegacyValues((ObjectMetadata) eObject);
 
             checkMetadataConsistency(objectId, metadata);
 

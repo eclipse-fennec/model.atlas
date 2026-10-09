@@ -93,7 +93,7 @@ public class ManagementAdapterFactory extends AdapterFactoryImpl {
 				return createDiagnosticChangeAdapter();
 			}
 			@Override
-			public Adapter caseStringToObjectMapEntry(Map.Entry<String, Object> object) {
+			public Adapter caseStringToObjectMapEntry(Map.Entry<String, String> object) {
 				return createStringToObjectMapEntryAdapter();
 			}
 			@Override

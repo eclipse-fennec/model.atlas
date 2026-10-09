@@ -106,6 +106,20 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	private EEnum diagnosticSeverityEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum diagnosticStatusEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	private EEnum objectStatusEEnum = null;
 
 	/**
@@ -128,20 +142,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	private EEnum generationStatusEEnum = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EEnum diagnosticSeverityEEnum = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EEnum diagnosticStatusEEnum = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1024,6 +1024,26 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EEnum getDiagnosticSeverity() {
+		return diagnosticSeverityEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EEnum getDiagnosticStatus() {
+		return diagnosticStatusEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getObjectStatus() {
 		return objectStatusEEnum;
 	}
@@ -1056,26 +1076,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	@Override
 	public EEnum getGenerationStatus() {
 		return generationStatusEEnum;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EEnum getDiagnosticSeverity() {
-		return diagnosticSeverityEEnum;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EEnum getDiagnosticStatus() {
-		return diagnosticStatusEEnum;
 	}
 
 	/**
@@ -1243,12 +1243,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEReference(objectMetadataContainerEClass, OBJECT_METADATA_CONTAINER__METADATA);
 
 		// Create enums
+		diagnosticSeverityEEnum = createEEnum(DIAGNOSTIC_SEVERITY);
+		diagnosticStatusEEnum = createEEnum(DIAGNOSTIC_STATUS);
 		objectStatusEEnum = createEEnum(OBJECT_STATUS);
 		packageStatusEEnum = createEEnum(PACKAGE_STATUS);
 		storageBackendTypeEEnum = createEEnum(STORAGE_BACKEND_TYPE);
 		generationStatusEEnum = createEEnum(GENERATION_STATUS);
-		diagnosticSeverityEEnum = createEEnum(DIAGNOSTIC_SEVERITY);
-		diagnosticStatusEEnum = createEEnum(DIAGNOSTIC_STATUS);
 
 		// Create data types
 		instantEDataType = createEDataType(INSTANT);
@@ -1349,7 +1349,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 
 		initEClass(stringToObjectMapEntryEClass, Map.Entry.class, "StringToObjectMapEntry", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStringToObjectMapEntry_Key(), ecorePackage.getEString(), "key", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getStringToObjectMapEntry_Value(), ecorePackage.getEJavaObject(), "value", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStringToObjectMapEntry_Value(), ecorePackage.getEString(), "value", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(objectQueryEClass, ObjectQuery.class, "ObjectQuery", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getObjectQuery_UploadUser(), ecorePackage.getEString(), "uploadUser", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1380,6 +1380,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		getObjectMetadataContainer_Metadata().getEKeys().add(this.getObjectMetadata_ObjectId());
 
 		// Initialize enums and add enum literals
+		initEEnum(diagnosticSeverityEEnum, DiagnosticSeverity.class, "DiagnosticSeverity");
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.INFO);
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.WARNING);
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.ERROR);
+
+		initEEnum(diagnosticStatusEEnum, DiagnosticStatus.class, "DiagnosticStatus");
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.OPEN);
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.ACKNOWLEDGED);
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.RESOLVED);
+
 		initEEnum(objectStatusEEnum, ObjectStatus.class, "ObjectStatus");
 		addEEnumLiteral(objectStatusEEnum, ObjectStatus.DRAFT);
 		addEEnumLiteral(objectStatusEEnum, ObjectStatus.APPROVED);
@@ -1404,16 +1414,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.COMPLETED);
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.FAILED);
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.CANCELLED);
-
-		initEEnum(diagnosticSeverityEEnum, DiagnosticSeverity.class, "DiagnosticSeverity");
-		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.INFO);
-		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.WARNING);
-		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.ERROR);
-
-		initEEnum(diagnosticStatusEEnum, DiagnosticStatus.class, "DiagnosticStatus");
-		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.OPEN);
-		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.ACKNOWLEDGED);
-		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.RESOLVED);
 
 		// Initialize data types
 		initEDataType(instantEDataType, Instant.class, "Instant", IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
@@ -1822,7 +1822,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		  (getStringToObjectMapEntry_Value(),
 		   source,
 		   new String[] {
-			   "documentation", "Property value"
+			   "documentation", "Property value, in its string form. It was an EJavaObject, which EMF converts to a string by Java-serializing the value and hex-encoding the bytes - so every property reached the stored metadata and the REST API as an opaque ACED0005... blob that no non-Java client could read and nobody could edit, and reading one back was Java deserialization of input that may come from outside the server (issue #354). A property whose value means something other than text - the dcat flag is the one today - is parsed from this string where it is used, by the code that knows what the key means."
 		   });
 		addAnnotation
 		  (objectQueryEClass,

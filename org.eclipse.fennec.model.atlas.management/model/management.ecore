@@ -338,9 +338,9 @@
         <details key="documentation" value="Property key"/>
       </eAnnotations>
     </eStructuralFeatures>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EJavaObject">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Property value"/>
+        <details key="documentation" value="Property value, in its string form. It was an EJavaObject, which EMF converts to a string by Java-serializing the value and hex-encoding the bytes - so every property reached the stored metadata and the REST API as an opaque ACED0005... blob that no non-Java client could read and nobody could edit, and reading one back was Java deserialization of input that may come from outside the server (issue #354). A property whose value means something other than text - the dcat flag is the one today - is parsed from this string where it is used, by the code that knows what the key means."/>
       </eAnnotations>
     </eStructuralFeatures>
   </eClassifiers>

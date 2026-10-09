@@ -373,7 +373,7 @@ public interface ObjectMetadata extends EObject {
 	/**
 	 * Returns the value of the '<em><b>Properties</b></em>' map.
 	 * The key is of type {@link java.lang.String},
-	 * and the value is of type {@link java.lang.Object},
+	 * and the value is of type {@link java.lang.String},
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
@@ -381,10 +381,10 @@ public interface ObjectMetadata extends EObject {
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Properties</em>' map.
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Properties()
-	 * @model mapType="org.eclipse.fennec.model.atlas.mgmt.management.StringToObjectMapEntry&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EJavaObject&gt;"
+	 * @model mapType="org.eclipse.fennec.model.atlas.mgmt.management.StringToObjectMapEntry&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EString&gt;"
 	 * @generated
 	 */
-	EMap<String, Object> getProperties();
+	EMap<String, String> getProperties();
 
 	/**
 	 * Returns the value of the '<em><b>Last Change User</b></em>' attribute.

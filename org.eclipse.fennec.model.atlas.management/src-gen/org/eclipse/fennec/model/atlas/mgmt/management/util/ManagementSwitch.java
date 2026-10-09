@@ -98,7 +98,7 @@ public class ManagementSwitch<T> extends Switch<T> {
 				return result;
 			}
 			case ManagementPackage.STRING_TO_OBJECT_MAP_ENTRY: {
-				@SuppressWarnings("unchecked") Map.Entry<String, Object> stringToObjectMapEntry = (Map.Entry<String, Object>)theEObject;
+				@SuppressWarnings("unchecked") Map.Entry<String, String> stringToObjectMapEntry = (Map.Entry<String, String>)theEObject;
 				T result = caseStringToObjectMapEntry(stringToObjectMapEntry);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
@@ -181,7 +181,7 @@ public class ManagementSwitch<T> extends Switch<T> {
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public T caseStringToObjectMapEntry(Map.Entry<String, Object> object) {
+	public T caseStringToObjectMapEntry(Map.Entry<String, String> object) {
 		return null;
 	}
 

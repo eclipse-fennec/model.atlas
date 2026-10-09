@@ -291,7 +291,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	 */
 	@Override
 	public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage, String objectId,
-			Map<String, Object> properties) {
+			Map<String, String> properties) {
 		validateRegistry(registry);
 		return getRegistryService(registry).updateProperties(config.scope_name(), stage, objectId, properties);
 	}

@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:c8b8c4b0f1e5997ac3318cb8662ff3c96dda2f2fd6e64143d821caf2089deb92", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
+@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:872bed7b7a976d9f873238e39e863a8ca1466b01d78523774dc8ea7ae262e840", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
 public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -912,46 +912,6 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA_CONTAINER_OPERATION_COUNT = 0;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus <em>Object Status</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getObjectStatus()
-	 * @generated
-	 */
-	int OBJECT_STATUS = 7;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.PackageStatus <em>Package Status</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.PackageStatus
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getPackageStatus()
-	 * @generated
-	 */
-	int PACKAGE_STATUS = 8;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType <em>Storage Backend Type</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getStorageBackendType()
-	 * @generated
-	 */
-	int STORAGE_BACKEND_TYPE = 9;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus <em>Generation Status</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getGenerationStatus()
-	 * @generated
-	 */
-	int GENERATION_STATUS = 10;
-
-	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -959,7 +919,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticSeverity()
 	 * @generated
 	 */
-	int DIAGNOSTIC_SEVERITY = 11;
+	int DIAGNOSTIC_SEVERITY = 7;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}' enum.
@@ -969,7 +929,47 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticStatus()
 	 * @generated
 	 */
-	int DIAGNOSTIC_STATUS = 12;
+	int DIAGNOSTIC_STATUS = 8;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus <em>Object Status</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getObjectStatus()
+	 * @generated
+	 */
+	int OBJECT_STATUS = 9;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.PackageStatus <em>Package Status</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.PackageStatus
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getPackageStatus()
+	 * @generated
+	 */
+	int PACKAGE_STATUS = 10;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType <em>Storage Backend Type</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getStorageBackendType()
+	 * @generated
+	 */
+	int STORAGE_BACKEND_TYPE = 11;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus <em>Generation Status</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getGenerationStatus()
+	 * @generated
+	 */
+	int GENERATION_STATUS = 12;
 
 	/**
 	 * The meta object id for the '<em>Instant</em>' data type.
@@ -1587,7 +1587,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @return the meta object for class '<em>String To Object Map Entry</em>'.
 	 * @see java.util.Map.Entry
 	 * @model keyDataType="org.eclipse.emf.ecore.EString" keyRequired="true"
-	 *        valueDataType="org.eclipse.emf.ecore.EJavaObject" valueRequired="true"
+	 *        valueDataType="org.eclipse.emf.ecore.EString" valueRequired="true"
 	 * @generated
 	 */
 	EClass getStringToObjectMapEntry();
@@ -1876,6 +1876,26 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getObjectMetadataContainer_Metadata();
 
 	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Diagnostic Severity</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
+	 * @generated
+	 */
+	EEnum getDiagnosticSeverity();
+
+	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Diagnostic Status</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
+	 * @generated
+	 */
+	EEnum getDiagnosticStatus();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus <em>Object Status</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1914,26 +1934,6 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EEnum getGenerationStatus();
-
-	/**
-	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for enum '<em>Diagnostic Severity</em>'.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
-	 * @generated
-	 */
-	EEnum getDiagnosticSeverity();
-
-	/**
-	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for enum '<em>Diagnostic Status</em>'.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
-	 * @generated
-	 */
-	EEnum getDiagnosticStatus();
 
 	/**
 	 * Returns the meta object for data type '{@link java.time.Instant <em>Instant</em>}'.
@@ -2656,6 +2656,26 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EReference OBJECT_METADATA_CONTAINER__METADATA = eINSTANCE.getObjectMetadataContainer_Metadata();
 
 		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticSeverity()
+		 * @generated
+		 */
+		EEnum DIAGNOSTIC_SEVERITY = eINSTANCE.getDiagnosticSeverity();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticStatus()
+		 * @generated
+		 */
+		EEnum DIAGNOSTIC_STATUS = eINSTANCE.getDiagnosticStatus();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus <em>Object Status</em>}' enum.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -2694,26 +2714,6 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EEnum GENERATION_STATUS = eINSTANCE.getGenerationStatus();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}' enum.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
-		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticSeverity()
-		 * @generated
-		 */
-		EEnum DIAGNOSTIC_SEVERITY = eINSTANCE.getDiagnosticSeverity();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}' enum.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
-		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticStatus()
-		 * @generated
-		 */
-		EEnum DIAGNOSTIC_STATUS = eINSTANCE.getDiagnosticStatus();
 
 		/**
 		 * The meta object literal for the '<em>Instant</em>' data type.

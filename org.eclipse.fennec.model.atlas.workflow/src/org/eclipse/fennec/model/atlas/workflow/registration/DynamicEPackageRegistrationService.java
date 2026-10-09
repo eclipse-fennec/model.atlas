@@ -717,21 +717,19 @@ public class DynamicEPackageRegistrationService {
      * <p>
      * {@code ObjectMetadata.properties} is typed {@code String -> EJavaObject}, so both
      * {@code Boolean.TRUE} and the string {@code "true"} are storable and only one of them is
-     * what the schema upload path writes. Read both, and treat anything else — including a value
-     * of the wrong type entirely — as "not asserted" rather than as an error: a nonsense flag
-     * must not stop a package from being registered and served.
+     * what the schema upload path writes. A property is text since issue #354, so the flag is
+     * parsed rather than cast, and anything that is not {@code "true"} — a null, a leftover of the
+     * wrong shape, a typo — is "not asserted" rather than an error: a nonsense flag must not stop
+     * a package from being registered and served.
      * </p>
      *
      * @param metadata the object's metadata; never {@code null} here
      * @return {@code true} only if the metadata asserts publication
      */
     private boolean extractDcatFlag(ObjectMetadata metadata) {
-        Object flag = metadata.getProperties() == null ? null
+        String flag = metadata.getProperties() == null ? null
                 : metadata.getProperties().get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
-        if (flag instanceof Boolean bool) {
-            return bool.booleanValue();
-        }
-        return flag instanceof String text && Boolean.parseBoolean(text);
+        return Boolean.parseBoolean(flag);
     }
 
     private ServiceRegistration<EPackageConfigurator> registerEPackageConfigurator(
