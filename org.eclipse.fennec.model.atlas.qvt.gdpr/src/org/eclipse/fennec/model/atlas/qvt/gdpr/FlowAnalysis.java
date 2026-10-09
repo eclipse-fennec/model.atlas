@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
 import org.eclipse.fennec.m2x.model.compiled.CompiledUnitManifest;
@@ -389,6 +390,108 @@ final class FlowAnalysis {
 		for (List<Flow> arriving : byTarget.values()) {
 			apply(arriving, evaluations, byNsURI, report);
 		}
+		combinationsCarried(extraction, byNsURI, evaluations, report);
+	}
+
+	/* ------------------------------------------------------------------ a reviewed combination */
+
+	/**
+	 * Carries over a combination a source review raised, where the transformation rebuilds it.
+	 * <p>
+	 * {@link Rule#AGGREGATION} sees several values meet in one field, which is a fact about the
+	 * dataflow. This sees several values meet in one <em>record</em>, which is not: that those
+	 * particular fields are joinable was decided by whoever reviewed the model, and all the
+	 * analyser contributes is that its transformation carries every one of them into one class of
+	 * the target model. A transformation that copies field by field - the ordinary shape of a
+	 * pseudonymisation or an open-data export - produces no aggregation at all, and used to produce
+	 * no statement about the set either, which is the statement such an export turns on.
+	 * <p>
+	 * All members or nothing. A set that arrives in pieces is a set the transformation took apart,
+	 * and saying something weaker about the pieces would be the analyser making the reviewer's
+	 * judgement for it.
+	 */
+	private static void combinationsCarried(Extraction extraction, Map<String, ReviewIndex> byNsURI,
+			Map<Flow, FlowEvaluation> evaluations, ComplianceReport report) {
+		for (Map.Entry<String, ReviewIndex> entry : byNsURI.entrySet()) {
+			String nsURI = entry.getKey();
+			for (CombinationFinding reviewed : entry.getValue().combinations()) {
+				List<String> members = ReviewIndex.membersOf(reviewed);
+				if (members.size() < 2 || members.size() != reviewed.getFeatures().size()) {
+					// A combination over one feature is not a combination, and one whose members
+					// did not all resolve is not one this analysis knows the extent of.
+					continue;
+				}
+				for (Map.Entry<String, List<Flow>> arriving : membersArrivingTogether(extraction, nsURI, members)
+						.entrySet()) {
+					carriedCombination(nsURI, reviewed, arriving.getKey(), arriving.getValue(), evaluations,
+							report);
+				}
+			}
+		}
+	}
+
+	/**
+	 * The target classes every member of the set reaches, with the one flow of each member into it.
+	 * <p>
+	 * A member may travel along several flows - a field copied into one target field and
+	 * concatenated into another - so the question is asked per target class and answered with the
+	 * first flow of each member into that class. A class that is not reached by every member is not
+	 * in the result at all.
+	 */
+	private static Map<String, List<Flow>> membersArrivingTogether(Extraction extraction, String nsURI,
+			List<String> members) {
+		Map<String, List<Flow>> perClass = new LinkedHashMap<>();
+		for (String member : members) {
+			Map<String, Flow> reached = new LinkedHashMap<>();
+			for (Flow flow : extraction.flows()) {
+				if (nsURI.equals(flow.sourceNsURI()) && member.equals(flow.sourceFeature())
+						&& flow.targetFeature() != null && flow.targetNsURI() != null) {
+					reached.putIfAbsent(classOf(flow.targetNsURI(), flow.targetFeature()), flow);
+				}
+			}
+			if (member.equals(members.get(0))) {
+				reached.forEach((targetClass, flow) -> perClass.put(targetClass, new ArrayList<>(List.of(flow))));
+				continue;
+			}
+			perClass.keySet().retainAll(reached.keySet());
+			perClass.forEach((targetClass, flows) -> flows.add(reached.get(targetClass)));
+		}
+		return perClass;
+	}
+
+	/** One carried-over combination, or nothing when the review backed it with no citation. */
+	private static void carriedCombination(String nsURI, CombinationFinding reviewed, String targetClass,
+			List<Flow> flows, Map<Flow, FlowEvaluation> evaluations, ComplianceReport report) {
+		CombinationFinding combination = REPORTS.createCombinationFinding();
+		combination.setId(Rule.COMBINATION_CARRIED.code() + ":" + reviewed.getId() + ID_SEPARATOR + targetClass);
+		// Carried over, both of them: the kind of combination and the category of the set are the
+		// reviewer's, and the analyser is in no position to assert either from a dataflow.
+		for (CategoryRef ref : reviewed.getCategories()) {
+			combination.getCategories().add(categoryRef(ref.getTaxonomyId(), ref.getCategoryId()));
+		}
+		combination.setRelevanceLevel(reviewed.getRelevanceLevel());
+		combination.getDetectedBy().add(DetectionSignal.TRANSFORMATION_FLOW);
+		flows.forEach(flow -> combination.getFeatures().add(evaluations.get(flow)));
+
+		Map<String, String> facts = new LinkedHashMap<>();
+		facts.put("nsURI", nsURI);
+		facts.put("nSources", String.valueOf(flows.size()));
+		facts.put("sourceList", flows.stream().map(Flow::sourceFeature).collect(Collectors.joining(", ")));
+		facts.put("mapping", flows.get(0).mapping() == null ? "an unnamed mapping" : flows.get(0).mapping());
+		facts.put("targetClass", targetClass.substring(targetClass.indexOf('#') + 1));
+		combination.setRationale(RuleCatalogue.rationale(Rule.COMBINATION_CARRIED, facts));
+		// The combination's own citations, not its members': what is carried over is the statement
+		// the reviewer made about the set, and the members' citations are already on their flows.
+		carry(combination, reviewed.getEvidence(), Rule.COMBINATION_CARRIED, facts, new LinkedHashSet<>());
+		if (!combination.getEvidence().isEmpty()) {
+			report.getCombinations().add(combination);
+		}
+	}
+
+	/** {@code <nsURI>#<classifier fragment>} of the class a target feature belongs to. */
+	private static String classOf(String nsURI, String targetFeature) {
+		int feature = targetFeature.lastIndexOf('/');
+		return nsURI + "#" + (feature <= 0 ? targetFeature : targetFeature.substring(0, feature));
 	}
 
 	/** One flow as the report records it, with what the source review says about its origin. */
@@ -620,10 +723,11 @@ final class FlowAnalysis {
 					"nClassified", String.valueOf(classified), //
 					"nsURI", nsURI, //
 					"sourceList", String.join(", ", unread))));
+			Set<String> seen = new LinkedHashSet<>();
 			for (int i = 0; i < unread.size(); i++) {
 				String fragment = unread.get(i);
 				carry(finding, ReviewIndex.evidenceOf(unreadFeatures.get(i)), Rule.NOT_PROPAGATED,
-						Map.of("sourceFeature", fragment));
+						Map.of("sourceFeature", fragment), seen);
 			}
 			if (finding.getEvidence().isEmpty()) {
 				continue;
@@ -675,12 +779,13 @@ final class FlowAnalysis {
 		Map<String, String> facts = new LinkedHashMap<>(facts(flow, category, contributing));
 		facts.putAll(extra);
 		finding.setRationale(RuleCatalogue.rationale(rule, facts));
+		Set<String> seen = new LinkedHashSet<>();
 		for (Flow contributor : contributing) {
 			Map<String, String> clause = new LinkedHashMap<>(facts);
 			clause.put("sourceFeature", contributor.sourceFeature() == null ? "an unnamed value"
 					: contributor.sourceFeature());
 			clause.put("nOthers", String.valueOf(contributing.size() - 1));
-			carry(finding, ReviewIndex.evidenceOf(featureOf(contributor, byNsURI)), rule, clause);
+			carry(finding, ReviewIndex.evidenceOf(featureOf(contributor, byNsURI)), rule, clause, seen);
 		}
 		return !finding.getEvidence().isEmpty();
 	}
@@ -706,18 +811,32 @@ final class FlowAnalysis {
 	 * <p>
 	 * The identifier, the quote and the source reference are copied unchanged - they were checked
 	 * when the review was written and they still say exactly what they said. Only {@code relevance}
-	 * grows, by the one clause saying how the data this provision is about travels here. Duplicates
-	 * are dropped: several review findings on one feature routinely cite the same provision.
+	 * grows, by the one clause saying how the data this provision is about travels here.
+	 * <p>
+	 * <b>What counts as a duplicate.</b> The whole of what would be written: the identifier, the
+	 * quote, and the relevance as it ends up - what the reviewer wrote plus the clause this
+	 * analysis appends. Two review findings on one feature routinely cite the same provision in the
+	 * same words and would say the same thing twice; two different features behind that provision
+	 * would not, because the appended clause names the feature.
+	 * <p>
+	 * The distinction is not academic. Keying on the citation alone narrowed the aggregated finding
+	 * about everything no mapping reads from a statement about thirty fields to the citations of
+	 * ten of them, and keying on the reviewer's words alone still lost the fields a reviewer had
+	 * described in identical words - two name fields of one class, which is the ordinary case. A
+	 * reader could not then tell whether those fields had been reviewed at all.
+	 *
+	 * @param seen the citations already carried into this finding, across every call for it
 	 */
-	private static void carry(Finding finding, List<Evidence> inherited, Rule rule, Map<String, String> facts) {
+	private static void carry(Finding finding, List<Evidence> inherited, Rule rule, Map<String, String> facts,
+			Set<String> seen) {
+		String clause = RuleCatalogue.relevanceClause(rule, facts);
 		for (Evidence source : inherited) {
 			if (source.getCitationId() == null || source.getQuote() == null) {
 				continue;
 			}
-			boolean already = finding.getEvidence().stream()
-					.anyMatch(existing -> source.getCitationId().equals(existing.getCitationId())
-							&& source.getQuote().equals(existing.getQuote()));
-			if (already) {
+			String relevance = source.getRelevance() == null || source.getRelevance().isBlank() ? clause
+					: source.getRelevance().trim() + " " + clause;
+			if (!seen.add(source.getCitationId() + ID_SEPARATOR + source.getQuote() + ID_SEPARATOR + relevance)) {
 				continue;
 			}
 			Evidence evidence = REPORTS.createEvidence();
@@ -725,9 +844,7 @@ final class FlowAnalysis {
 			evidence.setQuote(source.getQuote());
 			evidence.setSourceRef(source.getSourceRef());
 			evidence.setVerbatim(source.isVerbatim());
-			String clause = RuleCatalogue.relevanceClause(rule, facts);
-			evidence.setRelevance(source.getRelevance() == null || source.getRelevance().isBlank() ? clause
-					: source.getRelevance().trim() + " " + clause);
+			evidence.setRelevance(relevance);
 			finding.getEvidence().add(evidence);
 		}
 	}

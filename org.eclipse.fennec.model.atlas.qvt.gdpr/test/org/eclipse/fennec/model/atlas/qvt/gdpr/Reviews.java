@@ -17,6 +17,8 @@ import org.eclipse.fennec.model.compliance.context.CategoryRef;
 import org.eclipse.fennec.model.compliance.context.ContextRef;
 import org.eclipse.fennec.model.compliance.context.ContextFactory;
 import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.DetectionSignal;
 import org.eclipse.fennec.model.compliance.report.Evidence;
 import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
 import org.eclipse.fennec.model.compliance.report.Finding;
@@ -62,12 +64,13 @@ final class Reviews {
 		ComplianceReport report = report("gdpr-fp1-5b87b0c6-20260923-human", "clinic", CLINIC_NS, CLINIC_FP,
 				ReportOrigin.HUMAN);
 		ClassifierEvaluation patient = classifier(report, "Patient");
-		feature(patient, "//Patient/id", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "Art.4(1)",
-				"any information relating to an identified or identifiable natural person");
-		feature(patient, "//Patient/fullName", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null,
+		FeatureEvaluation id = feature(patient, "//Patient/id", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
-		feature(patient, "//Patient/email", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "Art.4(1)",
+		FeatureEvaluation fullName = feature(patient, "//Patient/fullName", "DIRECT_IDENTIFIER",
+				RelevanceLevel.HIGH, null, "Art.4(1)",
 				"any information relating to an identified or identifiable natural person");
+		FeatureEvaluation email = feature(patient, "//Patient/email", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH,
+				null, "Art.4(1)", "any information relating to an identified or identifiable natural person");
 		feature(patient, "//Patient/birthDate", "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM, null,
 				"Rec.26", "account should be taken of all the means reasonably likely to be used");
 		feature(patient, "//Patient/postcode", "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM, null,
@@ -80,6 +83,20 @@ final class Reviews {
 		ClassifierEvaluation physician = classifier(report, "Physician");
 		feature(physician, "//Physician/name", "DIRECT_IDENTIFIER", RelevanceLevel.MEDIUM, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
+		// A second field citing the provision its neighbour cites, in the reviewer's same words, and
+		// read by no mapping either. Two unread features behind one identical citation is the
+		// ordinary case in a real review - two name fields of one class - and it is what tells
+		// whether the aggregated finding still names both of them.
+		FeatureEvaluation physicianEmail = feature(physician, "//Physician/email", "DIRECT_IDENTIFIER",
+				RelevanceLevel.MEDIUM, null, "Art.4(1)",
+				"any information relating to an identified or identifiable natural person");
+		physicianEmail.getFindings().get(0).getEvidence().get(0)
+				.setRelevance("The reviewer's relevance for //Physician/name.");
+
+		// What the reviewer said about the three fields together, which is a statement neither the
+		// contacts review nor any one of those fields can make.
+		combination(report, "CF-001", "QUASI_IDENTIFIER_SET", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH,
+				"Rec.26", "singling out", id, fullName, email);
 		return report;
 	}
 
@@ -131,7 +148,7 @@ final class Reviews {
 		return classifier;
 	}
 
-	private static void feature(ClassifierEvaluation classifier, String uriFragment, String category,
+	private static FeatureEvaluation feature(ClassifierEvaluation classifier, String uriFragment, String category,
 			RelevanceLevel relevance, String purpose, String citationId, String quote) {
 		FeatureEvaluation feature = REPORTS.createFeatureEvaluation();
 		feature.setId(uriFragment);
@@ -153,6 +170,45 @@ final class Reviews {
 		finding.getEvidence().add(evidence);
 		feature.getFindings().add(finding);
 		classifier.getFeatureEvaluations().add(feature);
+		return feature;
+	}
+
+	/**
+	 * A combination the reviewer raised over several features, the way a review records one: the
+	 * kind in the {@code combination-kinds} taxonomy, the category of the set beside it, and the
+	 * members as references to the feature evaluations rather than copies of them.
+	 */
+	private static CombinationFinding combination(ComplianceReport report, String id, String kind,
+			String category, RelevanceLevel relevance, String citationId, String quote,
+			FeatureEvaluation... members) {
+		CombinationFinding combination = REPORTS.createCombinationFinding();
+		combination.setId(id);
+		combination.setRelevanceLevel(relevance);
+		combination.getCategories().add(kindRef(kind));
+		combination.getCategories().add(categoryRef(category));
+		combination.setRationale("The reviewer's reason for " + id + ".");
+		combination.getDetectedBy().add(DetectionSignal.FEATURE_COMBINATION);
+		Evidence evidence = REPORTS.createEvidence();
+		evidence.setCitationId(citationId);
+		evidence.setQuote(quote);
+		evidence.setVerbatim(true);
+		evidence.setSourceRef("celex:02016R0679-20160504#" + citationId);
+		evidence.setRelevance("The reviewer's relevance for " + id + ".");
+		combination.getEvidence().add(evidence);
+		for (FeatureEvaluation member : members) {
+			combination.getFeatures().add(member);
+		}
+		report.getCombinations().add(combination);
+		return combination;
+	}
+
+	/** A combination-kind reference: the same shape, a different taxonomy of the same context. */
+	static CategoryRef kindRef(String kindId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("combination-kinds");
+		ref.setCategoryId(kindId);
+		return ref;
 	}
 
 	/**

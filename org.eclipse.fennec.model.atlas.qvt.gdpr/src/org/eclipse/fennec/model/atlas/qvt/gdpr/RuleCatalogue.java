@@ -93,6 +93,20 @@ final class RuleCatalogue {
 		AGGREGATION(Reach.TARGET),
 
 		/**
+		 * Every member of a combination a metamodel review raised reaches one class of the target
+		 * model. A statement for the receiver: the set the reviewer described is rebuilt there, in
+		 * one record, and the target model's own review has no way of knowing that the fields it
+		 * sees separately arrived together.
+		 * <p>
+		 * It is the counterpart of {@link #AGGREGATION} for a transformation that copies field by
+		 * field. Aggregation is about several values meeting in one <em>field</em>, which the
+		 * analyser can see for itself; this one is about several values meeting in one
+		 * <em>record</em>, which it cannot - that they belong together is the reviewer's
+		 * judgement, and it is carried over rather than made here.
+		 */
+		COMBINATION_CARRIED(Reach.TARGET),
+
+		/**
 		 * Classified data lands where the classification cannot be carried. Both ends, because
 		 * both have something to do and the two things differ: the target model cannot express
 		 * what it now holds, and the source model's field is being flattened into prose somewhere
@@ -181,6 +195,11 @@ final class RuleCatalogue {
 					+ "{targetFeature} by the mapping {mapping} ({flowKind}). Classification, "
 					+ "pseudonymisation and erasure all operate per field, so a combined field cannot be "
 					+ "treated as any one of its parts.",
+			Rule.COMBINATION_CARRIED, //
+			"The review of {nsURI} raised a combination over {nSources} features - {sourceList} - and the "
+					+ "mapping {mapping} carries every one of them into {targetClass}. The set the reviewer "
+					+ "described is rebuilt there, in one record of the target model, although no single field "
+					+ "of it carries the set's classification.",
 			Rule.STRUCTURE_LOSS, //
 			"{targetFeature} receives data the source review classifies as {category}, but it cannot carry "
 					+ "that classification: the value arrives in it as free text by way of the mapping "
@@ -217,6 +236,9 @@ final class RuleCatalogue {
 			Rule.AGGREGATION, //
 			"Carried over from the review of {sourceFeature}, which this transformation combines with "
 					+ "{nOthers} other classified features into {targetFeature}.",
+			Rule.COMBINATION_CARRIED, //
+			"Carried over from the review of {nsURI}, which raised this combination over {sourceList}; the "
+					+ "mapping {mapping} carries all of them into {targetClass}.",
 			Rule.STRUCTURE_LOSS, //
 			"Carried over from the review of {sourceFeature}, whose classification the receiving field "
 					+ "{targetFeature} cannot express.",
