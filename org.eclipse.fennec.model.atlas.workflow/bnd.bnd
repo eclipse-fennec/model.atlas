@@ -40,7 +40,13 @@ src=${^src},src-wf-api
 
 # jackson-databind needs the annotations at runtime; in OSGi the import is wired
 # automatically, but the plain unit tests need it on the classpath explicitly
--testpath: com.fasterxml.jackson.core.jackson-annotations
+# FingerprintHelper backs PackageMetadata.describe(), which the atlas schema registry calls to
+# fill a system schema's metadata (issue #359). The bundle itself needs no import for it - the
+# helper lives in model.atlas.management and is loaded by that bundle - but a plain JUnit run has
+# one classpath, so the class has to be on it.
+-testpath: \
+	com.fasterxml.jackson.core.jackson-annotations,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
 
 
 

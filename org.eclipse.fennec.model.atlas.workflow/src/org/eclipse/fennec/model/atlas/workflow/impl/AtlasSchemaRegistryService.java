@@ -32,6 +32,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
+import org.eclipse.fennec.model.atlas.mgmt.storage.PackageMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -447,19 +448,62 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
         return registry;
     }
 
+	/**
+	 * The metadata a system schema is listed under.
+	 * <p>
+	 * It carries the same fields as the metadata of an uploaded schema (issue #359). The three a
+	 * package states about itself - its version, the hash of its bytes and its fingerprint - are
+	 * read off the package, by the same rules the upload path applies, so a client sees a system
+	 * schema the way it sees any other and can tell by its fingerprint whether it is the one it
+	 * knows (#156).
+	 * <p>
+	 * The two timestamps are not read off the package, because they are not about it: they are
+	 * about this registry's history with it, and the only record of that is what the shared
+	 * registry already holds. A schema that is there with the same fingerprint keeps both - it was
+	 * not uploaded again and it did not change, and a restart is not an event in its life. One
+	 * whose fingerprint moved keeps the time it was first seen and gets a new change time. Only a
+	 * schema nobody has recorded before is stamped with now.
+	 */
 	private ObjectMetadata createMetadata(EPackage ePackage) {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setObjectId(encodeObjectId(ePackage));
+		String objectId = encodeObjectId(ePackage);
+		metadata.setObjectId(objectId);
 		metadata.setObjectName(ePackage.getName());
 		metadata.setIsReadOnly(true);
 		metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
 		metadata.setScope(WorkflowConstants.ATLAS_SCOPE_NAME);
 		metadata.setRegistry(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME);
 		metadata.setStage(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME);
-		metadata.setUploadTime(Instant.now());
 		metadata.setUploadUser("system");
+		PackageMetadata.describe(metadata, ePackage);
+		timestamps(metadata, objectId);
 		metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, ePackage.getNsURI());
 		return metadata;
+	}
+
+	/**
+	 * Carries the timestamps of what is already recorded about this schema, where anything is.
+	 * <p>
+	 * {@code uploadTime} used to be {@code now} on every mirror, so every restart made every system
+	 * schema look newly uploaded even though the runtime shipped the same bundles. The registry
+	 * outlives a restart, so the question "have I seen this before, and was it this?" has an
+	 * answer, and the fingerprint computed a moment ago is what answers the second half of it.
+	 */
+	private void timestamps(ObjectMetadata metadata, String objectId) {
+		Instant now = Instant.now();
+		ObjectMetadata recorded = registry.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME,
+				objectId).orElse(null);
+		if (recorded == null || recorded.getUploadTime() == null) {
+			metadata.setUploadTime(now);
+			metadata.setLastChangeTime(now);
+			return;
+		}
+		metadata.setUploadTime(recorded.getUploadTime());
+		boolean unchanged = metadata.getFingerprint() != null
+				&& metadata.getFingerprint().equals(recorded.getFingerprint())
+				&& recorded.getLastChangeTime() != null;
+		metadata.setLastChangeTime(unchanged ? recorded.getLastChangeTime() : now);
 	}
 	
 	private void validateStage(String stageName) {

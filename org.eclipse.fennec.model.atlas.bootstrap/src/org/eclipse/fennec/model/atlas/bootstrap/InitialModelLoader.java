@@ -37,7 +37,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,6 +57,7 @@ import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.emf.common.configurator.DynamicEPackageConfigurator;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EClassResolvingDynamicEFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.storage.PackageMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -68,7 +68,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.framework.Version;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
@@ -157,19 +156,6 @@ public class InitialModelLoader {
     private static final String REGISTRY_NAME_PROPERTY = "registry.name";
 
     private static final Logger LOG = System.getLogger(InitialModelLoader.class.getName());
-
-    /** Annotation source a model declares its version under; {@code emf.osgi}'s convention. */
-    private static final String VERSION_ANNOTATION_SOURCE = "Version";
-
-    /** Detail key holding the declared version, e.g. {@code <details key="value" value="1.2.0"/>}. */
-    private static final String VERSION_ANNOTATION_DETAIL = "value";
-
-    /**
-     * What an nsURI segment has to look like before it is read as a version: {@code
-     * major.minor}, optionally {@code .micro} and an OSGi qualifier. Kept in step with
-     * {@code PackageVersions} in the REST layer (issue #180).
-     */
-    private static final Pattern VERSION_SHAPED = Pattern.compile("\\d+\\.\\d+(\\.\\d+(\\.[\\p{Alnum}_-]+)?)?");
 
     @ObjectClassDefinition(name = "Atlas Initial Model Loader Configuration")
     public @interface Config {
@@ -953,73 +939,20 @@ public class InitialModelLoader {
     }
 
     /**
-     * The version to record for a bootstrapped model: the one it declares in its
-     * {@code Version} annotation, or else the last segment of its nsURI when that segment
-     * looks like a version — the same rule the REST upload applies
-     * ({@code PackageVersions}, issue #180).
-     *
+     * The version to record for a bootstrapped model.
      * <p>
-     * Being <em>parseable</em> as an OSGi version is not enough: a bare number parses, so
-     * parsing every segment read {@code 2002} out of
-     * {@code http://www.eclipse.org/emf/2002/Ecore} and recorded the model under that
-     * version.
-     * </p>
-     *
-     * <p>
-     * The rule is spelled out here rather than shared with the REST layer because the two
-     * differ on what a bad declaration means: a one-shot loader must not abort start-up over
-     * a junk annotation, so it logs and falls through, where the upload endpoint reports a
-     * bad request to the caller.
-     * </p>
+     * The rule itself lives in {@code PackageMetadata}, which is also what the atlas schema
+     * registry reads a system schema's version with (issue #359), so a model seeded here and the
+     * same model served from the running framework come out under the same version. It is lenient
+     * in the way a one-shot loader needs: a junk annotation is logged and fallen through rather
+     * than raised, where the upload endpoint reports a bad request to its caller.
      *
      * @param ePackage the bootstrapped package
      * @return the version, or {@code null} when the model declares none and its nsURI carries
      *         none
      */
     static String extractVersion(EPackage ePackage) {
-        String declared = declaredVersion(ePackage);
-        if (declared != null) {
-            return declared;
-        }
-        String[] segments = URI.createURI(ePackage.getNsURI()).segments();
-        if (segments.length == 0) {
-            return null;
-        }
-        String last = segments[segments.length - 1];
-        if (last == null || !VERSION_SHAPED.matcher(last).matches()) {
-            return null;
-        }
-        try {
-            return Version.parseVersion(last).toString();
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    /**
-     * The version the model states in its {@code Version} annotation (the convention
-     * {@code emf.osgi}'s generator writes), or {@code null} when it states none — or states
-     * something that is not a version, which is logged and ignored.
-     */
-    private static String declaredVersion(EPackage ePackage) {
-        EAnnotation annotation = ePackage.getEAnnotation(VERSION_ANNOTATION_SOURCE);
-        if (annotation == null) {
-            return null;
-        }
-        String declared = annotation.getDetails().get(VERSION_ANNOTATION_DETAIL);
-        if (declared == null || declared.isBlank()) {
-            return null;
-        }
-        String trimmed = declared.trim();
-        try {
-            Version.parseVersion(trimmed);
-            return trimmed;
-        } catch (IllegalArgumentException e) {
-            LOG.log(Level.WARNING, () -> "InitialModelLoader: " + ePackage.getNsURI()
-                    + " declares the version '" + declared
-                    + "' in its Version annotation, which is not a valid version - ignoring it");
-            return null;
-        }
+        return PackageMetadata.version(ePackage);
     }
 
     private Resource loadJsonschema(String uri) {

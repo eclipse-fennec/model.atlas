@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -37,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.eclipse.emf.ecore.EAnnotation;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -55,6 +60,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -79,6 +85,122 @@ public class AtlasSchemaRegistryServiceTest {
 	@BeforeEach
 	void setUp() {
 		service = new AtlasSchemaRegistryService(registryService, ePackageIndex);
+		// What the shared registry already holds about a schema is what decides whether its
+		// timestamps move, so every mirror asks. Nothing there is the ordinary case.
+		lenient().when(registryService.getMetadata(any(), any(), any(), any())).thenReturn(Optional.empty());
+	}
+
+	/** What the one static registry of {@link #mirrored(EPackage)} currently holds. */
+	private final List<EPackage> staticContents = new ArrayList<>();
+
+	private EPackage.Registry boundStaticRegistry;
+
+	/**
+	 * Puts one package into the static registry and hands back the metadata that reached the
+	 * shared registry for it.
+	 * <p>
+	 * The same registry instance every time: a reconcile is answered only for the registry this
+	 * component is bound to, so a second mock would be ignored as a late signal from one it no
+	 * longer follows - and the test would pass by never mirroring anything at all.
+	 */
+	private ObjectMetadata mirrored(EPackage ePackage) {
+		staticContents.clear();
+		staticContents.add(ePackage);
+		if (boundStaticRegistry == null) {
+			boundStaticRegistry = mock(EPackage.Registry.class);
+			when(boundStaticRegistry.values()).thenAnswer(inv -> new ArrayList<EPackage>(staticContents));
+			service.bindStaticEPackageRegistry(boundStaticRegistry);
+		} else {
+			service.updatedStaticEPackageRegistry(boundStaticRegistry);
+		}
+		ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+		verify(registryService, atLeastOnce()).updateCache(captor.capture());
+		return captor.getValue();
+	}
+
+	@Nested
+	@DisplayName("System schema metadata (issue #359)")
+	class SystemSchemaMetadataTests {
+
+		private static final String COMPILED_NS_URI = "http://www.eclipse.org/fennec/m2x/compiled/1.0";
+
+		@Test
+		@DisplayName("Should record the version the model declares")
+		void shouldRecordTheDeclaredVersion() {
+			EPackage declaring = ePackage("declaring", "http://test/declaring");
+			EAnnotation annotation = EcoreFactory.eINSTANCE.createEAnnotation();
+			annotation.setSource("Version");
+			annotation.getDetails().put("value", "2.1.0");
+			declaring.getEAnnotations().add(annotation);
+
+			assertEquals("2.1.0", mirrored(declaring).getVersion(),
+					"a model that states its own version is taken at its word");
+		}
+
+		@Test
+		@DisplayName("Should infer the version from a version-shaped last nsURI segment")
+		void shouldInferTheVersionFromTheNsUri() {
+			// The case the issue reports: the compiled schema shows no version in gene and xdp-ui,
+			// although its nsURI ends in one.
+			assertEquals("1.0.0", mirrored(ePackage("compiled", COMPILED_NS_URI)).getVersion());
+		}
+
+		@Test
+		@DisplayName("Should leave the version unset when a segment only looks like a number")
+		void shouldNotReadAYearAsAVersion() {
+			assertNull(mirrored(ePackage("ecore", "http://www.eclipse.org/emf/2002/Ecore")).getVersion(),
+					"a year is not a version - issue #180");
+		}
+
+		@Test
+		@DisplayName("Should record a content hash and a fingerprint")
+		void shouldRecordAContentHashAndAFingerprint() {
+			ObjectMetadata metadata = mirrored(ePackage("compiled", COMPILED_NS_URI));
+
+			assertNotNull(metadata.getContentHash(), "without it a client cannot see that a schema changed");
+			assertNotNull(metadata.getFingerprint(), "and cannot match the schema by fingerprint (#156)");
+			assertTrue(metadata.getFingerprint().startsWith("fp1:"), metadata.getFingerprint());
+			assertNotNull(metadata.getLastChangeTime());
+		}
+
+		@Test
+		@DisplayName("Should keep the timestamps of a schema whose content did not change")
+		void shouldKeepTheTimestampsOfAnUnchangedSchema() {
+			ObjectMetadata first = mirrored(ePackage("compiled", COMPILED_NS_URI));
+			Instant uploaded = Instant.parse("2026-09-01T10:00:00Z");
+			Instant changed = Instant.parse("2026-09-02T11:00:00Z");
+			first.setUploadTime(uploaded);
+			first.setLastChangeTime(changed);
+			when(registryService.getMetadata(any(), any(), any(), any())).thenReturn(Optional.of(first));
+
+			// A restart re-reads the static registry and mirrors the same schema again, as a new
+			// instance. uploadTime moving on every start is what the issue reports.
+			ObjectMetadata second = mirrored(ePackage("compiled", COMPILED_NS_URI));
+
+			assertEquals(uploaded, second.getUploadTime(), "the schema was not uploaded again");
+			assertEquals(changed, second.getLastChangeTime(), "and its content did not change");
+		}
+
+		@Test
+		@DisplayName("Should move the last change time when the content did change")
+		void shouldMoveTheLastChangeTimeOfAChangedSchema() {
+			ObjectMetadata first = mirrored(ePackage("compiled", COMPILED_NS_URI));
+			Instant uploaded = Instant.parse("2026-09-01T10:00:00Z");
+			Instant changed = Instant.parse("2026-09-02T11:00:00Z");
+			first.setUploadTime(uploaded);
+			first.setLastChangeTime(changed);
+			when(registryService.getMetadata(any(), any(), any(), any())).thenReturn(Optional.of(first));
+
+			EPackage grown = ePackage("compiled", COMPILED_NS_URI);
+			EClass added = EcoreFactory.eINSTANCE.createEClass();
+			added.setName("CompiledUnit");
+			grown.getEClassifiers().add(added);
+			ObjectMetadata second = mirrored(grown);
+
+			assertEquals(uploaded, second.getUploadTime(), "when it was first seen does not change");
+			assertTrue(second.getLastChangeTime().isAfter(changed),
+					"but the content did: " + second.getLastChangeTime());
+		}
 	}
 
 	@Nested
