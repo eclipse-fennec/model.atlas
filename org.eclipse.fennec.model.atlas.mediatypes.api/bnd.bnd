@@ -1,4 +1,3 @@
-
 -buildpath: \
-	org.osgi.annotation.versioning,\
-	org.osgi.annotation.bundle
+	org.osgi.annotation.versioning;version=latest,\
+	org.osgi.annotation.bundle;version=latest
