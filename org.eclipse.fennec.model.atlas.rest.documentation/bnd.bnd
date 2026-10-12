@@ -1,0 +1,19 @@
+Bundle-Name: Eclipse Fennec Model Atlas Documentation Writer
+Bundle-Description: Serves a registered EPackage - or one of its classifiers - as generated \
+ documentation. text/html and text/markdown become response formats of the endpoints that already \
+ return a package, negotiated by the Accept header like every other format.
+
+-library: enableEMF
+
+-buildpath: \
+	jakarta.ws.rs-api;version=latest,\
+	jakarta.inject.jakarta.inject-api;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.jakartars;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.eclipse.fennec.emf.util.documentation.generators.apis;version=latest,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot
+
+# Unit tests only.
+-testpath: \
+	junit-jupiter-api
