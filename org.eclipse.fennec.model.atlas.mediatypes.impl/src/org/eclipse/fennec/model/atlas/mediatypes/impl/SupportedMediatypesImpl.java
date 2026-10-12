@@ -15,10 +15,13 @@ package org.eclipse.fennec.model.atlas.mediatypes.impl;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.mediatypes.api.MediatypeContributor;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
@@ -27,6 +30,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
@@ -49,7 +54,12 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(immediate = true, service = {})
 public class SupportedMediatypesImpl implements SupportedMediatype {
 
-    private List<String> mediaTypes = new CopyOnWriteArrayList<>();
+    /** What the bound {@code ResourceSet} knows, plus the formats written without a factory. */
+    private final List<String> resourceSetMediaTypes = new CopyOnWriteArrayList<>();
+
+    private final List<MediatypeContributor> contributors = new CopyOnWriteArrayList<>();
+
+    private final List<String> mediaTypes = new CopyOnWriteArrayList<>();
 
     private volatile ServiceRegistration<SupportedMediatype> registration;
 
@@ -57,17 +67,44 @@ public class SupportedMediatypesImpl implements SupportedMediatype {
     void bindResourceSet(ResourceSet set) {
         synchronized (mediaTypes) {
 
-            mediaTypes.clear();
+            resourceSetMediaTypes.clear();
             set.getResourceFactoryRegistry().getContentTypeToFactoryMap().keySet().stream()
-                    .filter(s -> s.startsWith("application/") || s.startsWith("text/")).forEach(mediaTypes::add);
-            mediaTypes.add("application/xmi");
-            mediaTypes.add("application/uml");
-            mediaTypes.add("application/schema+xml");
+                    .filter(s -> s.startsWith("application/") || s.startsWith("text/"))
+                    .forEach(resourceSetMediaTypes::add);
+            resourceSetMediaTypes.add("application/xmi");
+            resourceSetMediaTypes.add("application/uml");
+            resourceSetMediaTypes.add("application/schema+xml");
+            recompute();
         }
         // Outside the block, and only once registered: this fires a synchronous MODIFIED event, so
         // consumers run their updated methods on this thread and must see the finished list. The
         // first call arrives before activate, where the registration is made with the same
         // properties.
+        publishProperties();
+    }
+
+    /**
+     * A format that no {@code Resource.Factory} backs is announced by its own bundle, so that the
+     * list says what this runtime can actually serve: the media types appear when that bundle is
+     * installed and disappear with it. The reference is dynamic because the service registered
+     * manually above must survive a contributor coming and going — a static reference would
+     * deactivate this component and unregister it.
+     */
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindContributor(MediatypeContributor contributor) {
+        synchronized (mediaTypes) {
+            contributors.add(contributor);
+            recompute();
+        }
+        publishProperties();
+    }
+
+    void unbindContributor(MediatypeContributor contributor) {
+        synchronized (mediaTypes) {
+            contributors.remove(contributor);
+            recompute();
+        }
         publishProperties();
     }
 
@@ -83,6 +120,18 @@ public class SupportedMediatypesImpl implements SupportedMediatype {
         if (current != null) {
             current.unregister();
         }
+    }
+
+    /**
+     * Rebuilds the published list from both sources. A media type claimed twice — by a codec and by
+     * a contributor, or by two contributors — is listed once.
+     */
+    private void recompute() {
+        LinkedHashSet<String> merged = new LinkedHashSet<>(resourceSetMediaTypes);
+        contributors.stream().map(MediatypeContributor::getMediaTypes).filter(Objects::nonNull)
+                .flatMap(List::stream).forEach(merged::add);
+        mediaTypes.clear();
+        mediaTypes.addAll(merged);
     }
 
     private void publishProperties() {

@@ -82,7 +82,7 @@ All bundles use the `org.eclipse.fennec.model.atlas` prefix. Key groupings:
 | Group | Bundles | Purpose |
 |-------|---------|---------|
 | **Core** | `.` (root bundle) | EMFFileWatcher, EPackageService |
-| **REST** | `.rest.application`, `.rest.model`, `.rest.ecore.xmi`, `.rest.jsonschema`, `.rest.xsdschema`, `.rest.uml`, `.rest.tests` | HTTP API, format-specific endpoints |
+| **REST** | `.rest.application`, `.rest.model`, `.rest.ecore.xmi`, `.rest.jsonschema`, `.rest.xsdschema`, `.rest.uml`, `.rest.documentation`, `.rest.tests` | HTTP API, format-specific endpoints |
 | **Workflow** | `.workflow`, `.workflow.tests` | Scope management, stage-based workflows |
 | **Storage** | `.management`, `.management.file`, `.management.git`, `.management.lucene` + test bundles | Pluggable storage backends |
 | **Schema** | `.schema.registry.api`, `.schema.registry.impl` | Schema registry service |
@@ -90,7 +90,6 @@ All bundles use the `org.eclipse.fennec.model.atlas` prefix. Key groupings:
 | **EMF Utils** | `.emf.common` | Dynamic EPackage config, format converters |
 | **Runtime** | `.runtime`, `.runtime.config`, `.runtime.config.local`, `.runtime.config.docker`, `.runtime.config.docker.file` | bndrun configurations per environment |
 | **Health** | `.healthcheck` | Felix Health Checks (liveness/readiness) |
-| **Docs** | `.model.documentation.provider` | Model documentation generation |
 
 ### Bundle Conventions
 
