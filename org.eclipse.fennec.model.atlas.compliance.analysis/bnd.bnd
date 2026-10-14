@@ -36,11 +36,9 @@ Bundle-Description: What every static compliance analyser needs and none of them
 
 # junit-jupiter-api alone, as the sibling gdpr bundles have it: the engine and the platform
 # launcher come from the workspace build.gradle, and bnd's copies here as well would mix two
-# versions of the platform, at which point the engine discovers no tests at all. XMI is what
-# reading the seeded context files outside OSGi needs.
--testpath: \
-	junit-jupiter-api,\
-	org.eclipse.emf.ecore.xmi
+# versions of the platform, at which point the engine discovers no tests at all. Nothing else is
+# needed: the fixtures are built in code, so no test reads a file.
+-testpath: junit-jupiter-api
 
 javac.source: 21
 javac.target: 21

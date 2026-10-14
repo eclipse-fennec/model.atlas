@@ -51,11 +51,11 @@ public class ComplianceContextsTest {
 		ComplianceContexts contexts = new ComplianceContexts(scope, "compliance-context", null);
 
 		for (int i = 0; i < 5; i++) {
-			assertEquals(Outcome.FOUND, contexts.resolve("gdpr", "Art.32(1)(a)", "DE").outcome());
+			assertEquals(Outcome.FOUND, contexts.resolve("demo", "Art.1(1)(a)", "DE").outcome());
 		}
 
 		assertEquals(1, scope.gets, "a multi-megabyte containment tree re-read per finding is the one cost here");
-		assertTrue(contexts.isCached("gdpr"));
+		assertTrue(contexts.isCached("demo"));
 	}
 
 	@Test
@@ -64,12 +64,12 @@ public class ComplianceContextsTest {
 		CountingScope scope = new CountingScope();
 		ComplianceContexts contexts = new ComplianceContexts(scope, "compliance-context", null);
 
-		contexts.resolve("gdpr", "Art.32(1)(a)", "DE");
-		contexts.resolve("iso27001-annex-a", "A.5.1", "EN");
-		contexts.resolve("gdpr", "Art.5(1)(e)", "DE");
+		contexts.resolve("demo", "Art.1(1)(a)", "DE");
+		contexts.resolve("identifiers-only", "A.5.1", "EN");
+		contexts.resolve("demo", "Art.1(1)(a)", "DE");
 
 		assertEquals(2, scope.gets);
-		assertSame(contexts.citations("gdpr").orElseThrow(), contexts.citations("gdpr").orElseThrow());
+		assertSame(contexts.citations("demo").orElseThrow(), contexts.citations("demo").orElseThrow());
 	}
 
 	@Test
@@ -94,11 +94,11 @@ public class ComplianceContextsTest {
 	@DisplayName("a blank stage reads the scope's own view, a named one that stage")
 	public void stageSelectsTheView() {
 		CountingScope unstaged = new CountingScope();
-		new ComplianceContexts(unstaged, "compliance-context", "  ").citations("gdpr");
+		new ComplianceContexts(unstaged, "compliance-context", "  ").citations("demo");
 		assertEquals(List.of("compliance-context"), unstaged.views);
 
 		CountingScope staged = new CountingScope();
-		new ComplianceContexts(staged, "compliance-context", "release").citations("gdpr");
+		new ComplianceContexts(staged, "compliance-context", "release").citations("demo");
 		assertEquals(List.of("compliance-context@release"), staged.views);
 	}
 
@@ -106,7 +106,7 @@ public class ComplianceContextsTest {
 	@DisplayName("a blank registry falls back to the seeded convention")
 	public void defaultRegistry() {
 		CountingScope scope = new CountingScope();
-		new ComplianceContexts(scope, null, null).citations("gdpr");
+		new ComplianceContexts(scope, null, null).citations("demo");
 
 		assertEquals(List.of(ComplianceContexts.DEFAULT_REGISTRY), scope.views);
 	}
@@ -177,10 +177,11 @@ public class ComplianceContextsTest {
 			@Override
 			public Optional<EObject> get(String objectId) {
 				gets++;
-				if (!"gdpr".equals(objectId) && !"iso27001-annex-a".equals(objectId)) {
-					return Optional.empty();
-				}
-				return Optional.of(SeededContexts.get(objectId));
+				return switch (objectId) {
+				case "demo" -> Optional.of(Contexts.twoLanguages());
+				case "identifiers-only" -> Optional.of(Contexts.withoutCorpus());
+				default -> Optional.empty();
+				};
 			}
 
 			@Override
@@ -200,7 +201,7 @@ public class ComplianceContextsTest {
 
 			@Override
 			public List<String> listObjectIds() {
-				return List.of("gdpr", "iso27001-annex-a");
+				return List.of("demo", "identifiers-only");
 			}
 
 			@Override
