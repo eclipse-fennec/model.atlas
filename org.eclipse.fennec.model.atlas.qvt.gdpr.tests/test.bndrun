@@ -3,6 +3,7 @@
 -runrequires: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.qvt.gdpr.tests',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.qvt.gdpr',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.compliance.analysis',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.file',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.lucene',\
 	bnd.identity;id='org.eclipse.fennec.compliance.report.model',\

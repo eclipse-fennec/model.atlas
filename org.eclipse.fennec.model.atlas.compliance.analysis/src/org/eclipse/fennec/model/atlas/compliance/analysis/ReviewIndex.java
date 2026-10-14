@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.qvt.gdpr;
+package org.eclipse.fennec.model.atlas.compliance.analysis;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,21 +32,30 @@ import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 
 /**
- * One metamodel's review, indexed the way a flow asks about it: by the {@code uriFragment} of the
- * feature.
+ * One metamodel's review, indexed the way an analyser asks about it: by the {@code uriFragment} of
+ * the feature.
  * <p>
- * This is the whole of what the analyser knows about data protection. It classifies nothing itself
- * and it reads no corpus: a category, a relevance, a purpose and a citation all come from here, and
- * where this says nothing the analyser says nothing rather than deciding.
+ * This is the whole of what an analyser knows <em>about the data</em>. It classifies nothing
+ * itself: a category, a relevance and a purpose all come from here, and where this says nothing
+ * about a feature the analyser says nothing about that feature rather than deciding.
+ * <p>
+ * What it does not bound is what an analyser may say about the <em>artefact</em>. A derived
+ * statement - this classified value reaches that field - rests wholly on the review and is
+ * evidenced by carrying the review's own citation over, which is the route {@link #evidenceOf}
+ * serves. A control statement - this classified field is stored unencrypted, this resource is
+ * published with no retention rule - is a judgement about the artefact that no review of a
+ * metamodel ever made, so there is no citation here to carry: it is evidenced against the
+ * requirement it is raised under, by dereferencing that requirement's cited text in the compliance
+ * context. Which fields such a rule may speak about at all still comes from here.
  */
-final class ReviewIndex {
+public final class ReviewIndex {
 
 	/**
 	 * The taxonomy a review's data categories point into. Everything else a finding may reference -
 	 * a combination kind, a lawful basis - is in a taxonomy of its own and is not a classification
 	 * of the data, so it is read past here.
 	 */
-	static final String TAXONOMY = "data-categories";
+	public static final String TAXONOMY = "data-categories";
 
 	/**
 	 * The categories that mean personal data is involved.
@@ -65,7 +74,7 @@ final class ReviewIndex {
 	 * and the ordering is of how much the category constrains processing, not of whether the
 	 * Regulation applies.
 	 */
-	static final Set<String> PERSONAL = Set.of("PERSONAL_DATA", "PSEUDONYMISED", "DIRECT_IDENTIFIER",
+	public static final Set<String> PERSONAL = Set.of("PERSONAL_DATA", "PSEUDONYMISED", "DIRECT_IDENTIFIER",
 			"QUASI_IDENTIFIER", "ONLINE_IDENTIFIER", "LOCATION_DATA", "SPECIAL_CATEGORY",
 			"CRIMINAL_CONVICTION_DATA", "CHILD_DATA");
 
@@ -89,7 +98,7 @@ final class ReviewIndex {
 	private final ComplianceReport report;
 	private final Map<String, FeatureEvaluation> byFragment = new LinkedHashMap<>();
 
-	ReviewIndex(ComplianceReport report) {
+	public ReviewIndex(ComplianceReport report) {
 		this.report = report;
 		for (Evaluation evaluation : report.getEvaluations()) {
 			if (evaluation instanceof ClassifierEvaluation classifier) {
@@ -110,31 +119,32 @@ final class ReviewIndex {
 	}
 
 	/** Which review this is, so a report can point at the one it carried its findings from. */
-	String reportId() {
+	public String reportId() {
 		return report.getReportId();
 	}
 
 	/**
-	 * The contexts the review was made against. A transformation report carries them over rather
-	 * than naming any of its own: every citation in it came from a review, so the contexts those
-	 * quotes were read against are the contexts this report is against.
+	 * The contexts the review was made against. A derived report carries them over rather than
+	 * naming any of its own: every citation it carries came from a review, so the contexts those
+	 * quotes were read against are the contexts that report is against. One that also raises
+	 * control statements of its own names the context it raised them against beside these.
 	 */
-	List<ContextRef> contexts() {
+	public List<ContextRef> contexts() {
 		return report.getContexts();
 	}
 
 	/** The language the review wrote its prose in, or {@code null} when it did not say. */
-	String language() {
+	public String language() {
 		return report.getLanguage();
 	}
 
 	/** What the review says about one feature, or {@code null} if it says nothing about it. */
-	FeatureEvaluation feature(String uriFragment) {
+	public FeatureEvaluation feature(String uriFragment) {
 		return uriFragment == null ? null : byFragment.get(uriFragment);
 	}
 
 	/** Every feature the review has an entry for, in the order the review lists them. */
-	Collection<String> fragments() {
+	public Collection<String> fragments() {
 		return byFragment.keySet();
 	}
 
@@ -142,16 +152,16 @@ final class ReviewIndex {
 	 * The combinations the reviewer raised over several features of this model.
 	 * <p>
 	 * They are the one thing in a review that no single feature's entry carries, and the one thing
-	 * a flow analysis cannot arrive at on its own: that two fields are joinable is a judgement
-	 * about the data, not about the dataflow. The analyser reads them to find out whether the
-	 * transformation rebuilds a set somebody already described.
+	 * an analysis of the artefact cannot arrive at on its own: that two fields are joinable is a
+	 * judgement about the data, not about what the artefact does with it. The analyser reads them
+	 * to find out whether the artefact rebuilds a set somebody already described.
 	 */
-	List<CombinationFinding> combinations() {
+	public List<CombinationFinding> combinations() {
 		return report.getCombinations();
 	}
 
 	/**
-	 * The features a combination is over, as the fragments a flow is joined on.
+	 * The features a combination is over, as the fragments an analysis matches on.
 	 * <p>
 	 * {@code CombinationFinding.features} is a non-containment reference into the same document, so
 	 * a member is the review's own {@code FeatureEvaluation} and carries the fragment directly. A
@@ -162,7 +172,7 @@ final class ReviewIndex {
 	 * @param combination the reviewed combination, never {@code null}
 	 * @return the members' uri fragments in the order the review listed them, possibly empty
 	 */
-	static List<String> membersOf(CombinationFinding combination) {
+	public static List<String> membersOf(CombinationFinding combination) {
 		List<String> members = new ArrayList<>();
 		for (Evaluation member : combination.getFeatures()) {
 			if (member instanceof FeatureEvaluation feature && feature.getUriFragment() != null) {
@@ -184,7 +194,7 @@ final class ReviewIndex {
 	 * @param finding the finding, never {@code null}
 	 * @return the category ids, possibly empty
 	 */
-	static List<String> categoriesOf(Finding finding) {
+	public static List<String> categoriesOf(Finding finding) {
 		List<String> ids = new ArrayList<>();
 		for (CategoryRef ref : finding.getCategories()) {
 			if (TAXONOMY.equals(ref.getTaxonomyId()) && ref.getCategoryId() != null
@@ -198,10 +208,11 @@ final class ReviewIndex {
 	/**
 	 * The strongest category anybody claimed about the feature, or {@code null} when the review
 	 * made no claim. Several findings on one feature is the ordinary case - a reviewer records each
-	 * signal separately - and what travels along a flow is the strongest of them. A single finding
-	 * may now claim several categories as well, and they are weighed the same way.
+	 * signal separately - and what a statement about the feature rests on is the strongest of them.
+	 * A single finding may now claim several categories as well, and they are weighed the same
+	 * way.
 	 */
-	static String worstCategory(FeatureEvaluation feature) {
+	public static String worstCategory(FeatureEvaluation feature) {
 		String worst = null;
 		if (feature == null) {
 			return null;
@@ -217,7 +228,7 @@ final class ReviewIndex {
 	}
 
 	/** Whether the first classification constrains processing less than the second. */
-	static boolean weakerThan(String first, String second) {
+	public static boolean weakerThan(String first, String second) {
 		if (first == null || second == null) {
 			return false;
 		}
@@ -225,7 +236,7 @@ final class ReviewIndex {
 	}
 
 	/** The stronger of two categories, either of which may be absent. */
-	static String stronger(String first, String second) {
+	public static String stronger(String first, String second) {
 		if (first == null) {
 			return second;
 		}
@@ -236,7 +247,7 @@ final class ReviewIndex {
 	}
 
 	/** The higher of two relevance levels, either of which may be absent. */
-	static RelevanceLevel higher(RelevanceLevel first, RelevanceLevel second) {
+	public static RelevanceLevel higher(RelevanceLevel first, RelevanceLevel second) {
 		if (first == null) {
 			return second;
 		}
@@ -261,7 +272,7 @@ final class ReviewIndex {
 	 * @return the reference as the review holds it - still contained by the review, so a caller
 	 *         that records it has to copy it
 	 */
-	static CategoryRef refFor(FeatureEvaluation feature, String categoryId) {
+	public static CategoryRef refFor(FeatureEvaluation feature, String categoryId) {
 		if (feature == null || categoryId == null) {
 			return null;
 		}
@@ -278,13 +289,14 @@ final class ReviewIndex {
 	/**
 	 * Every citation the review made about one feature.
 	 * <p>
-	 * These are what a flow finding is evidenced with, and they are the reason the analyser needs
-	 * no corpus at all: it carries a citation over from the review that checked it, never composes
-	 * one. A review finding whose evidence is absent contributes none - and a flow finding with no
-	 * evidence to carry cannot be raised, because {@code Finding.evidence} is mandatory and a
-	 * compliance record must not hold a claim nobody backed.
+	 * These are what a finding derived from the review is evidenced with: it carries a citation
+	 * over from the review that checked it, never composes one. A review finding whose evidence is
+	 * absent contributes none - and a derived finding with no evidence to carry cannot be raised,
+	 * because {@code Finding.evidence} is mandatory and a compliance record must not hold a claim
+	 * nobody backed. A control statement the review never made has nothing here to carry and takes
+	 * its evidence from its requirement instead; see the class comment.
 	 */
-	static List<Evidence> evidenceOf(FeatureEvaluation feature) {
+	public static List<Evidence> evidenceOf(FeatureEvaluation feature) {
 		List<Evidence> evidence = new ArrayList<>();
 		if (feature == null) {
 			return evidence;

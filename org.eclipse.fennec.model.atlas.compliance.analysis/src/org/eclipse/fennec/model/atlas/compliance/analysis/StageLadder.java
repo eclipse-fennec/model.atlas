@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.qvt.gdpr;
+package org.eclipse.fennec.model.atlas.compliance.analysis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,15 +22,16 @@ import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 
 /**
- * Which stages a metamodel of a transformation may be in, seen from the stage the transformation
+ * Which stages a metamodel of an analysed artefact may be in, seen from the stage the artefact
  * itself is in.
  *
  * <p>
  * This is not a policy and it is not configured: it is a reading of the ladder the runtime already
  * built. {@code SchemaRegistryChainConfigurator} creates one EPackage registry per stage of the
  * schema registry and chains them in declared order - <em>stage[i] points at stage[i+1]</em>, and
- * the last points at the parent scope. A unit compiled in stage {@code S} therefore resolved its
- * metamodels from {@code S} and from every stage declared after it, and from nowhere else.
+ * the last points at the parent scope. An artefact that resolved its metamodels in stage {@code S}
+ * - a unit compiled there, a mapping authored there - therefore saw {@code S} and every stage
+ * declared after it, and nowhere else.
  * </p>
  *
  * <pre>
@@ -46,12 +47,12 @@ import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
  * released models, released work must never rest on drafts. Deriving the search path from the same
  * list the chain is built from is what keeps the two from drifting - a configured list would be a
  * second statement of the same fact, and the failure of a second statement is that it can be wrong.
- * A search path wider than the ladder would let a draft review speak for a released transformation;
- * one narrower would report a metamodel as unreviewed when its review is exactly where the compiler
+ * A search path wider than the ladder would let a draft review speak for a released artefact; one
+ * narrower would report a metamodel as unreviewed when its review is exactly where the artefact
  * found the model.
  * </p>
  */
-final class StageLadder {
+public final class StageLadder {
 
 	private StageLadder() {
 	}
@@ -61,10 +62,10 @@ final class StageLadder {
 	 *
 	 * @param scope the scope, whose schema registry declares the ladder; {@code null} answers with
 	 *              the stage alone
-	 * @param stage the stage the transformation - or the report about it - is in
+	 * @param stage the stage the artefact - or the report about it - is in
 	 * @return {@code stage} and every schema stage declared after it, in that order. Never empty
 	 */
-	static List<String> visibleFrom(ScopeInfo scope, String stage) {
+	public static List<String> visibleFrom(ScopeInfo scope, String stage) {
 		List<String> declared = schemaStagesOf(scope);
 		int position = declared.indexOf(stage);
 		if (position >= 0) {
@@ -94,9 +95,9 @@ final class StageLadder {
 	 *                     narrowing, because guessing it has nothing would silently find nothing
 	 * @param stage        the stage the event came from
 	 * @return the visible stages that {@code registryName} has, nearest first. May be empty, which
-	 *         says that registry holds nothing anywhere the transformation could see
+	 *         says that registry holds nothing anywhere the artefact could see
 	 */
-	static List<String> visibleIn(ScopeInfo scope, String registryName, String stage) {
+	public static List<String> visibleIn(ScopeInfo scope, String registryName, String stage) {
 		return narrow(visibleFrom(scope, stage), scope, registryName);
 	}
 
@@ -105,7 +106,7 @@ final class StageLadder {
 	 * <p>
 	 * It answers "who was allowed to read this?", which is what a change to something has to ask
 	 * before it can know who is now out of date. A review landing in {@code approved} makes stale
-	 * the transformations in {@code draft} and in {@code approved}, and none in {@code release} -
+	 * the artefacts in {@code draft} and in {@code approved}, and none in {@code release} -
 	 * the exact inverse of the ladder, and deliberately computed <em>from</em>
 	 * {@link #visibleFrom} rather than restated, because a second statement of one rule is a second
 	 * thing that can be wrong.
@@ -114,7 +115,7 @@ final class StageLadder {
 	 * @param stage the stage something changed in
 	 * @return the stages that can see it, in declared order. Never empty
 	 */
-	static List<String> stagesSeeing(ScopeInfo scope, String stage) {
+	public static List<String> stagesSeeing(ScopeInfo scope, String stage) {
 		List<String> candidates = allStagesOf(scope);
 		if (candidates.isEmpty()) {
 			return List.of(stage);
@@ -129,7 +130,7 @@ final class StageLadder {
 	}
 
 	/** {@link #stagesSeeing}, narrowed to the stages one registry has. */
-	static List<String> stagesSeeingIn(ScopeInfo scope, String registryName, String stage) {
+	public static List<String> stagesSeeingIn(ScopeInfo scope, String registryName, String stage) {
 		return narrow(stagesSeeing(scope, stage), scope, registryName);
 	}
 

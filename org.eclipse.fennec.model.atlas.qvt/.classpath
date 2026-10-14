@@ -7,6 +7,5 @@
 	</classpathentry>
 	<classpathentry kind="con" path="aQute.bnd.classpath.container"/>
 	<classpathentry kind="src" output="bin" path="src"/>
-	<classpathentry kind="src" path="src-gen"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
