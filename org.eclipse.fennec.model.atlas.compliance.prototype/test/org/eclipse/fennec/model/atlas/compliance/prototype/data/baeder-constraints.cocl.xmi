@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written: no deployment holds an OclConstraintSet yet. The expressions are plausible for
+     a city-baths validation layer, and every feature they touch is one the review already
+     classified - none was chosen to make a rule fire. -->
+<cocl:OclConstraintSet xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:cocl="http://www.gme.org/cocl/1.0"
+    name="baeder-source-validation" version="1.0.0"
+    description="Validation, derivation and access rules of the city baths' check-in system."
+    targetModelNsURIs="https://dimcity.example/baeder/source/1.0.0">
+
+  <!-- MESSAGE_LEAK: a DIRECT_IDENTIFIER concatenated into a string the Diagnostic will carry. -->
+  <constraints name="feedbackKontaktLesbar" severity="WARN" role="VALIDATION" active="true"
+      contextClass="https://dimcity.example/baeder/source/1.0.0#//Feedback"
+      description="Feedback mit Kontaktangabe darf nicht uferlos lang werden."
+      expression="('Feedback von ' + self.email).size() &lt; 200"/>
+
+  <!-- DERIVED_AGGREGATION: two classified features reach one derived feature. -->
+  <constraints name="besuchsdauer" severity="INFO" role="DERIVED" active="true"
+      contextClass="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch" featureName="dauerMinuten"
+      description="Aufenthaltsdauer aus Ein- und Auslass."
+      expression="if self.einlass.oclIsUndefined() or self.auslass.oclIsUndefined() then 0 else 1 endif"/>
+
+  <!-- OPERATION_DISCLOSURE: a DIRECT_IDENTIFIER reaches a return value served over /validate. -->
+  <constraints name="karteGueltig" severity="INFO" role="OPERATION" active="true"
+      contextClass="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch" operationName="istGueltig" operationReturnType="JAVA_OBJECT"
+      description="Ist die Karte zum Besuchszeitpunkt gueltig?"
+      expression="self.kartenNr.size() > 0"/>
+
+  <!-- FILTER_ON_PERSONAL: which objects a caller may reach is decided by a DIRECT_IDENTIFIER. -->
+  <constraints name="nurEigeneBesuche" severity="ERROR" role="REFERENCE_FILTER" active="true"
+      contextClass="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch"
+      description="Ein Karteninhaber sieht nur die eigenen Besuche."
+      expression="self.kartenNr.size() > 0"/>
+
+  <!-- INACTIVE_GUARD: a protective constraint that is switched off. -->
+  <constraints name="feedbackOhnePersonenbezug" severity="ERROR" role="VALIDATION" active="false"
+      contextClass="https://dimcity.example/baeder/source/1.0.0#//Feedback"
+      description="Freitext darf keinen Personenbezug enthalten."
+      expression="not self.enthaeltPersonenbezug"/>
+
+</cocl:OclConstraintSet>

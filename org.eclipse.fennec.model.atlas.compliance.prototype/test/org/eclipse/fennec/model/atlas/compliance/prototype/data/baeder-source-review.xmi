@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="ASCII"?>
+<report:ComplianceReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:report="https://org.eclipse/fennec/compliance/report/1.0.0" reportId="gdpr-fp1-ade51afd4260619ea782bac90d305703a29f-de-20261008-185826" name="DSGVO-Pr&#xfc;fung von baedersource" generatedAt="2026-10-08T18:59:04.055419913Z" generatedBy="claude-sonnet-4-6" disclaimer="Automatisierte Pr&#xfc;fung eines Ecore-Metamodells anhand der in 'corpus' genannten konsolidierten Fassung der Verordnung (EU) 2016/679. Eine konsolidierte Fassung dient der Dokumentation und ist nicht verbindlich; Rechtswirkung entfaltet allein das Amtsblatt. Dieser Bericht weist aus, wo die Verordnung die Struktur des Modells ber&#xfc;hrt. Er ist keine Rechtsberatung, er stellt keine Konformit&#xe4;t fest, und er kann einen Verarbeitungszweck, den das Modell nicht angibt, nicht beurteilen." origin="AI_AGENT" language="DE">
+  <subject xsi:type="report:PackageSubject" subjectFingerprint="fp1:ade51afd4260619ea782bac90d305703a29ffec9ac0e03baf414bd218ae83f45" name="baedersource" nsURI="https://dimcity.example/baeder/source/1.0.0" nsPrefix="bs"/>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="Oeffnungszeiten" name="Oeffnungszeiten" uriFragment="//Oeffnungszeiten">
+    <featureEvaluations id="Oeffnungszeiten.id" name="id" uriFragment="//Oeffnungszeiten/id" typeName="EString"/>
+    <featureEvaluations id="Oeffnungszeiten.wochentag" name="wochentag" uriFragment="//Oeffnungszeiten/wochentag" typeName="EInt"/>
+    <featureEvaluations id="Oeffnungszeiten.bereich" name="bereich" uriFragment="//Oeffnungszeiten/bereich" typeName="EString"/>
+    <featureEvaluations id="Oeffnungszeiten.von" name="von" uriFragment="//Oeffnungszeiten/von" typeName="EString"/>
+    <featureEvaluations id="Oeffnungszeiten.bis" name="bis" uriFragment="//Oeffnungszeiten/bis" typeName="EString"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="Veranstaltung" name="Veranstaltung" uriFragment="//Veranstaltung">
+    <featureEvaluations id="Veranstaltung.id" name="id" uriFragment="//Veranstaltung/id" typeName="EString"/>
+    <featureEvaluations id="Veranstaltung.typ" name="typ" uriFragment="//Veranstaltung/typ" typeName="EString"/>
+    <featureEvaluations id="Veranstaltung.titel" name="titel" uriFragment="//Veranstaltung/titel" typeName="EString"/>
+    <featureEvaluations id="Veranstaltung.bereich" name="bereich" uriFragment="//Veranstaltung/bereich" typeName="EString"/>
+    <featureEvaluations id="Veranstaltung.beginn" name="beginn" uriFragment="//Veranstaltung/beginn" typeName="EDate"/>
+    <featureEvaluations id="Veranstaltung.dauerMinuten" name="dauerMinuten" uriFragment="//Veranstaltung/dauerMinuten" typeName="EInt"/>
+    <featureEvaluations id="Veranstaltung.oeffentlich" name="oeffentlich" uriFragment="//Veranstaltung/oeffentlich" typeName="EBoolean"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="Preisliste" name="Preisliste" uriFragment="//Preisliste">
+    <featureEvaluations id="Preisliste.id" name="id" uriFragment="//Preisliste/id" typeName="EString"/>
+    <featureEvaluations id="Preisliste.tarifId" name="tarifId" uriFragment="//Preisliste/tarifId" typeName="EString"/>
+    <featureEvaluations id="Preisliste.name" name="name" uriFragment="//Preisliste/name" typeName="EString"/>
+    <featureEvaluations id="Preisliste.zielgruppe" name="zielgruppe" uriFragment="//Preisliste/zielgruppe" typeName="EString"/>
+    <featureEvaluations id="Preisliste.preise" name="preise" uriFragment="//Preisliste/preise" typeName="PreislistePreise"/>
+    <featureEvaluations id="Preisliste.saunaInklusive" name="saunaInklusive" uriFragment="//Preisliste/saunaInklusive" typeName="EBoolean"/>
+    <featureEvaluations id="Preisliste.gueltigVon" name="gueltigVon" uriFragment="//Preisliste/gueltigVon" typeName="EDate"/>
+    <featureEvaluations id="Preisliste.gueltigBis" name="gueltigBis" uriFragment="//Preisliste/gueltigBis" typeName="EDate"/>
+    <featureEvaluations id="Preisliste.waehrung" name="waehrung" uriFragment="//Preisliste/waehrung" typeName="EString"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="PreislistePreise" name="PreislistePreise" uriFragment="//PreislistePreise">
+    <featureEvaluations id="PreislistePreise.tageskarte" name="tageskarte" uriFragment="//PreislistePreise/tageskarte" typeName="EDoubleObject"/>
+    <featureEvaluations id="PreislistePreise.dauerkarte" name="dauerkarte" uriFragment="//PreislistePreise/dauerkarte" typeName="EDoubleObject"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" name="KarteninhaberBesuch" uriFragment="//KarteninhaberBesuch">
+    <featureEvaluations id="KarteninhaberBesuch.id" name="id" uriFragment="//KarteninhaberBesuch/id" typeName="EString"/>
+    <featureEvaluations id="KarteninhaberBesuch.kartenNr" name="kartenNr" uriFragment="//KarteninhaberBesuch/kartenNr" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-KB-003" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kartennummer ist ein dauerhafter, dem Karteninhaber fest zugeordneter Identifikator. Sie taucht ebenfalls in SaunaBesuch, Checkin und Feedback auf und ermoeglicht die klassen&#xfc;bergreifende Verkn&#xfc;pfung aller Datens&#xe4;tze zu einem Personenprofil.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Die Kartennummer ist eine Kennnummer, die eine nat&#xfc;rliche Person identifiziert." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.vorname" name="vorname" uriFragment="//KarteninhaberBesuch/vorname" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-KB-004" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Vorname ist ein direkter Identifikator im Sinne von Art. 4 Nr. 1 DSGVO. Er identifiziert im Verbund mit dem Nachnamen eine nat&#xfc;rliche Person namentlich.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Der Name ist in Art. 4 Nr. 1 ausdr&#xfc;cklich als Kennung aufgef&#xfc;hrt." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.nachname" name="nachname" uriFragment="//KarteninhaberBesuch/nachname" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-KB-005" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Nachname ist ein direkter Identifikator im Sinne von Art. 4 Nr. 1 DSGVO.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Der Name ist in Art. 4 Nr. 1 ausdr&#xfc;cklich als Kennung aufgef&#xfc;hrt." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.geburtsdatum" name="geburtsdatum" uriFragment="//KarteninhaberBesuch/geburtsdatum" typeName="EDate" relevanceLevel="HIGH">
+      <findings id="F-KB-006" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Das vollst&#xe4;ndige Geburtsdatum ist ein starker Quasi-Identifikator. Im Kontext von KarteninhaberBesuch, wo Name und Adresse bereits vorliegen, erleichtert es die eindeutige Identifizierung erheblich.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="QUASI_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Die Grunds&#xe4;tze des Datenschutzes sollten f&#xfc;r alle Informationen gelten, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person beziehen. Einer Pseudonymisierung unterzogene personenbezogene Daten, die durch Heranziehung zus&#xe4;tzlicher Informationen einer nat&#xfc;rlichen Person zugeordnet werden k&#xf6;nnten, sollten als Informationen &#xfc;ber eine identifizierbare nat&#xfc;rliche Person betrachtet werden. Um festzustellen, ob eine nat&#xfc;rliche Person identifizierbar ist, sollten alle Mittel ber&#xfc;cksichtigt werden, die von dem Verantwortlichen oder einer anderen Person nach allgemeinem Ermessen wahrscheinlich genutzt werden, um die nat&#xfc;rliche Person direkt oder indirekt zu identifizieren, wie beispielsweise das Aussondern." verbatim="true" relevance="Das Geburtsdatum ist ein Quasi-Identifikator, der zusammen mit Name und Adresse das Aussondern im Sinne von Erw&#xe4;gungsgrund 26 erm&#xf6;glicht." sourceRef="rct_26"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.plz" name="plz" uriFragment="//KarteninhaberBesuch/plz" typeName="EString" relevanceLevel="MEDIUM">
+      <findings id="F-KB-007" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Die Postleitzahl ist ein Quasi-Identifikator, der im Verbund mit Namen und Geburtsdatum die Identifizierung einer Person erheblich einschr&#xe4;nkt.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="QUASI_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Die Grunds&#xe4;tze des Datenschutzes sollten f&#xfc;r alle Informationen gelten, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person beziehen." relevance="Die PLZ tr&#xe4;gt im Verbund mit weiteren Feldern zum Aussondern einer nat&#xfc;rlichen Person bei." sourceRef="rct_26"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.ort" name="ort" uriFragment="//KarteninhaberBesuch/ort" typeName="EString" relevanceLevel="MEDIUM">
+      <findings id="F-KB-008" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der Wohnort ist zusammen mit der PLZ ein Quasi-Identifikator f&#xfc;r die Wohnadresse des Karteninhabers.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="QUASI_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Der Ort ist ein Standortdatum im Sinne von Art. 4 Nr. 1." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.email" name="email" uriFragment="//KarteninhaberBesuch/email" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-KB-009" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Eine E-Mail-Adresse ist ein direkter Identifikator, der eine Person weltweit eindeutig adressierbar macht.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Die E-Mail-Adresse ist eine Online-Kennung, die direkt auf eine nat&#xfc;rliche Person schlie&#xdf;en l&#xe4;sst." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.tarifId" name="tarifId" uriFragment="//KarteninhaberBesuch/tarifId" typeName="EString" relevanceLevel="LOW">
+      <findings id="F-KB-010" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Die tarifId ist im Kontext des identifizierten Datensatzes personenbezogen und kann &#xfc;ber den Tarif (z.B. Sozialtarif) Hinweise auf wirtschaftliche Verh&#xe4;ltnisse geben.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Im Kontext eines identifizierten Datensatzes ist auch die Tarifzuordnung eine auf die Person bezogene Information." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.gueltigVon" name="gueltigVon" uriFragment="//KarteninhaberBesuch/gueltigVon" typeName="EDate" relevanceLevel="LOW">
+      <findings id="F-KB-011" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Das G&#xfc;ltigkeitsdatum der Dauerkarte ist im Kontext des identifizierten Datensatzes ein personenbezogenes Vertragsdatum.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(e)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.5(1)(e)" quote="in einer Form gespeichert werden, die die Identifizierung der betroffenen Personen nur so lange erm&#xf6;glicht, wie es f&#xfc;r die Zwecke, f&#xfc;r die sie verarbeitet werden, erforderlich ist;" relevance="Vertragslaufzeiten sind personenbezogen; nach Ablauf der G&#xfc;ltigkeit ist die weitere Aufbewahrung am Speicherbegrenzungsgrundsatz zu messen." sourceRef="art_5/parag[1]/item[5]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.gueltigBis" name="gueltigBis" uriFragment="//KarteninhaberBesuch/gueltigBis" typeName="EDate" relevanceLevel="LOW">
+      <findings id="F-KB-012" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Das Ablaufdatum der Dauerkarte ist im Kontext des identifizierten Datensatzes ein personenbezogenes Vertragsdatum.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(e)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.5(1)(e)" quote="in einer Form gespeichert werden, die die Identifizierung der betroffenen Personen nur so lange erm&#xf6;glicht, wie es f&#xfc;r die Zwecke, f&#xfc;r die sie verarbeitet werden, erforderlich ist;" relevance="Das Ablaufdatum ist relevant f&#xfc;r die Speicherbegrenzung: Ob nach Ende der G&#xfc;ltigkeit weitere Aufbewahrung erforderlich ist, muss begr&#xfc;ndet werden." sourceRef="art_5/parag[1]/item[5]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.datum" name="datum" uriFragment="//KarteninhaberBesuch/datum" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-KB-013" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Das Besuchsdatum einer identifizierten Person ist personenbezogen und erm&#xf6;glicht im Zeitverlauf die Analyse von Nutzungsmustern.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Das Besuchsdatum einer identifizierten Person ist eine auf sie bezogene Information." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.bereich" name="bereich" uriFragment="//KarteninhaberBesuch/bereich" typeName="EString" relevanceLevel="MEDIUM">
+      <findings id="F-KB-014" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der besuchte Bereich (z.B. Sauna, Schwimmbad) ist im Kontext eines identifizierten Datensatzes personenbezogen und dokumentiert Verhaltensmuster.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="Der genutzten Bereich dokumentiert Verhalten und Aufenthaltsort einer identifizierten Person und kann zur Profileierung beitragen." sourceRef="art_4/item[4]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.einlass" name="einlass" uriFragment="//KarteninhaberBesuch/einlass" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-KB-015" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der genaue Einlasszeitpunkt einer identifizierten Person dokumentiert Bewegungsmuster und Verhalten im Sinne des Profiling-Tatbestands (Art. 4 Nr. 4).">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="Einlasszeiten erm&#xf6;glichen die Analyse von Verhaltensmustern (Aufenthaltsort, Gewohnheiten) im Sinne des Profiling-Tatbestands." sourceRef="art_4/item[4]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.auslass" name="auslass" uriFragment="//KarteninhaberBesuch/auslass" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-KB-016" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der Auslasszeitpunkt dokumentiert zusammen mit dem Einlass die exakte Aufenthaltsdauer und das Verhaltensmuster einer identifizierten Person.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="Auslasszeiten dokumentieren das Verhalten und den Aufenthaltsort einer identifizierten Person." sourceRef="art_4/item[4]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="KarteninhaberBesuch.dauerMinuten" name="dauerMinuten" uriFragment="//KarteninhaberBesuch/dauerMinuten" typeName="EBigDecimal" relevanceLevel="LOW">
+      <findings id="F-KB-017" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Die Aufenthaltsdauer in Minuten ist ein von Einlass/Auslass abgeleiteter Wert und im Kontext des identifizierten Datensatzes personenbezogen, jedoch weniger sensibel als die genauen Zeitstempel.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Die Aufenthaltsdauer einer identifizierten Person ist eine auf sie bezogene Information." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="AuslastungFenster" name="AuslastungFenster" uriFragment="//AuslastungFenster">
+    <findings id="F-AF-CLASS-001" origin="AI_AGENT" relevanceLevel="LOW" confidence="MEDIUM" rationale="Die Klasse aggregiert Besucherzahlen in 15-Minuten-Fenstern und unterdr&#xfc;ckt Gruppen unter f&#xfc;nf Personen. Diese k-Anonymit&#xe4;t reduziert das Identifizierungsrisiko erheblich. Der Anonymisierungseffekt h&#xe4;ngt jedoch davon ab, dass die Unterdr&#xfc;ckung zuverl&#xe4;ssig und vollst&#xe4;ndig durchgesetzt wird; eine Klasse mit 'unterdrueckt = false' und 'anzahl = 1' w&#xe4;re dennoch nicht anonym.">
+      <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.25(1)"/>
+      <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+      <signalValues>Aggregiert, Gruppen unter f&#xfc;nf sind unterdr&#xfc;ckt (anzahl leer, unterdrueckt = true).</signalValues>
+      <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Die Grunds&#xe4;tze des Datenschutzes sollten daher nicht f&#xfc;r anonyme Informationen gelten, d.h. f&#xfc;r Informationen, die sich nicht auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person beziehen, oder personenbezogene Daten, die in einer Weise anonymisiert worden sind, dass die betroffene Person nicht oder nicht mehr identifiziert werden kann." verbatim="true" relevance="Aggregierte Z&#xe4;hldaten ohne Einzelpersonenbezug k&#xf6;nnen anonym im Sinne von Erw&#xe4;gungsgrund 26 sein, wenn die Unterdr&#xfc;ckung kleiner Gruppen vollst&#xe4;ndig durchgesetzt wird." sourceRef="rct_26"/>
+    </findings>
+    <featureEvaluations id="AuslastungFenster.id" name="id" uriFragment="//AuslastungFenster/id" typeName="EString"/>
+    <featureEvaluations id="AuslastungFenster.beginn" name="beginn" uriFragment="//AuslastungFenster/beginn" typeName="EDate"/>
+    <featureEvaluations id="AuslastungFenster.ende" name="ende" uriFragment="//AuslastungFenster/ende" typeName="EDate"/>
+    <featureEvaluations id="AuslastungFenster.areaId" name="areaId" uriFragment="//AuslastungFenster/areaId" typeName="EString"/>
+    <featureEvaluations id="AuslastungFenster.anzahl" name="anzahl" uriFragment="//AuslastungFenster/anzahl" typeName="EIntegerObject"/>
+    <featureEvaluations id="AuslastungFenster.unterdrueckt" name="unterdrueckt" uriFragment="//AuslastungFenster/unterdrueckt" typeName="EBoolean"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="Tagesbesucher" name="Tagesbesucher" uriFragment="//Tagesbesucher">
+    <featureEvaluations id="Tagesbesucher.id" name="id" uriFragment="//Tagesbesucher/id" typeName="EString"/>
+    <featureEvaluations id="Tagesbesucher.datum" name="datum" uriFragment="//Tagesbesucher/datum" typeName="EDate"/>
+    <featureEvaluations id="Tagesbesucher.bereich" name="bereich" uriFragment="//Tagesbesucher/bereich" typeName="EString"/>
+    <featureEvaluations id="Tagesbesucher.ticketTyp" name="ticketTyp" uriFragment="//Tagesbesucher/ticketTyp" typeName="EString"/>
+    <featureEvaluations id="Tagesbesucher.tarifId" name="tarifId" uriFragment="//Tagesbesucher/tarifId" typeName="EString"/>
+    <featureEvaluations id="Tagesbesucher.tarif" name="tarif" uriFragment="//Tagesbesucher/tarif" typeName="EString"/>
+    <featureEvaluations id="Tagesbesucher.anzahl" name="anzahl" uriFragment="//Tagesbesucher/anzahl" typeName="EIntegerObject"/>
+    <featureEvaluations id="Tagesbesucher.unterdrueckt" name="unterdrueckt" uriFragment="//Tagesbesucher/unterdrueckt" typeName="EBoolean"/>
+    <featureEvaluations id="Tagesbesucher.temperaturMax" name="temperaturMax" uriFragment="//Tagesbesucher/temperaturMax" typeName="EBigDecimal"/>
+    <featureEvaluations id="Tagesbesucher.wetterlage" name="wetterlage" uriFragment="//Tagesbesucher/wetterlage" typeName="EString"/>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" name="SaunaBesuch" uriFragment="//SaunaBesuch">
+    <featureEvaluations id="SaunaBesuch.id" name="id" uriFragment="//SaunaBesuch/id" typeName="EString"/>
+    <featureEvaluations id="SaunaBesuch.kartenNr" name="kartenNr" uriFragment="//SaunaBesuch/kartenNr" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-SB-001" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kartennummer ist in SaunaBesuch das zentrale Pseudonym. Sie erm&#xf6;glicht die Verkn&#xfc;pfung mit KarteninhaberBesuch, wo Name, Adresse und Geburtsdatum hinterlegt sind. Die Annotation best&#xe4;tigt ausdr&#xfc;cklich: 'Sieht anonym aus, ist es nicht: Pseudonym plus Quasi-Identifikatoren.' Pseudonymisierte Daten bleiben nach DSGVO personenbezogen.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PSEUDONYMISED"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(a)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <signalValues>Sieht anonym aus, ist es nicht: Pseudonym plus Quasi-Identifikatoren.</signalValues>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(5)" quote="&#x201e;Pseudonymisierung&#x201c; die Verarbeitung personenbezogener Daten in einer Weise, dass die personenbezogenen Daten ohne Hinzuziehung zus&#xe4;tzlicher Informationen nicht mehr einer spezifischen betroffenen Person zugeordnet werden k&#xf6;nnen, sofern diese zus&#xe4;tzlichen Informationen gesondert aufbewahrt werden und technischen und organisatorischen Ma&#xdf;nahmen unterliegen, die gew&#xe4;hrleisten, dass die personenbezogenen Daten nicht einer identifizierten oder identifizierbaren nat&#xfc;rlichen Person zugewiesen werden;" relevance="Die Kartennummer ist ein Pseudonym im Sinne von Art. 4 Nr. 5 DSGVO. Da die Zuordnungstabelle (KarteninhaberBesuch) existiert, bleiben die Daten personenbezogen." sourceRef="art_4/item[5]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="SaunaBesuch.geburtsjahr" name="geburtsjahr" uriFragment="//SaunaBesuch/geburtsjahr" typeName="EInt" relevanceLevel="HIGH">
+      <findings id="F-SB-002" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Das Geburtsjahr ist ein Quasi-Identifikator. Im Verbund mit der PLZ und der Kartennummer (Pseudonym) erm&#xf6;glicht es die statistische Re-Identifizierung einer Person. Die Annotation nennt es explizit als Quasi-Identifikator.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="QUASI_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <signalValues>Sieht anonym aus, ist es nicht: Pseudonym plus Quasi-Identifikatoren.</signalValues>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Die Grunds&#xe4;tze des Datenschutzes sollten f&#xfc;r alle Informationen gelten, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person beziehen. Einer Pseudonymisierung unterzogene personenbezogene Daten, die durch Heranziehung zus&#xe4;tzlicher Informationen einer nat&#xfc;rlichen Person zugeordnet werden k&#xf6;nnten, sollten als Informationen &#xfc;ber eine identifizierbare nat&#xfc;rliche Person betrachtet werden." verbatim="true" relevance="Das Geburtsjahr ist ein Quasi-Identifikator, der im Verbund mit PLZ und Kartennummer (Pseudonym mit Zuordnungstabelle) die Re-Identifizierung erm&#xf6;glicht." sourceRef="rct_26"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="SaunaBesuch.plz" name="plz" uriFragment="//SaunaBesuch/plz" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-SB-003" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Postleitzahl ist ein Quasi-Identifikator. Zusammen mit dem Geburtsjahr und der Kartennummer (Pseudonym) tr&#xe4;gt sie erheblich zur M&#xf6;glichkeit der statistischen Re-Identifizierung bei, wie die Annotation explizit warnt.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="QUASI_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <signalValues>Sieht anonym aus, ist es nicht: Pseudonym plus Quasi-Identifikatoren.</signalValues>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Um festzustellen, ob eine nat&#xfc;rliche Person identifizierbar ist, sollten alle Mittel ber&#xfc;cksichtigt werden, die von dem Verantwortlichen oder einer anderen Person nach allgemeinem Ermessen wahrscheinlich genutzt werden, um die nat&#xfc;rliche Person direkt oder indirekt zu identifizieren, wie beispielsweise das Aussondern." verbatim="true" relevance="PLZ als Quasi-Identifikator erm&#xf6;glicht das 'Aussondern' einer Person aus einer Gruppe nach Erw&#xe4;gungsgrund 26." sourceRef="rct_26"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="SaunaBesuch.einlass" name="einlass" uriFragment="//SaunaBesuch/einlass" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-SB-004" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der genaue Einlasszeitpunkt ist im Kontext des pseudonymisierten Datensatzes ein zus&#xe4;tzlicher Quasi-Identifikator und erm&#xf6;glicht zeitliche Verhaltensmuster.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(5)" quote="&#x201e;Pseudonymisierung&#x201c; die Verarbeitung personenbezogener Daten in einer Weise, dass die personenbezogenen Daten ohne Hinzuziehung zus&#xe4;tzlicher Informationen nicht mehr einer spezifischen betroffenen Person zugeordnet werden k&#xf6;nnen, sofern diese zus&#xe4;tzlichen Informationen gesondert aufbewahrt werden und technischen und organisatorischen Ma&#xdf;nahmen unterliegen, die gew&#xe4;hrleisten, dass die personenbezogenen Daten nicht einer identifizierten oder identifizierbaren nat&#xfc;rlichen Person zugewiesen werden;" relevance="Der Einlasszeitpunkt in einem pseudonymisierten Datensatz bleibt personenbezogen, da die Zuordnungstabelle existiert." sourceRef="art_4/item[5]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="SaunaBesuch.auslass" name="auslass" uriFragment="//SaunaBesuch/auslass" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-SB-005" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der Auslasszeitpunkt dokumentiert zusammen mit dem Einlass die Aufenthaltsdauer in der Sauna f&#xfc;r den pseudonymisierten Karteninhaber.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(5)" quote="&#x201e;Pseudonymisierung&#x201c; die Verarbeitung personenbezogener Daten in einer Weise, dass die personenbezogenen Daten ohne Hinzuziehung zus&#xe4;tzlicher Informationen nicht mehr einer spezifischen betroffenen Person zugeordnet werden k&#xf6;nnen, sofern diese zus&#xe4;tzlichen Informationen gesondert aufbewahrt werden und technischen und organisatorischen Ma&#xdf;nahmen unterliegen, die gew&#xe4;hrleisten, dass die personenbezogenen Daten nicht einer identifizierten oder identifizierbaren nat&#xfc;rlichen Person zugewiesen werden;" relevance="Der Auslasszeitpunkt in einem pseudonymisierten Datensatz bleibt personenbezogen, da die Zuordnungstabelle existiert." sourceRef="art_4/item[5]"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" name="Checkin" uriFragment="//Checkin">
+    <featureEvaluations id="Checkin.id" name="id" uriFragment="//Checkin/id" typeName="EString"/>
+    <featureEvaluations id="Checkin.kartenNr" name="kartenNr" uriFragment="//Checkin/kartenNr" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-CI-001" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kartennummer stellt die direkte Verkn&#xfc;pfung zum Karteninhaber her und macht den Checkin-Datensatz eindeutig personenbezogen. Sie ist identisch mit kartenNr in KarteninhaberBesuch und SaunaBesuch und erm&#xf6;glicht klassenklassen&#xfc;bergreifende Profilbildung.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Die Kartennummer ist eine Kennnummer nach Art. 4 Nr. 1, die direkt auf eine nat&#xfc;rliche Person schlie&#xdf;en l&#xe4;sst." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Checkin.zeitpunkt" name="zeitpunkt" uriFragment="//Checkin/zeitpunkt" typeName="EDate" relevanceLevel="MEDIUM">
+      <findings id="F-CI-002" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der Zeitpunkt des App-Checkins einer identifizierten Person ist personenbezogen und dokumentiert Verhaltensmuster.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Der Zeitpunkt eines App-Events einer identifizierten Person ist eine auf sie bezogene Information." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Checkin.bereich" name="bereich" uriFragment="//Checkin/bereich" typeName="EString" relevanceLevel="MEDIUM">
+      <findings id="F-CI-003" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Der besuchte Bereich ist im Kontext eines identifizierten Datensatzes personenbezogen und dokumentiert das Verhalten des Karteninhabers.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="Der besuchte Bereich zusammen mit Zeitpunkt und Kartennummer erm&#xf6;glicht die Analyse von Verhaltensmustern einer identifizierten Person." sourceRef="art_4/item[4]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Checkin.geraet" name="geraet" uriFragment="//Checkin/geraet" typeName="CheckinGeraet" relevanceLevel="MEDIUM">
+      <findings id="F-CI-004" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Das eingebettete Ger&#xe4;t (CheckinGeraet mit Plattform und App-Version) ist im Kontext einer identifizierten Person als ger&#xe4;tebezogene Kennung personenbezogen und kann zur Profilbildung verwendet werden.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.30" quote="Nat&#xfc;rlichen Personen werden unter Umst&#xe4;nden Online-Kennungen wie IP-Adressen und Cookie-Kennungen, die sein Ger&#xe4;t oder Software-Anwendungen und -Tools oder Protokolle liefern, oder sonstige Kennungen wie Funkfrequenzkennzeichnungen zugeordnet. Dies kann Spuren hinterlassen, die insbesondere in Kombination mit eindeutigen Kennungen und anderen beim Server eingehenden Informationen dazu benutzt werden k&#xf6;nnen, um Profile der nat&#xfc;rlichen Personen zu erstellen und sie zu identifizieren." verbatim="true" relevance="Ger&#xe4;te- und Plattformdaten sind Ger&#xe4;tekennungen nach Erw&#xe4;gungsgrund 30, die im Verbund mit der Kartennummer zur Profilbildung dienen k&#xf6;nnen." sourceRef="rct_30"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Checkin.standort" name="standort" uriFragment="//Checkin/standort" typeName="CheckinStandort" relevanceLevel="HIGH">
+      <findings id="F-CI-005" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Der eingebettete Standort (Lat/Lon) ist Standortdatum nach Art. 4 Nr. 1 DSGVO und im Kontext eines identifizierten Datensatzes hochsensibel. Die Dokumentation nennt 'groben Standort', aber prazise GPS-Koordinaten k&#xf6;nnen einen genauen Aufenthaltsort aufzeigen.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="LOCATION_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Standortdaten (Lat/Lon) sind in Art. 4 Nr. 1 ausdr&#xfc;cklich als Identifizierungsmerkmal genannt." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Checkin.besuchId" name="besuchId" uriFragment="//Checkin/besuchId" typeName="ELongObject" relevanceLevel="LOW">
+      <findings id="F-CI-006" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Die besuchId verkn&#xfc;pft den App-Checkin mit dem entsprechenden Besuchsdatensatz aus dem Kassensystem und ist damit ein Verbindungsschl&#xfc;ssel zwischen MongoDB und Postgres, der die personenbezogene Klassenzugeh&#xf6;rigkeit fortschreibt.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Die besuchId als Fremdschl&#xfc;ssel in einem personalisierten Datensatz ist eine Kennnummer nach Art. 4 Nr. 1." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="CheckinGeraet" name="CheckinGeraet" uriFragment="//CheckinGeraet">
+    <featureEvaluations id="CheckinGeraet.plattform" name="plattform" uriFragment="//CheckinGeraet/plattform" typeName="EString" relevanceLevel="LOW">
+      <findings id="F-CG-001" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Die Plattformangabe (z.B. iOS, Android) ist im Kontext eines Checkins mit kartenNr personenbezogen, da sie dem identifizierten Karteninhaber zugeordnet ist.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.30" quote="Nat&#xfc;rlichen Personen werden unter Umst&#xe4;nden Online-Kennungen wie IP-Adressen und Cookie-Kennungen, die sein Ger&#xe4;t oder Software-Anwendungen und -Tools oder Protokolle liefern, oder sonstige Kennungen wie Funkfrequenzkennzeichnungen zugeordnet." verbatim="true" relevance="Plattform- und App-Informationen gehen von Ger&#xe4;t oder Software-Anwendungen aus und sind im Kontext einer identifizierten Person personenbezogen." sourceRef="rct_30"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="CheckinGeraet.appVersion" name="appVersion" uriFragment="//CheckinGeraet/appVersion" typeName="EString" relevanceLevel="LOW">
+      <findings id="F-CG-002" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Die App-Version ist im Kontext eines identifizierten Checkins personenbezogen und kann technische R&#xfc;ckschl&#xfc;sse erm&#xf6;glichen.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.30" quote="Nat&#xfc;rlichen Personen werden unter Umst&#xe4;nden Online-Kennungen wie IP-Adressen und Cookie-Kennungen, die sein Ger&#xe4;t oder Software-Anwendungen und -Tools oder Protokolle liefern, oder sonstige Kennungen wie Funkfrequenzkennzeichnungen zugeordnet." verbatim="true" relevance="App-Versionsinformationen stammen aus Software-Anwendungen und sind im Kontext einer identifizierten Person personenbezogen." sourceRef="rct_30"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" id="CheckinStandort" name="CheckinStandort" uriFragment="//CheckinStandort">
+    <featureEvaluations id="CheckinStandort.lat" name="lat" uriFragment="//CheckinStandort/lat" typeName="EDoubleObject" relevanceLevel="HIGH">
+      <findings id="F-CS-001" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Der GPS-Breitengrad ist ein Standortdatum nach Art. 4 Nr. 1 DSGVO. Im Kontext eines identifizierten Checkins (kartenNr) erlauben prazise GPS-Koordinaten die Bestimmung des genauen Aufenthaltsorts zum Zeitpunkt des Checkins.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="LOCATION_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Standortdaten (hier GPS-Breitengrad) sind in Art. 4 Nr. 1 ausdr&#xfc;cklich als Identifizierungsmerkmal aufgef&#xfc;hrt." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="CheckinStandort.lon" name="lon" uriFragment="//CheckinStandort/lon" typeName="EDoubleObject" relevanceLevel="HIGH">
+      <findings id="F-CS-002" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Der GPS-L&#xe4;ngengrad ist zusammen mit dem Breitengrad ein vollst&#xe4;ndiges Standortdatum nach Art. 4 Nr. 1 DSGVO.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="LOCATION_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="GPS-L&#xe4;ngengrad ist ein Standortdatum nach Art. 4 Nr. 1." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <evaluations xsi:type="report:ClassifierEvaluation" name="Feedback" uriFragment="//Feedback">
+    <featureEvaluations id="Feedback.id" name="id" uriFragment="//Feedback/id" typeName="EString"/>
+    <featureEvaluations id="Feedback.zeitpunkt" name="zeitpunkt" uriFragment="//Feedback/zeitpunkt" typeName="EDate" relevanceLevel="LOW">
+      <findings id="F-FB-001" origin="AI_AGENT" relevanceLevel="LOW" confidence="HIGH" rationale="Der Bewertungszeitpunkt ist dann personenbezogen, wenn email oder kartenNr im selben Datensatz vorliegen.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>FEATURE_TYPE</detectedBy>
+        <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Wenn Feedback mit einer Person verkn&#xfc;pft ist, ist auch der Zeitpunkt eine auf sie bezogene Information." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Feedback.bereich" name="bereich" uriFragment="//Feedback/bereich" typeName="EString"/>
+    <featureEvaluations id="Feedback.sterne" name="sterne" uriFragment="//Feedback/sterne" typeName="EInt"/>
+    <featureEvaluations id="Feedback.text" name="text" uriFragment="//Feedback/text" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-FB-002" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Das Freitextfeld enth&#xe4;lt nach Dokumentation in rund einem F&#xfc;nftel der F&#xe4;lle Namen, Telefonnummern oder E-Mail-Adressen. Das Metamodell modelliert dieses Risiko mit dem Flag 'enthaeltPersonenbezug', aber das Feld selbst kann jederzeit personenbezogene Daten enthalten. Freitextfelder mit bekanntem Anteil personenbezogener Inhalte sind grunds&#xe4;tzlich als personenbezogen zu behandeln." recommendation="Freitextinhalte sollten vor Weiterverarbeitung und Speicherung automatisiert auf Personenbezug gepr&#xfc;ft und ggf. maskiert werden. Das Flag 'enthaeltPersonenbezug' allein reicht nicht aus, wenn der Rohtext weiter gespeichert wird.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.25(1)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <signalValues>Rund ein F&#xfc;nftel der Texte nennt Namen, Telefonnummern oder Mailadressen; das Flag enthaeltPersonenbezug ist die Ground Truth f&#xfc;r den DSGVO-Check.</signalValues>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen; als identifizierbar wird eine nat&#xfc;rliche Person angesehen, die direkt oder indirekt, insbesondere mittels Zuordnung zu einer Kennung wie einem Namen, zu einer Kennnummer, zu Standortdaten, zu einer Online-Kennung oder zu einem oder mehreren besonderen Merkmalen, die Ausdruck der physischen, physiologischen, genetischen, psychischen, wirtschaftlichen, kulturellen oder sozialen Identit&#xe4;t dieser nat&#xfc;rlichen Person sind, identifiziert werden kann;" relevance="Namen und Kontaktdaten, die in Freitexten erscheinen, sind personenbezogene Daten nach Art. 4 Nr. 1." sourceRef="art_4/item[1]"/>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.25(1)" quote="Unter Ber&#xfc;cksichtigung des Stands der Technik, der Implementierungskosten und der Art, des Umfangs, der Umst&#xe4;nde und der Zwecke der Verarbeitung sowie der unterschiedlichen Eintrittswahrscheinlichkeit und Schwere der mit der Verarbeitung verbundenen Risiken f&#xfc;r die Rechte und Freiheiten nat&#xfc;rlicher Personen trifft der Verantwortliche sowohl zum Zeitpunkt der Festlegung der Mittel f&#xfc;r die Verarbeitung als auch zum Zeitpunkt der eigentlichen Verarbeitung geeignete technische und organisatorische Ma&#xdf;nahmen &#x2014; wie z.&#xa0;B. Pseudonymisierung &#x2014;, die daf&#xfc;r ausgelegt sind, die Datenschutzgrunds&#xe4;tze wie etwa Datenminimierung wirksam umzusetzen und die notwendigen Garantien in die Verarbeitung aufzunehmen, um den Anforderungen dieser Verordnung zu gen&#xfc;gen und die Rechte der betroffenen Personen zu sch&#xfc;tzen." relevance="Der bekannte Anteil personenbezogener Inhalte im Freitextfeld verlangt technische und organisatorische Ma&#xdf;nahmen (Privacy by Design), z.B. automatisierte Erkennung und Schw&#xe4;rzung vor Weiterverarbeitung." sourceRef="art_25/parag[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Feedback.enthaeltPersonenbezug" name="enthaeltPersonenbezug" uriFragment="//Feedback/enthaeltPersonenbezug" typeName="EBoolean" relevanceLevel="MEDIUM">
+      <findings id="F-FB-003" origin="AI_AGENT" relevanceLevel="MEDIUM" confidence="HIGH" rationale="Das Flag 'enthaeltPersonenbezug' dokumentiert, dass personenbezogene Inhalte im Freitextfeld erkannt wurden. Es ist zwar positiv, dass diese Klassifikation modelliert ist, aber das Flag ersetzt nicht die Pflicht zur Datenminimierung: Auch markierte Datens&#xe4;tze m&#xfc;ssen einer Rechtsgrundlage und einem Zweck entsprechen.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(a)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+        <signalValues>das Flag enthaeltPersonenbezug ist die Ground Truth f&#xfc;r den DSGVO-Check</signalValues>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.5(1)(a)" quote="auf rechtm&#xe4;&#xdf;ige Weise, nach Treu und Glauben und in einer f&#xfc;r die betroffene Person nachvollziehbaren Weise verarbeitet werden (&#x201e;Rechtm&#xe4;&#xdf;igkeit, Verarbeitung nach Treu und Glauben, Transparenz&#x201c;);" relevance="Ein Flag allein begr&#xfc;ndet keine Rechtsgrundlage; die Verarbeitung des Freitexts einschlie&#xdf;lich personenbezogener Inhalte muss rechtm&#xe4;&#xdf;ig sein." sourceRef="art_5/parag[1]/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Feedback.email" name="email" uriFragment="//Feedback/email" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-FB-004" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Eine E-Mail-Adresse in einem Feedback-Datensatz ist ein direkter Identifikator, auch wenn das Feedback sonst anonym eingegangen ist. Die E-Mail-Adresse macht den gesamten Datensatz eindeutig einer Person zuordenbar.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Die E-Mail-Adresse im Feedback macht den Datensatz eindeutig personenbezogen nach Art. 4 Nr. 1." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+    <featureEvaluations id="Feedback.kartenNr" name="kartenNr" uriFragment="//Feedback/kartenNr" typeName="EString" relevanceLevel="HIGH">
+      <findings id="F-FB-005" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kartennummer im Feedback-Datensatz verkn&#xfc;pft die Bewertung eindeutig mit dem Karteninhaber und macht den Datensatz personenbezogen. Sie erm&#xf6;glicht die Verquickung von Feedback-Inhalt und Besuchshistorie.">
+        <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="DIRECT_IDENTIFIER"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+        <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+        <detectedBy>FEATURE_NAME</detectedBy>
+        <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(1)" quote="&#x201e;personenbezogene Daten&#x201c; alle Informationen, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person (im Folgenden &#x201e;betroffene Person&#x201c;) beziehen;" relevance="Die kartenNr als Kennnummer im Feedback-Datensatz macht ihn eindeutig einer nat&#xfc;rlichen Person zuordenbar." sourceRef="art_4/item[1]"/>
+      </findings>
+    </featureEvaluations>
+  </evaluations>
+  <combinations id="CF-001" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kombination aus Kartennummer (Pseudonym), Geburtsjahr und PLZ bildet einen Quasi-Identifikatoren-Satz, der laut Modellannotation explizit als re-identifizierbar eingestuft wird. Obwohl kein direkter Name vorliegt, erm&#xf6;glicht die Kartennummer die R&#xfc;ckf&#xfc;hrung auf KarteninhaberBesuch, und Geburtsjahr + PLZ verkleinern die Anonymit&#xe4;tsmenge erheblich. Das klassische Latanya-Sweeney-Ergebnis zeigt, dass PLZ + Geschlecht + Geburtsdatum rund 87 % der US-Bev&#xf6;lkerung eindeutig identifizieren; PLZ + Geburtsjahr reicht f&#xfc;r einen erheblichen Anteil." recommendation="Das Geburtsjahr k&#xf6;nnte auf ein Jahrzehnt vergr&#xf6;bert oder die PLZ auf eine 2-stellige Kennung reduziert werden, um den Quasi-Identifikator-Satz aufzubrechen." features="#SaunaBesuch.kartenNr #SaunaBesuch.geburtsjahr #SaunaBesuch.plz">
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="combination-kinds" categoryId="QUASI_IDENTIFIER_SET"/>
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PSEUDONYMISED"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.25(1)"/>
+    <detectedBy>FEATURE_COMBINATION</detectedBy>
+    <detectedBy>DOCUMENTATION_ANNOTATION</detectedBy>
+    <signalValues>Sieht anonym aus, ist es nicht: Pseudonym plus Quasi-Identifikatoren.</signalValues>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Um festzustellen, ob eine nat&#xfc;rliche Person identifizierbar ist, sollten alle Mittel ber&#xfc;cksichtigt werden, die von dem Verantwortlichen oder einer anderen Person nach allgemeinem Ermessen wahrscheinlich genutzt werden, um die nat&#xfc;rliche Person direkt oder indirekt zu identifizieren, wie beispielsweise das Aussondern. Bei der Feststellung, ob Mittel nach allgemeinem Ermessen wahrscheinlich zur Identifizierung der nat&#xfc;rlichen Person genutzt werden, sollten alle objektiven Faktoren, wie die Kosten der Identifizierung und der daf&#xfc;r erforderliche Zeitaufwand, herangezogen werden, wobei die zum Zeitpunkt der Verarbeitung verf&#xfc;gbare Technologie und technologische Entwicklungen zu ber&#xfc;cksichtigen sind." verbatim="true" relevance="Der Quasi-Identifikatoren-Satz PLZ + Geburtsjahr + Kartennummer erm&#xf6;glicht das 'Aussondern' einer Person nach Erw&#xe4;gungsgrund 26." sourceRef="rct_26"/>
+  </combinations>
+  <combinations id="CF-002" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kombination aus Kartennummer, Besuchsdatum, Bereich sowie genauen Einlass- und Auslasszeitpunkten erlaubt die automatisierte Erstellung eines detaillierten Nutzungsprofils: Wie oft kommt eine Person, wann, welche Bereiche nutzt sie, wie lange bleibt sie. Dies ist Profiling im Sinne von Art. 4 Nr. 4 DSGVO, da Verhaltensaspekte und Gewohnheiten einer identifizierten Person bewertet werden k&#xf6;nnen." recommendation="Pr&#xfc;fen, ob alle Zeitstempel und Besuchsdaten auf Individuumsebene f&#xfc;r den Verarbeitungszweck erforderlich sind. Sofern keine explizite Rechtsgrundlage f&#xfc;r Profiling vorliegt, sollte eine Datenschutz-Folgenabsch&#xe4;tzung durchgef&#xfc;hrt werden." features="#KarteninhaberBesuch.kartenNr #KarteninhaberBesuch.einlass #KarteninhaberBesuch.auslass #KarteninhaberBesuch.bereich #KarteninhaberBesuch.datum">
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="combination-kinds" categoryId="PROFILING"/>
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.35(1)"/>
+    <detectedBy>FEATURE_COMBINATION</detectedBy>
+    <detectedBy>OWNING_CLASSIFIER_NAME</detectedBy>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="Besuchsdaten (Datum, Bereich, Einlass, Auslass) einer identifizierten Person erm&#xf6;glichen die Analyse von Verhalten, Gewohnheiten und Aufenthaltsort im Sinne des Profiling-Tatbestands." sourceRef="art_4/item[4]"/>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.35(1)" quote="Hat eine Form der Verarbeitung, insbesondere bei Verwendung neuer Technologien, aufgrund der Art, des Umfangs, der Umst&#xe4;nde und der Zwecke der Verarbeitung voraussichtlich ein hohes Risiko f&#xfc;r die Rechte und Freiheiten nat&#xfc;rlicher Personen zur Folge, so f&#xfc;hrt der Verantwortliche vorab eine Absch&#xe4;tzung der Folgen der vorgesehenen Verarbeitungsvorg&#xe4;nge f&#xfc;r den Schutz personenbezogener Daten durch." verbatim="true" relevance="Systematisches Profiling von Besuchsgewohnheiten kann ein hohes Risiko f&#xfc;r Betroffene darstellen und eine DSFA erforderlich machen." sourceRef="art_35/parag[1]"/>
+  </combinations>
+  <combinations id="CF-003" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Das Feld 'kartenNr' taucht als Schl&#xfc;ssel in vier verschiedenen Klassen auf: KarteninhaberBesuch (Stammdaten), SaunaBesuch (pseudonymisierte Besuchsdaten), Checkin (App-Ereignisse) und Feedback (Bewertungen). Dies erm&#xf6;glicht eine vollst&#xe4;ndige verkn&#xfc;pfte Sicht auf eine Person: ihre Identit&#xe4;t, ihre Saunagewohnheiten, ihre App-Nutzung inkl. Standortdaten und ihre ge&#xe4;u&#xdf;erten Meinungen. Diese systemweite Verkn&#xfc;pfung &#xfc;ber eine einzige Kennung ist ein Profiling-Risiko h&#xf6;chster Stufe." recommendation="Pr&#xfc;fen, ob die klassen&#xfc;bergreifende Verkn&#xfc;pfung &#xfc;ber kartenNr f&#xfc;r alle Verarbeitungszwecke erforderlich ist. Zugriffskontrollen sollten sicherstellen, dass nicht alle Klassen gemeinsam abgefragt werden k&#xf6;nnen, wenn der Zweck dies nicht erfordert." features="#KarteninhaberBesuch.kartenNr #SaunaBesuch.kartenNr #Checkin.kartenNr #Feedback.kartenNr">
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="combination-kinds" categoryId="LINKAGE"/>
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="PERSONAL_DATA"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(b)"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.35(1)"/>
+    <detectedBy>FEATURE_COMBINATION</detectedBy>
+    <detectedBy>FEATURE_NAME</detectedBy>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.5(1)(b)" quote="f&#xfc;r festgelegte, eindeutige und legitime Zwecke erhoben werden und d&#xfc;rfen nicht in einer mit diesen Zwecken nicht zu vereinbarenden Weise weiterverarbeitet werden;" relevance="Die klassen&#xfc;bergreifende Verkn&#xfc;pfung &#xfc;ber kartenNr kann eine Zweckentfremdung darstellen, wenn Daten aus verschiedenen Systemteilen f&#xfc;r urspr&#xfc;nglich nicht vorgesehene Zwecke kombiniert werden." sourceRef="art_5/parag[1]/item[2]"/>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Rec.26" quote="Die Grunds&#xe4;tze des Datenschutzes sollten f&#xfc;r alle Informationen gelten, die sich auf eine identifizierte oder identifizierbare nat&#xfc;rliche Person beziehen." verbatim="true" relevance="Die Verkn&#xfc;pfung &#xfc;ber kartenNr macht alle Datens&#xe4;tze zu identifizierbaren Personen, auch wenn einzelne Klassen wie SaunaBesuch nur pseudonymisierte Daten enthalten." sourceRef="rct_26"/>
+  </combinations>
+  <combinations id="CF-004" origin="AI_AGENT" relevanceLevel="HIGH" confidence="HIGH" rationale="Die Kombination aus Kartennummer (identifiziert die Person), Zeitpunkt (Wann) sowie GPS-Breitengrad und -L&#xe4;ngengrad (genauer Aufenthaltsort) erzeugt einen vollst&#xe4;ndigen Standortdatensatz f&#xfc;r eine identifizierte Person. Die Dokumentation beschreibt dies als 'groben Standort', aber das Modell speichert prazise EDoubleObject-Werte (double-precision floating point), die Meter-genaue Koordinaten erm&#xf6;glichen. &#xdc;ber mehrere Check-ins hinweg entsteht ein Bewegungsprofil." recommendation="GPS-Koordinaten sollten auf eine f&#xfc;r den Zweck ausreichende Genauigkeit reduziert werden (z.B. Grobgitter statt metrische Pr&#xe4;zision). Ob die Erhebung von Standortdaten beim Check-in &#xfc;berhaupt erforderlich ist, sollte im Rahmen der Datenschutz-Folgenabsch&#xe4;tzung gepr&#xfc;ft werden." features="#Checkin.kartenNr #Checkin.zeitpunkt #CheckinStandort.lat #CheckinStandort.lon">
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="combination-kinds" categoryId="PROFILING"/>
+    <categories contextId="gdpr" contextVersion="20160504" taxonomyId="data-categories" categoryId="LOCATION_DATA"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.6(1)"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.5(1)(c)"/>
+    <requirements contextId="gdpr" contextVersion="20160504" requirementId="Art.35(1)"/>
+    <detectedBy>FEATURE_COMBINATION</detectedBy>
+    <detectedBy>CONTAINMENT_CONTEXT</detectedBy>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.4(4)" quote="&#x201e;Profiling&#x201c; jede Art der automatisierten Verarbeitung personenbezogener Daten, die darin besteht, dass diese personenbezogenen Daten verwendet werden, um bestimmte pers&#xf6;nliche Aspekte, die sich auf eine nat&#xfc;rliche Person beziehen, zu bewerten, insbesondere um Aspekte bez&#xfc;glich Arbeitsleistung, wirtschaftliche Lage, Gesundheit, pers&#xf6;nliche Vorlieben, Interessen, Zuverl&#xe4;ssigkeit, Verhalten, Aufenthaltsort oder Ortswechsel dieser nat&#xfc;rlichen Person zu analysieren oder vorherzusagen;" relevance="GPS-Koordinaten zusammen mit Zeitstempel und Personenkennung erm&#xf6;glichen die Analyse von Aufenthaltsort und Ortswechsel einer identifizierten Person." sourceRef="art_4/item[4]"/>
+    <evidence contextId="gdpr" corpusId="02016R0679-20160504-DE" citationId="Art.35(1)" quote="Hat eine Form der Verarbeitung, insbesondere bei Verwendung neuer Technologien, aufgrund der Art, des Umfangs, der Umst&#xe4;nde und der Zwecke der Verarbeitung voraussichtlich ein hohes Risiko f&#xfc;r die Rechte und Freiheiten nat&#xfc;rlicher Personen zur Folge, so f&#xfc;hrt der Verantwortliche vorab eine Absch&#xe4;tzung der Folgen der vorgesehenen Verarbeitungsvorg&#xe4;nge f&#xfc;r den Schutz personenbezogener Daten durch." verbatim="true" relevance="Standortdatenerhebung mittels GPS ist eine Verarbeitung, die bei systematischem Einsatz ein hohes Risiko darstellen und eine DSFA ausl&#xf6;sen kann." sourceRef="art_35/parag[1]"/>
+  </combinations>
+  <contexts contextId="gdpr" contextVersion="20160504"/>
+</report:ComplianceReport>

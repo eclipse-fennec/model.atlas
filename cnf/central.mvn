@@ -197,6 +197,7 @@ org.geckoprojects.emf:org.gecko.emf.osgi.example.model.basic:6.3.1
 com.h2database:h2:2.3.232
 
 org.eclipse.fennec.event.atlas:org.eclipse.fennec.event.atlas.mapping:1.0.0-SNAPSHOT
+org.eclipse.fennec.persistence:org.eclipse.fennec.persistence.orm:0.1.0-SNAPSHOT
 
 
 # DCAT.Atlas client (replaces the hand-placed jars formerly in cnf/local)

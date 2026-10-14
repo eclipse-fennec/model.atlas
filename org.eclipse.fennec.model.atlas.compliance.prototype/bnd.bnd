@@ -1,0 +1,61 @@
+Bundle-Name: Model Atlas Compliance Analysis Prototype
+Bundle-Description: A prototype, not a product. Derives a static GDPR report for an OCL constraint \
+ set, an eorm persistence mapping and a sensiNact provider mapping, all from one stored review of \
+ one metamodel, to find out what such a report looks like before the three analysers are built \
+ for real.
+
+# Why this exists and what it is allowed to be
+#
+# The three analysers are planned (xdp: OCL_COMPLIANCE_ANALYSIS_PLAN, EORM_MAPPING_COMPLIANCE_PLAN,
+# SENSINACT_MAPPING_COMPLIANCE_PLAN) but not decided. What a plan cannot settle is whether the
+# resulting report is worth reading: whether the rules fire on real data, whether the join to a
+# real review holds, and whether a data protection officer would recognise the result. So this
+# bundle answers exactly that and nothing else.
+#
+# Deliberately NOT here, because each would presume the decision:
+#   - no DS components, so nothing activates in any runtime
+#   - not in any bndrun, and no registry, stage action, gate or PID anywhere
+#   - no common.models change; the interim TransformationSubject carries the subject
+#
+# It is therefore deletable in one command if the answer is no.
+
+-workingset: ModelAtlas
+
+-library: enableEMF
+
+-buildpath: \
+	org.eclipse.fennec.model.atlas.compliance.analysis;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest,\
+	org.eclipse.fennec.m2x.ocl.model;version=latest,\
+	org.eclipse.fennec.m2x.ocl.engine;version=latest,\
+	org.eclipse.fennec.event.atlas.mapping;version=latest,\
+	org.eclipse.fennec.persistence.orm;version=latest
+
+# junit-jupiter-api alone, as the sibling gdpr bundles have it: the engine and the platform
+# launcher come from the workspace build.gradle, and bnd's copies here as well would mix two
+# versions of the platform, at which point the engine discovers no tests at all. XMI is what
+# reading the stored review and the three artefacts outside OSGi needs; the OCL parser is what
+# turns an expression into the AST the join is made on.
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.emf.ecore.xmi,\
+	org.eclipse.fennec.m2x.ocl.parser;version=latest,\
+	org.antlr.antlr4-runtime;version=latest,\
+	org.eclipse.fennec.m2x.unit;version=latest
+
+-privatepackage: org.eclipse.fennec.model.atlas.compliance.prototype
+
+javac.source: 21
+javac.target: 21
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+# Never published: a prototype has no business on Maven Central.
+-maven-release: local

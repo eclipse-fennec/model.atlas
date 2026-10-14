@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. A check-in terminal published as a sensiNact provider: the card number becomes
+     a northbound-readable resource and the terminal's location becomes the provider's position.
+     No deletionRule anywhere, which is the ordinary case and the one NO_DELETION_RULE is about. -->
+<mapping:ProviderMapping xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:mapping="https://fennec.eclipse.org/event.atlas/mapping/1.0"
+    providerTimestamp="true">
+
+  <providerClasses href="https://dimcity.example/baeder/source/1.0.0#//Checkin"/>
+
+  <admin friendlyName="Badi Check-in">
+    <!-- LOCATION_OF_A_PERSON: the position of a check-in is the position of the person. -->
+    <latitudeRef xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//CheckinStandort/lat"/>
+    <longitudeRef xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//CheckinStandort/lon"/>
+  </admin>
+
+  <services>
+    <resources mid="kartenNr" unit="">
+      <!-- RESOURCE_PUBLISHES_PERSONAL: a DIRECT_IDENTIFIER served northbound. -->
+      <valueFeature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//Checkin/kartenNr"/>
+      <timestamp hint="zeitpunkt"/>
+    </resources>
+    <resources mid="bereich" unit="">
+      <valueFeature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//Checkin/bereich"/>
+      <timestamp hint="zeitpunkt"/>
+    </resources>
+    <resources mid="plattform" unit="">
+      <valueFeature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//CheckinGeraet/plattform"/>
+      <timestamp hint="zeitpunkt"/>
+    </resources>
+  </services>
+</mapping:ProviderMapping>

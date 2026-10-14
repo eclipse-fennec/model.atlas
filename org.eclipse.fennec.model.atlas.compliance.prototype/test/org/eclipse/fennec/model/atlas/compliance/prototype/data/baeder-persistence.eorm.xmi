@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written: no deployment stores an eorm file in the Atlas yet. Shaped like what
+     EntityMapper.createMappingsFromEPackage produces - every attribute a column, which is the
+     maximal default MAPS_EVERYTHING is about. The join runs through accessibleObject, an
+     EFeatureObject, which is where the current eorm model puts the EStructuralFeature. -->
+<eorm:EntityMappings xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:eorm="https://eclipse.org/fennec/persistence/eorm/1.0.0"
+    name="baeder-source" version="2.0" package="https://dimcity.example/baeder/source/1.0.0"
+    description="Persistence mapping of the city baths source model.">
+  <entity name="KarteninhaberBesuch" class="ecore:EClass https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch">
+    <table name="KARTENINHABER_BESUCH"/>
+    <attributes>
+      <id name="kartenNr" access="PROPERTY">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="kartenNr">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/kartenNr"/>
+        </accessibleObject>
+        <column name="KARTEN_NR" nullable="false"/>
+      </id>
+      <basic name="kartenNr" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="kartenNr">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/kartenNr"/>
+        </accessibleObject>
+        <column name="KARTEN_NR"/>
+      </basic>
+      <basic name="vorname" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="vorname">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/vorname"/>
+        </accessibleObject>
+        <column name="VORNAME"/>
+      </basic>
+      <basic name="nachname" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="nachname">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/nachname"/>
+        </accessibleObject>
+        <column name="NACHNAME"/>
+      </basic>
+      <basic name="email" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="email">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/email"/>
+        </accessibleObject>
+        <column name="EMAIL"/>
+        <convert attributeName="email" converter="aes-gcm"/>
+      </basic>
+      <basic name="geburtsdatum" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="geburtsdatum">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/geburtsdatum"/>
+        </accessibleObject>
+        <column name="GEBURTSDATUM"/>
+      </basic>
+      <basic name="plz" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="plz">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/plz"/>
+        </accessibleObject>
+        <column name="PLZ"/>
+      </basic>
+      <basic name="einlass" access="PROPERTY" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="einlass">
+          <feature xsi:type="ecore:EAttribute" href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/einlass"/>
+        </accessibleObject>
+        <column name="EINLASS"/>
+      </basic>
+    </attributes>
+  </entity>
+</eorm:EntityMappings>
