@@ -1,8 +1,9 @@
 Bundle-Name: Model Atlas Compliance Analysis
 Bundle-Description: What every static compliance analyser needs and none of them should own: which \
  stages a reviewed model may be found in, which review of it applies, what that review says about \
- a feature, and how a finding becomes a Diagnostic. Pure functions over the compliance models and \
- the scope topology - no OSGi components, no storage, no language.
+ a feature, the text a requirement cites when the analyser has a statement of its own to evidence, \
+ and how a finding becomes a Diagnostic. Pure functions over the compliance models and the scope \
+ topology - no OSGi components, no language.
 
 # Extracted from org.eclipse.fennec.model.atlas.qvt.gdpr (issue #365), where these classes were
 # package-private because there was one analyser. There are about to be several, and a second copy
@@ -16,6 +17,11 @@ Bundle-Description: What every static compliance analyser needs and none of them
 # differ, and the parts a reviewer of one language must be able to read on their own.
 #
 # No DS components on purpose. An analyser binds the services; this bundle is what it calls.
+# ComplianceContexts (issue #366) reads a registry and is still not a component: an analyser
+# already binds a scope service and already has a configuration to name its registries, so giving
+# this one of its own would add a PID to every deployment and a service whose target, left unset,
+# binds nothing and resolves nothing while the analyser carries on as though the context simply
+# had no such requirement.
 
 -workingset: ModelAtlas
 
@@ -28,7 +34,13 @@ Bundle-Description: What every static compliance analyser needs and none of them
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot
 
--testpath: junit-jupiter-api
+# junit-jupiter-api alone, as the sibling gdpr bundles have it: the engine and the platform
+# launcher come from the workspace build.gradle, and bnd's copies here as well would mix two
+# versions of the platform, at which point the engine discovers no tests at all. XMI is what
+# reading the seeded context files outside OSGi needs.
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.emf.ecore.xmi
 
 javac.source: 21
 javac.target: 21
