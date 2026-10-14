@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.qvt.gdpr;
+package org.eclipse.fennec.model.atlas.compliance.analysis;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.fennec.model.atlas.qvt.gdpr.StagedReviews.Candidate;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StagedReviews.Candidate;
 import org.eclipse.fennec.model.compliance.report.ReportFactory;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.junit.jupiter.api.DisplayName;
@@ -29,10 +29,10 @@ import org.junit.jupiter.api.Test;
 /**
  * Which review speaks for a metamodel revision when the reviews are spread over several stages.
  * <p>
- * The case this exists for: package visibility runs along a ladder, so a transformation in
- * {@code draft} routinely compiles against a metamodel that lives in {@code approved}. Looking only
- * where the transformation is would report that metamodel as unreviewed - not merely incomplete but
- * false, because the review of exactly those bytes is one stage up.
+ * The case this exists for: package visibility runs along a ladder, so an artefact in
+ * {@code draft} routinely rests on a metamodel that lives in {@code approved}. Looking only where
+ * the artefact is would report that metamodel as unreviewed - not merely incomplete but false,
+ * because the review of exactly those bytes is one stage up.
  */
 @DisplayName("The review that speaks for a revision, across stages")
 public class StagedReviewsTest {
@@ -44,7 +44,7 @@ public class StagedReviewsTest {
 	private static final Instant LATE = Instant.parse("2026-09-30T00:00:00Z");
 
 	@Test
-	@DisplayName("a review one stage up is found when the transformation's own stage has none")
+	@DisplayName("a review one stage up is found when the artefact's own stage has none")
 	public void aReviewFromAnotherStageIsFound() {
 		ComplianceReport approved = report("in-approved");
 
@@ -112,7 +112,7 @@ public class StagedReviewsTest {
 				List.of(new Candidate("draft", "r1", LATE, FP, report("in-draft"))));
 
 		assertTrue(resolved.isEmpty(),
-				"the list is also what decides which stages a transformation may rest on at all");
+				"the list is also what decides which stages an artefact may rest on at all");
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public class StagedReviewsTest {
 
 		assertEquals(hr, resolved.get("fp1:hr"));
 		assertEquals(payroll, resolved.get("fp1:payroll"),
-				"a transformation may read one metamodel from draft and another from release");
+				"an artefact may read one metamodel from draft and another from release");
 	}
 
 	@Test

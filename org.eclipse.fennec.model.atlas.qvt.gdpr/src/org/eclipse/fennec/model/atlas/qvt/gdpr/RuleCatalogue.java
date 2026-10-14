@@ -14,6 +14,8 @@
 package org.eclipse.fennec.model.atlas.qvt.gdpr;
 
 import java.util.Map;
+
+import org.eclipse.fennec.model.atlas.compliance.analysis.Reach;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,35 +45,6 @@ final class RuleCatalogue {
 
 	/** Which table of rules wrote a report. It goes into {@code ComplianceReport.generatedBy}. */
 	static final String VERSION = "qvt-flow-analysis/1";
-
-	/**
-	 * Which metamodel of a transformation a rule's statement is about, and therefore which one it
-	 * is written onto.
-	 * <p>
-	 * A transformation report is about the transformation, and the compiled unit carries all of it.
-	 * But a person maintaining one of the metamodels will never read that report, and half of what
-	 * it says is directly about their model - so those halves are written there too, and the split
-	 * is the whole point of the enum.
-	 */
-	enum Reach {
-
-		/** Read by the transformation: a statement about a field whose data goes elsewhere. */
-		SOURCE,
-
-		/** Written by the transformation: a statement about a field that receives data. */
-		TARGET,
-
-		/** Both ends have something to do about it, and what they would do differs. */
-		BOTH;
-
-		boolean touchesSource() {
-			return this != TARGET;
-		}
-
-		boolean touchesTarget() {
-			return this != SOURCE;
-		}
-	}
 
 	/** What the analyser can conclude from a flow and the reviews of its two ends. */
 	enum Rule {

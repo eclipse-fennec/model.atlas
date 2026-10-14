@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.qvt.gdpr;
+package org.eclipse.fennec.model.atlas.compliance.analysis;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -40,10 +40,10 @@ import org.eclipse.fennec.model.compliance.report.ComplianceReport;
  * <p>
  * Nothing here changes where a review is <em>stored</em>: a review still belongs to the stage of the
  * subject it reviewed. What is dropped is only the assumption that that stage is also the stage of
- * the transformation whose analysis rests on it - package visibility runs along a ladder, so a
- * transformation in an early stage routinely reads a metamodel of a later one.
+ * the artefact whose analysis rests on it - package visibility runs along a ladder, so an artefact
+ * in an early stage routinely reads a metamodel of a later one.
  */
-final class StagedReviews {
+public final class StagedReviews {
 
 	/**
 	 * One stored review, as a scan found it.
@@ -54,7 +54,7 @@ final class StagedReviews {
 	 * @param fingerprint the revision it is about
 	 * @param report      the review itself
 	 */
-	record Candidate(String stage, String objectId, Instant at, String fingerprint, ComplianceReport report) {
+	public record Candidate(String stage, String objectId, Instant at, String fingerprint, ComplianceReport report) {
 	}
 
 	private StagedReviews() {
@@ -68,7 +68,7 @@ final class StagedReviews {
 	 * @param candidates every review found, in any order
 	 * @return fingerprint to the review that speaks for it
 	 */
-	static Map<String, ComplianceReport> resolve(List<String> stageOrder, List<Candidate> candidates) {
+	public static Map<String, ComplianceReport> resolve(List<String> stageOrder, List<Candidate> candidates) {
 		Map<String, Candidate> best = new LinkedHashMap<>();
 		for (Candidate candidate : candidates) {
 			int rank = stageOrder.indexOf(candidate.stage());

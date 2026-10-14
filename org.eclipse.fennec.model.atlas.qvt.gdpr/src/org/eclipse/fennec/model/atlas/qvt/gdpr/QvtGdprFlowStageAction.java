@@ -29,7 +29,6 @@ import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.compliance.report.ReportPackage;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -39,6 +38,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StageLadder;
 
 /**
  * Derives the GDPR report of a compiled transformation when the unit enters a stage, and stores it
@@ -119,8 +119,6 @@ public class QvtGdprFlowStageAction implements StageActionService {
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a compiled unit. */
 	private static final String UNIT_TYPE = EcoreUtil.getURI(CompiledPackage.Literals.COMPILED_UNIT).toString();
-
-	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	/** Configuration of this component. */
 	@ObjectClassDefinition(name = "QVT GDPR Flow Analysis Stage Action")

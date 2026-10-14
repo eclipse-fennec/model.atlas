@@ -61,6 +61,7 @@ import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.eclipse.fennec.model.atlas.compliance.analysis.ReviewIndex;
 
 /**
  * The analyser, against the transformation the probe of 2026-09-23 ran end to end.

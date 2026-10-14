@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.qvt.gdpr;
+package org.eclipse.fennec.model.atlas.compliance.analysis;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -26,16 +26,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * Where a transformation's metamodels may be, seen from the stage the transformation is in.
+ * Where an analysed artefact's metamodels may be, seen from the stage the artefact is in.
  * <p>
- * It has to be the same set the compiler could resolve them from, which is what
+ * It has to be the same set the artefact could resolve them from, which is what
  * {@code SchemaRegistryChainConfigurator} builds: one EPackage registry per stage of the schema
  * registry, chained in declared order, stage[i] pointing at stage[i+1] and the last at the parent
- * scope. Wider than that would let a draft review speak for a released transformation; narrower
- * would report a metamodel as unreviewed when its review is exactly where the compiler found the
- * model.
+ * scope. Wider than that would let a draft review speak for a released artefact; narrower would
+ * report a metamodel as unreviewed when its review is exactly where the artefact found the model.
  */
-@DisplayName("The stages a transformation's metamodels may be in")
+@DisplayName("The stages an artefact's metamodels may be in")
 public class StageLadderTest {
 
 	private static final ScopeApiFactory SCOPE = ScopeApiFactory.eINSTANCE;
@@ -92,7 +91,7 @@ public class StageLadderTest {
 	public void stagesSeeingIsTheInverseOfTheLadder() {
 		ScopeInfo scope = scope("draft", "approved", "release");
 
-		// A review landing in approved makes stale the transformations in draft and in approved,
+		// A review landing in approved makes stale the artefacts in draft and in approved,
 		// and none in release - which is exactly the set of stages that can see approved.
 		assertEquals(List.of("draft", "approved"), StageLadder.stagesSeeing(scope, "approved"));
 		assertEquals(List.of("draft"), StageLadder.stagesSeeing(scope, "draft"),

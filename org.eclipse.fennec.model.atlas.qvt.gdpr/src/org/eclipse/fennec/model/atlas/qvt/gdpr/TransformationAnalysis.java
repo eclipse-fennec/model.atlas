@@ -40,6 +40,8 @@ import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.PackageSubject;
 import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.osgi.util.promise.Promise;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StageLadder;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StagedReviews;
 
 /**
  * Deriving a transformation's report and storing it, independently of what asked for it.
