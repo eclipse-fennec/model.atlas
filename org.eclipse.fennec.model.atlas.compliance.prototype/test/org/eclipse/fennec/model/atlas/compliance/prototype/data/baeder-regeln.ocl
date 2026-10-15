@@ -1,0 +1,42 @@
+-- Regeln der Stadtbaeder Dimcity, als Complete-OCL-Dokument.
+--
+-- Hand written: no deployment holds an .ocl document yet. Every feature touched here is one the
+-- review of baeder-source.ecore already classified, and none was chosen to make a rule fire - the
+-- document is what a validation layer for this domain would plausibly contain.
+
+package baedersource
+
+context KarteninhaberBesuch
+
+  -- Ein Besuch hat einen Ein- und einen Auslass.
+  inv besuchHatEinUndAuslass:
+      not self.einlass.oclIsUndefined() and not self.auslass.oclIsUndefined()
+
+  -- Anzeigename fuer die Kassenoberflaeche.
+  def : anzeigename : String = self.vorname + ' ' + self.nachname
+
+  -- Auskunft ueber die Karte, aufrufbar wo das Dokument registriert ist.
+  def : kartenAuskunft() : String = 'Karte ' + self.kartenNr
+
+context KarteninhaberBesuch::dauerMinuten : Real
+
+  -- Aufenthaltsdauer aus Ein- und Auslass.
+  derive: if self.einlass.oclIsUndefined() or self.auslass.oclIsUndefined() then 0 else 1 endif
+
+context Tagesbesucher::anzahl : Integer
+
+  -- Tagessumme aus den Einzelbesuchen desselben Bereichs.
+  derive: KarteninhaberBesuch.allInstances()->select(b | b.bereich = self.bereich)->size()
+
+context Checkin
+
+  -- Ein Karteninhaber sieht nur die eigenen Check-ins.
+  def : eigeneCheckins() : Integer =
+      Checkin.allInstances()->select(c | c.kartenNr = self.kartenNr)->size()
+
+context Feedback
+
+  -- Freitext darf keinen Personenbezug enthalten.
+  inv feedbackOhnePersonenbezug: not self.enthaeltPersonenbezug
+
+endpackage

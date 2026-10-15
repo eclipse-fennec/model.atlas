@@ -1,8 +1,8 @@
 Bundle-Name: Model Atlas Compliance Analysis Prototype
-Bundle-Description: A prototype, not a product. Derives a static GDPR report for an OCL constraint \
- set, an eorm persistence mapping, a sensiNact provider mapping and a catalogue of saved queries \
- and commands, all from one stored review of one metamodel, to find out what such a report looks \
- like before the analysers are built for real.
+Bundle-Description: A prototype, not a product. Derives a static GDPR report for a compiled \
+ Complete OCL document, an OCL constraint set, an eorm persistence mapping, a sensiNact provider \
+ mapping and a catalogue of saved queries and commands, all from one stored review of one \
+ metamodel, to find out what such a report looks like before the analysers are built for real.
 
 # Why this exists and what it is allowed to be
 #
@@ -52,8 +52,7 @@ Bundle-Description: A prototype, not a product. Derives a static GDPR report for
 	junit-jupiter-api,\
 	org.eclipse.emf.ecore.xmi,\
 	org.eclipse.fennec.m2x.ocl.parser;version=latest,\
-	org.antlr.antlr4-runtime;version=latest,\
-	org.eclipse.fennec.m2x.unit;version=latest
+	org.antlr.antlr4-runtime;version=latest
 
 -privatepackage: org.eclipse.fennec.model.atlas.compliance.prototype
 

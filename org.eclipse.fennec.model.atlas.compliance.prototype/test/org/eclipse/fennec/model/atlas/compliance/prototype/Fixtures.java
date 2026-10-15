@@ -66,6 +66,13 @@ final class Fixtures {
 		if (baederSource == null) {
 			Resource resource = load("data/baeder-source.ecore", new EcoreResourceFactoryImpl());
 			baederSource = (EPackage) resource.getContents().get(0);
+			// The resource is addressed by the package's own nsURI, as a registered EPackage is
+			// everywhere in the Atlas. Anything that serializes a reference INTO this package -
+			// a compiled OCL unit does, for every feature its AST reads - writes that nsURI as
+			// the href, and reading it back resolves through the package registry. Left at the
+			// classpath path it was loaded from, the href would be a relative file name that
+			// resolves nowhere, and every reference would come back a proxy.
+			resource.setURI(URI.createURI(baederSource.getNsURI()));
 		}
 		return baederSource;
 	}
