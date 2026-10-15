@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. Housekeeping: feedback older than the cut-off keeps its stars and its area and
+     loses its free text and its contact address. The template addresses features by the EMF
+     feature id within the selector's root type - Feedback[4] is text, Feedback[6] is email -
+     which is what makes an update template joinable to a review at all.
+     Whether this counts as a pseudonymisation measure depends on an inventory no runtime here
+     holds, so the report says NOT_ASSESSED and names the entries rather than guessing. -->
+<cmd:UpdateCommand xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:cmd="https://eclipse.org/fennec/command/1.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="feedback-anonymisieren">
+
+  <selector name="feedback-anonymisieren-selektor">
+    <from href="https://dimcity.example/baeder/source/1.0.0#//Feedback"/>
+    <predicate xsi:type="expr:Comparison" operator="LT">
+      <left xsi:type="expr:PropertyPath">
+        <segments xsi:type="ecore:EAttribute"
+            href="https://dimcity.example/baeder/source/1.0.0#//Feedback/zeitpunkt"/>
+      </left>
+      <right xsi:type="expr:ParameterRef" name="stichtag"/>
+    </predicate>
+    <parameters name="stichtag"/>
+  </selector>
+
+  <template id="feedback-anonymisieren-template" streamId="baeder-housekeeping">
+    <entries kind="SET" featureId="4" valueNew=""/>
+    <entries kind="SET" featureId="6" valueNew=""/>
+  </template>
+
+</cmd:UpdateCommand>

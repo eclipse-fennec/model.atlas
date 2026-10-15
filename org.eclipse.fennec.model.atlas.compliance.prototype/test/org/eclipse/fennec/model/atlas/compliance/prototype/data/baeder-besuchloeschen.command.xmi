@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. The erasure path for a cardholder's visits: a DeleteCommand is a Query
+     selector and nothing else, so the catalogue itself records which classifiers the operator
+     can actually erase on request. This one covers KarteninhaberBesuch. Nothing in the
+     catalogue covers Checkin, SaunaBesuch or Feedback, which is the point. -->
+<cmd:DeleteCommand xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:cmd="https://eclipse.org/fennec/command/1.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="besuch-loeschen">
+
+  <selector name="besuch-loeschen-selektor">
+    <from href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch"/>
+    <predicate xsi:type="expr:Comparison" operator="EQ">
+      <left xsi:type="expr:PropertyPath">
+        <segments xsi:type="ecore:EAttribute"
+            href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/kartenNr"/>
+      </left>
+      <right xsi:type="expr:ParameterRef" name="kartenNr"/>
+    </predicate>
+    <parameters name="kartenNr"/>
+  </selector>
+
+</cmd:DeleteCommand>

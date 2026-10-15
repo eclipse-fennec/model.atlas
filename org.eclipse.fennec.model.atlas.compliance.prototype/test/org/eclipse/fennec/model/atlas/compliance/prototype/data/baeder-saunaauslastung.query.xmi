@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. The capacity report: how many sauna visits per postcode and year of birth.
+     Nobody's name appears anywhere, which is exactly why it is here - the two group keys are
+     the review's QUASI_IDENTIFIER fields, and a group of one is a person. The source model
+     already knows the remedy: AuslastungFenster and Tagesbesucher both carry an
+     'unterdrueckt' flag for small counts. SaunaBesuch does not. -->
+<query:Query xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:query="https://eclipse.org/fennec/query/2.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="sauna-auslastung" saveQuery="true">
+
+  <from href="https://dimcity.example/baeder/source/1.0.0#//SaunaBesuch"/>
+
+  <apply>
+    <stages xsi:type="query:GroupByStage">
+      <paths>
+        <segments xsi:type="ecore:EAttribute"
+            href="https://dimcity.example/baeder/source/1.0.0#//SaunaBesuch/plz"/>
+      </paths>
+      <paths>
+        <segments xsi:type="ecore:EAttribute"
+            href="https://dimcity.example/baeder/source/1.0.0#//SaunaBesuch/geburtsjahr"/>
+      </paths>
+      <aggregates method="COUNT" alias="anzahl">
+        <path>
+          <segments xsi:type="ecore:EAttribute"
+              href="https://dimcity.example/baeder/source/1.0.0#//SaunaBesuch/id"/>
+        </path>
+      </aggregates>
+    </stages>
+  </apply>
+
+</query:Query>

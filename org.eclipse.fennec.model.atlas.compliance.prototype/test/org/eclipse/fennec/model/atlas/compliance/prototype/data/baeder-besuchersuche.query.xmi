@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written: no deployment catalogues a Query in the Atlas yet. A support desk search -
+     "find the visit of the person who is standing at the counter" - which is the most ordinary
+     saved query there is, and the one that touches the most. It names no output, so it hands out
+     every feature KarteninhaberBesuch has; it bounds nothing; and it carries the name it was
+     last run for, which is how a personal datum ends up stored inside a query. -->
+<query:Query xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:query="https://eclipse.org/fennec/query/2.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="besucher-suche" saveQuery="true">
+
+  <from href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch"/>
+
+  <predicate xsi:type="expr:StringMatch" kind="CONTAINS" caseInsensitive="true">
+    <source xsi:type="expr:PropertyPath">
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//KarteninhaberBesuch/nachname"/>
+    </source>
+    <pattern xsi:type="expr:StringLiteral" value="Mustermann"/>
+  </predicate>
+
+</query:Query>

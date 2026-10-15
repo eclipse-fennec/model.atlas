@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. The monthly feedback export for the operations meeting. Unlike the search it
+     names exactly what it wants - and what it wants is three features the review classified as
+     direct identifiers. A projection is the clearest flow there is: these values leave the
+     store because this query says so. -->
+<query:Query xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:query="https://eclipse.org/fennec/query/2.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="feedback-export" saveQuery="true">
+
+  <from href="https://dimcity.example/baeder/source/1.0.0#//Feedback"/>
+
+  <select alias="zeitpunkt">
+    <path>
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Feedback/zeitpunkt"/>
+    </path>
+  </select>
+  <select alias="kommentar">
+    <path>
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Feedback/text"/>
+    </path>
+  </select>
+  <select alias="kontakt">
+    <path>
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Feedback/email"/>
+    </path>
+  </select>
+  <select alias="karte">
+    <path>
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Feedback/kartenNr"/>
+    </path>
+  </select>
+
+  <orderBy direction="DESC" nulls="LAST">
+    <path>
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Feedback/zeitpunkt"/>
+    </path>
+  </orderBy>
+
+</query:Query>

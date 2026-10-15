@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand written. The same shape as besucher-suche, written the way it should be: the value it
+     filters on arrives as a parameter rather than sitting in the stored document, and the result
+     is bounded. What it still does is expand into Checkin.standort, and the containment closure
+     of Checkin carries lat and lon - which this query never names and the review classifies as
+     LOCATION_DATA. -->
+<query:Query xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:query="https://eclipse.org/fennec/query/2.0.0"
+    xmlns:expr="https://eclipse.org/fennec/expression/1.0.0"
+    name="checkin-verlauf" saveQuery="true" top="100">
+
+  <from href="https://dimcity.example/baeder/source/1.0.0#//Checkin"/>
+
+  <predicate xsi:type="expr:Comparison" operator="EQ">
+    <left xsi:type="expr:PropertyPath">
+      <segments xsi:type="ecore:EAttribute"
+          href="https://dimcity.example/baeder/source/1.0.0#//Checkin/kartenNr"/>
+    </left>
+    <right xsi:type="expr:ParameterRef" name="kartenNr"/>
+  </predicate>
+
+  <expand>
+    <path>
+      <segments xsi:type="ecore:EReference"
+          href="https://dimcity.example/baeder/source/1.0.0#//Checkin/standort"/>
+    </path>
+  </expand>
+
+  <parameters name="kartenNr"/>
+
+</query:Query>

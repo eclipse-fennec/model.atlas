@@ -1,8 +1,8 @@
 Bundle-Name: Model Atlas Compliance Analysis Prototype
 Bundle-Description: A prototype, not a product. Derives a static GDPR report for an OCL constraint \
- set, an eorm persistence mapping and a sensiNact provider mapping, all from one stored review of \
- one metamodel, to find out what such a report looks like before the three analysers are built \
- for real.
+ set, an eorm persistence mapping, a sensiNact provider mapping and a catalogue of saved queries \
+ and commands, all from one stored review of one metamodel, to find out what such a report looks \
+ like before the analysers are built for real.
 
 # Why this exists and what it is allowed to be
 #
@@ -35,8 +35,13 @@ Bundle-Description: A prototype, not a product. Derives a static GDPR report for
 	org.eclipse.fennec.m2x.ocl.api;version=latest,\
 	org.eclipse.fennec.m2x.ocl.model;version=latest,\
 	org.eclipse.fennec.m2x.ocl.engine;version=latest,\
+	org.eclipse.fennec.m2x.unit;version=latest,\
 	org.eclipse.fennec.event.atlas.mapping;version=latest,\
-	org.eclipse.fennec.persistence.orm;version=latest
+	org.eclipse.fennec.persistence.orm;version=latest,\
+	org.eclipse.fennec.expression.model;version=latest,\
+	org.eclipse.fennec.query.model;version=latest,\
+	org.eclipse.fennec.command.model;version=latest,\
+	org.eclipse.fennec.stream.model;version=latest
 
 # junit-jupiter-api alone, as the sibling gdpr bundles have it: the engine and the platform
 # launcher come from the workspace build.gradle, and bnd's copies here as well would mix two

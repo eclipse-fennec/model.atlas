@@ -198,6 +198,10 @@ com.h2database:h2:2.3.232
 
 org.eclipse.fennec.event.atlas:org.eclipse.fennec.event.atlas.mapping:1.0.0-SNAPSHOT
 org.eclipse.fennec.persistence:org.eclipse.fennec.persistence.orm:0.1.0-SNAPSHOT
+org.eclipse.fennec.persistence:org.eclipse.fennec.expression.model:0.1.0-SNAPSHOT
+org.eclipse.fennec.persistence:org.eclipse.fennec.query.model:0.1.0-SNAPSHOT
+org.eclipse.fennec.persistence:org.eclipse.fennec.command.model:0.1.0-SNAPSHOT
+org.eclipse.fennec.persistence:org.eclipse.fennec.stream.model:0.1.0-SNAPSHOT
 
 
 # DCAT.Atlas client (replaces the hand-placed jars formerly in cnf/local)
