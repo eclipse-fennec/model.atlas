@@ -110,11 +110,34 @@ class DocumentationMessageBodyWriterTest {
     }
 
     @Test
-    void refusesWhatItCannotDocument() {
-        assertFalse(writer.isWriteable(EcoreFactory.eINSTANCE.createEAnnotation().getClass(), null, null, HTML),
-                "an EObject that is neither a package nor a classifier");
+    void refusesAMediaTypeItDoesNotServe() {
         assertFalse(writer.isWriteable(ePackage.getClass(), null, null, MediaType.APPLICATION_JSON_TYPE),
                 "a media type this bundle does not serve");
+    }
+
+    /**
+     * An object that is neither a package nor a classifier is claimed, and refused at write time.
+     *
+     * <p>
+     * Nothing else in the runtime serves these media types - the codec writers key on a
+     * {@code Resource.Factory}, and documentation has none - so withdrawing here leaves the request
+     * with no writer at all, which Jersey can only answer with a 500 (issue #363).
+     * </p>
+     */
+    @Test
+    void answers406ForAnEObjectItCannotDocument() {
+        EObject annotation = EcoreFactory.eINSTANCE.createEAnnotation();
+        assertTrue(writer.isWriteable(annotation.getClass(), null, null, MARKDOWN),
+                "claimed, so that writeTo is reached and can answer");
+
+        WebApplicationException failure = assertThrows(WebApplicationException.class,
+                () -> writer.writeTo(annotation, annotation.getClass(), null, null, MARKDOWN, headers(),
+                        new ByteArrayOutputStream()));
+
+        assertEquals(406, failure.getResponse().getStatus());
+        assertTrue(String.valueOf(failure.getResponse().getEntity())
+                .contains("http://www.eclipse.org/emf/2002/Ecore#//EAnnotation"),
+                "the message names what was asked for documentation, as the sibling type errors do");
     }
 
     @Test

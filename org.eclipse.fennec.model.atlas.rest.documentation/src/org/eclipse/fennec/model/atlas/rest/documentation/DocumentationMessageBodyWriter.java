@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.emf.util.documentation.generators.apis.EcoreToDocumentationOptions;
 import org.eclipse.fennec.emf.util.documentation.generators.apis.EcoreToDocumentationService;
 import org.osgi.service.component.annotations.Component;
@@ -85,13 +86,22 @@ public class DocumentationMessageBodyWriter implements MessageBodyWriter<EObject
     jakarta.inject.Provider<ContainerRequestContext> requestContextProvider;
 
     /**
-     * Deliberately indifferent to the {@code diagram} parameter: a writer that withdrew over an
-     * unsupported combination would leave the request with no writer at all, which is a 500. Being
-     * chosen is what lets {@link #writeTo} answer the 400 the caller can act on.
+     * Claims every {@link EObject} in a format a bound generator produces, and not only the ones
+     * that can be documented.
+     *
+     * <p>
+     * A writer that withdrew here would leave the request with no writer at all, because nothing
+     * else in the runtime serves these media types: the codec writers key on a
+     * {@code Resource.Factory} and documentation has none, and the request filter has already
+     * accepted the {@code Accept} header against one list that spans every endpoint. Jersey can
+     * only answer that with a 500, which says nothing a caller can act on (issue #363). Being
+     * chosen is what lets {@link #writeTo} answer the {@code 406} instead - the same reason this
+     * method is indifferent to the {@code diagram} parameter and its {@code 400}.
+     * </p>
      */
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return isDocumentable(type) && generatorFor(mediaType) != null;
+        return EObject.class.isAssignableFrom(type) && generatorFor(mediaType) != null;
     }
 
     @Override
@@ -104,6 +114,7 @@ public class DocumentationMessageBodyWriter implements MessageBodyWriter<EObject
             // isWriteable said yes and the generator went away between then and now.
             throw new WebApplicationException(Status.NOT_ACCEPTABLE);
         }
+        requireDocumentable(t, mediaType);
         EcoreToDocumentationOptions mode = requireSupportedMode(generator, subtype(mediaType), requestedDiagram());
 
         CharSequence documentation = t instanceof EPackage ePackage ? generator.generateDocumentation(ePackage, mode)
@@ -115,8 +126,27 @@ public class DocumentationMessageBodyWriter implements MessageBodyWriter<EObject
      * Documentation is generated from the model's own description of itself, so only Ecore's own
      * elements can be written. A package and a classifier are what the generators accept.
      */
-    private static boolean isDocumentable(Class<?> type) {
-        return EPackage.class.isAssignableFrom(type) || EClassifier.class.isAssignableFrom(type);
+    private static boolean isDocumentable(Object object) {
+        return object instanceof EPackage || object instanceof EClassifier;
+    }
+
+    /**
+     * Refuses an object there is no documentation to generate from.
+     *
+     * <p>
+     * The caller asked an endpoint that answers with data for a format that only describes a
+     * schema. That is a content negotiation the server cannot satisfy, so it is the caller's to
+     * fix and the message says what the format does apply to.
+     * </p>
+     */
+    private static void requireDocumentable(EObject object, MediaType mediaType) {
+        if (isDocumentable(object)) {
+            return;
+        }
+        throw new WebApplicationException(Response.status(Status.NOT_ACCEPTABLE)
+                .entity(subtype(mediaType) + " is generated documentation, which only an EPackage or one of its "
+                        + "classifiers has. This resource answered with " + EcoreUtil.getURI(object.eClass()) + ".")
+                .type(MediaType.TEXT_PLAIN).build());
     }
 
     /**
