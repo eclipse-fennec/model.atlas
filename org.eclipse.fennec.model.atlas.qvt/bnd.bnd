@@ -23,4 +23,4 @@ Bundle-Description: Hosts QVT-O transformations in the Model Atlas (issue #239):
 	org.eclipse.fennec.m2x.qvto.engine;version=latest,\
 	org.eclipse.fennec.m2x.qvto.model;version=latest,\
 	org.eclipse.fennec.m2x.ocl.api;version=latest,\
-	org.eclipse.fennec.m2x.qvtd.api
+	org.eclipse.fennec.m2x.qvtd.api;version=latest
