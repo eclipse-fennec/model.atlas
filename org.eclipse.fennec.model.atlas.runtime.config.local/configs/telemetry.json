@@ -1,0 +1,12 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"org.eclipse.osgi.technology.opentelemetry.core.sender.logging": {
+		"serviceName": "model-atlas-local",
+		"serviceVersion": "0.1.0-SNAPSHOT"
+	},
+	"org.eclipse.fennec.model.atlas.telemetry": {
+		"scope": "org.eclipse.fennec.model.atlas",
+		"packageSeries": false
+	}
+}

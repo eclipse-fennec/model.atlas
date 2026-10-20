@@ -15,6 +15,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -buildpath: \
+	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.osgi.framework;version=latest,\
 	org.osgi.util.promise;version=latest,\
 	org.osgi.service.cm;version=latest,\
