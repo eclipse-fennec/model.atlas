@@ -45,6 +45,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StageLadder;
 
 /**
  * Writes what a transformation does to a metamodel onto that metamodel (issue #319, WP3).

@@ -50,6 +50,7 @@ import org.eclipse.fennec.model.compliance.report.ReportOrigin;
 import org.eclipse.fennec.model.compliance.report.PackageSubject;
 import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.eclipse.fennec.model.compliance.report.TransformationSubject;
+import org.eclipse.fennec.model.atlas.compliance.analysis.ReviewIndex;
 
 /**
  * Derives the GDPR report of a compiled transformation from the reviews of the metamodels it was
@@ -97,9 +98,6 @@ final class FlowAnalysis {
 			+ "assert compliance or non-compliance, and it is not a substitute for a review of this "
 			+ "transformation by a person. A rule nobody wrote down never fires, so an absence of findings is "
 			+ "not a statement that there is nothing to find.";
-
-	/** The GDPR itself. Not a citation - the corpus a report is against when no review named one. */
-	private static final String GDPR_CELEX = "32016R0679";
 
 	/** Where the target fields whose name says the value arrives as prose are recognised. */
 	private static final Set<String> FREE_TEXT_NAMES = Set.of("comment", "comments", "note", "notes",

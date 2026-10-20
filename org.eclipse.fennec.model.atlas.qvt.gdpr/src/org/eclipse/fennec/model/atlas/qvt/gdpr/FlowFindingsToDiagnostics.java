@@ -22,18 +22,21 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.fennec.model.atlas.compliance.analysis.FindingDiagnostics;
+import org.eclipse.fennec.model.atlas.compliance.analysis.FindingDiagnostics.Element;
+import org.eclipse.fennec.model.atlas.compliance.analysis.FindingDiagnostics.ElementKey;
+import org.eclipse.fennec.model.atlas.compliance.analysis.ReviewIndex;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
-import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.RuleCatalogue.Rule;
 import org.eclipse.fennec.model.compliance.report.CombinationFinding;
 import org.eclipse.fennec.model.compliance.report.Evaluation;
-import org.eclipse.fennec.model.compliance.report.Evidence;
 import org.eclipse.fennec.model.compliance.report.Finding;
 import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.eclipse.fennec.model.compliance.report.TransformationSubject;
+
+import static org.eclipse.fennec.model.atlas.compliance.analysis.FindingDiagnostics.blankToNull;
 
 /**
  * Projects a transformation's report onto the <em>metamodels</em> it is about (issue #319, WP3).
@@ -102,15 +105,6 @@ final class FlowFindingsToDiagnostics {
 
 	/** Code of the one root per producer: what this transformation does to this model. */
 	static final String CODE_TRANSFORMATION = "gdpr.transformation";
-
-	/** Prefix of every claim code, so a client recognises one without knowing the categories. */
-	static final String CODE_FINDING_PREFIX = "gdpr.finding.";
-
-	/** The diagnostic category the whole GDPR family writes under. */
-	static final String CATEGORY = "compliance";
-
-	/** What a claim is badged with when the finding names no data category at all. */
-	private static final String UNCLASSIFIED = "unclassified";
 
 	/** The categories that place the data outside the Regulation, as the GDPR context names them. */
 	private static final Set<String> BENIGN = Set.of("NOT_PERSONAL_DATA", "ANONYMOUS");
@@ -296,124 +290,13 @@ final class FlowFindingsToDiagnostics {
 
 	private static List<Diagnostic> rootsOf(TransformationSubject subject, Map<ElementKey, Element> elements,
 			String source) {
-		if (elements.isEmpty()) {
-			// An empty list, not an empty root: it is what clears what an earlier analysis of this
-			// transformation left on the model, and a root with no children would read as a
-			// transformation that was examined and found to do nothing.
-			return List.of();
-		}
-		List<Diagnostic> nodes = new ArrayList<>(elements.size());
-		DiagnosticSeverity worst = DiagnosticSeverity.INFO;
-		int claims = 0;
-		for (Map.Entry<ElementKey, Element> entry : elements.entrySet()) {
-			Diagnostic node = entry.getValue().toDiagnostic(entry.getKey(), source);
-			claims += node.getChildren().size();
-			if (node.getSeverity().getValue() > worst.getValue()) {
-				worst = node.getSeverity();
-			}
-			nodes.add(node);
-		}
-		Diagnostic root = diagnostic(CODE_TRANSFORMATION, null, worst,
-				String.format("%s: %d finding%s on %d element%s", subject.getQualifiedName(), claims,
-						claims == 1 ? "" : "s", nodes.size(), nodes.size() == 1 ? "" : "s"),
-				source);
-		root.getChildren().addAll(nodes);
-		return List.of(root);
-	}
-
-	/**
-	 * What one element node is: one rule's statement about one feature of one model.
-	 * <p>
-	 * A {@code null} feature addresses the model as a whole, which is right for a rule that speaks
-	 * about a set rather than a field - {@code NOT_PROPAGATED} is the one. It cannot collide with
-	 * anything, because the code is part of the key and each rule contributes at most one such
-	 * node per model.
-	 */
-	private record ElementKey(String code, String feature) {
-	}
-
-	/** The claims gathered on one element, folded per {@code (category, relevance)}. */
-	private static final class Element {
-
-		private final Map<String, Claim> claims = new LinkedHashMap<>();
-
-		void add(Finding finding, String category, RelevanceLevel relevance) {
-			claims.computeIfAbsent(findingCode(category, relevance), code -> new Claim(category, relevance))
-					.add(finding);
-		}
-
-		Diagnostic toDiagnostic(ElementKey key, String source) {
-			List<Diagnostic> children = new ArrayList<>(claims.size());
-			List<String> headline = new ArrayList<>(claims.size());
-			DiagnosticSeverity worst = DiagnosticSeverity.INFO;
-			for (Map.Entry<String, Claim> entry : claims.entrySet()) {
-				Claim claim = entry.getValue();
-				DiagnosticSeverity severity = severityOf(claim.relevance);
-				children.add(diagnostic(entry.getKey(), key.feature(), severity, claim.message(), source));
-				headline.add(claim.label());
-				if (severity.getValue() > worst.getValue()) {
-					worst = severity;
-				}
-			}
-			Diagnostic element = diagnostic(key.code(), key.feature(), worst, String.join(", ", headline), source);
-			element.getChildren().addAll(children);
-			return element;
-		}
-	}
-
-	/**
-	 * What one {@code (category, relevance)} pair on one element amounts to.
-	 * <p>
-	 * Deliberately not the review mapper's claim: that one folds several signals about one field
-	 * into a single verdict and merges confidence and recommendations with it. Here the findings
-	 * being folded came from different rules and each states something of its own, so what is kept
-	 * is each rule's own sentence, in order, and the citations they carried over.
-	 */
-	private static final class Claim {
-
-		private final String category;
-		private final RelevanceLevel relevance;
-		private final List<String> rationales = new ArrayList<>();
-		private final Set<String> citations = new LinkedHashSet<>();
-
-		Claim(String category, RelevanceLevel relevance) {
-			this.category = category == null ? UNCLASSIFIED : category;
-			this.relevance = relevance == null ? RelevanceLevel.NONE : relevance;
-		}
-
-		void add(Finding finding) {
-			String rationale = blankToNull(finding.getRationale());
-			if (rationale != null && !rationales.contains(rationale)) {
-				rationales.add(rationale);
-			}
-			for (Evidence evidence : finding.getEvidence()) {
-				String citation = blankToNull(evidence.getCitationId());
-				if (citation != null) {
-					citations.add(citation);
-				}
-			}
-		}
-
-		String label() {
-			return category + " (" + relevance.getName() + ")";
-		}
-
-		/** The report's own words, and what it quoted. Nothing here is composed. */
-		String message() {
-			StringBuilder message = new StringBuilder(rationales.isEmpty() ? label() : String.join(" ", rationales));
-			if (!citations.isEmpty()) {
-				message.append(" | Evidence: ").append(String.join(", ", citations));
-			}
-			return message.toString();
-		}
+		// An empty map answers with an empty list, not an empty root: that is what clears what an
+		// earlier analysis of this transformation left on the model, and a root with no children
+		// would read as a transformation that was examined and found to do nothing.
+		return FindingDiagnostics.rootsOf(CODE_TRANSFORMATION, subject.getQualifiedName(), elements, source);
 	}
 
 	/* ------------------------------------------------------------------ small helpers */
-
-	static String findingCode(String category, RelevanceLevel relevance) {
-		return CODE_FINDING_PREFIX + (category == null ? UNCLASSIFIED : category) + "."
-				+ (relevance == null ? RelevanceLevel.NONE : relevance).getName();
-	}
 
 	/**
 	 * Whether the finding says there is nothing of concern. The same reading the review mapper
@@ -428,38 +311,6 @@ final class FlowFindingsToDiagnostics {
 		return !categories.isEmpty() && BENIGN.containsAll(categories);
 	}
 
-	/**
-	 * How serious it is, in the vocabulary the object's metadata uses. Never {@code ERROR}: that
-	 * means the check did not run, and an analysis that ran and found something is not a failure of
-	 * the check. What did not run is said on the compiled unit, where the report is.
-	 */
-	private static DiagnosticSeverity severityOf(RelevanceLevel relevance) {
-		if (relevance == null) {
-			return DiagnosticSeverity.INFO;
-		}
-		return switch (relevance) {
-		case MEDIUM, HIGH -> DiagnosticSeverity.WARNING;
-		case LOW, NONE -> DiagnosticSeverity.INFO;
-		};
-	}
-
-	private static Diagnostic diagnostic(String code, String target, DiagnosticSeverity severity, String message,
-			String source) {
-		Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
-		diagnostic.setCode(code);
-		diagnostic.setTarget(target);
-		diagnostic.setSeverity(severity);
-		diagnostic.setMessage(message);
-		diagnostic.setCategory(CATEGORY);
-		if (source != null) {
-			diagnostic.setSource(source);
-		}
-		return diagnostic;
-	}
-
-	private static String blankToNull(String value) {
-		return value == null || value.isBlank() ? null : value.trim();
-	}
 
 
 }

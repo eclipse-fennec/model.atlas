@@ -41,6 +41,7 @@ import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
+import org.eclipse.fennec.model.atlas.compliance.analysis.StageLadder;
 
 /**
  * Re-derives a transformation's GDPR report when a review it rests on changes (issue #319, WP4).

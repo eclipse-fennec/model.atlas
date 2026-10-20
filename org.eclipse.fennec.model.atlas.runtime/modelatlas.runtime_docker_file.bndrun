@@ -59,6 +59,7 @@
 	org.eclipse.fennec.compliance.report.history.model,\
 	org.eclipse.fennec.model.atlas.gdpr.history,\
 	org.eclipse.fennec.model.atlas.gdpr.diagnostics,\
+	org.eclipse.fennec.model.atlas.compliance.analysis,\
 	org.eclipse.fennec.model.atlas.qvt.gdpr,\
 	org.eclipse.fennec.codec.ods,\
 	org.eclipse.fennec.codec.tabular,\
