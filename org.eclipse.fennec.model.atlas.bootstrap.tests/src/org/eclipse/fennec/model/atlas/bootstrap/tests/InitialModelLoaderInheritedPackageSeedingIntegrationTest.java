@@ -52,6 +52,7 @@ import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.Scalar;
 import org.osgi.test.common.annotation.Property.Type;
+import org.osgi.test.common.annotation.config.WithConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
@@ -145,6 +146,9 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "registryService.target", value = "(|(registry.name=" + CommonTestAnnotations.SCHEMA_REGISTRY_NAME
                 + ")(registry.name=" + InitialModelLoaderInheritedPackageSeedingIntegrationTest.REGISTRY + "))"),
         @Property(key = "registryService.cardinality.minimum", value = "2", scalar = Scalar.Integer) })
+// The gate in front of the loader is only registered from a configured activation (issue
+// #362); this test requires no bundle-shipped model, and says so with an empty configuration.
+@WithConfiguration(pid = "InitialModelLoaderRequiredModels", location = "?")
 @DisplayName("InitialModelLoader: seeded instances of an inherited package (issue #339)")
 public class InitialModelLoaderInheritedPackageSeedingIntegrationTest {
 

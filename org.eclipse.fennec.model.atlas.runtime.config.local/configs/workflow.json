@@ -1,6 +1,9 @@
 {
     ":configurator:resource-version": 1,
     ":configurator:version": "1.0.0",
+    "InitialModelLoaderRequiredModels": {
+        "required.models": []
+    },
     "EPackageStageActionService": {
         "trigger.stages": ["draft", "approved", "release"],
         "storageService.target": "(storage.type=file)"
