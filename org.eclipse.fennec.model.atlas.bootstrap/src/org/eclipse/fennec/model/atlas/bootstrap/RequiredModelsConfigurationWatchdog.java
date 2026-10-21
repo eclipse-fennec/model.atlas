@@ -31,22 +31,18 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * Says so when the {@link RequiredModelsCondition} configuration never arrives (issue #362).
+ * Says so when the {@link RequiredModelsCondition} configuration never arrives.
  *
  * <p>
- * The condition requires its configuration, so a deployment that ships none registers no
- * {@code atlas.initial.models.ready} and the {@link InitialModelLoader}, whose only gate is a
- * mandatory reference to it, never activates. Nothing is seeded — and nothing says so: the scope,
- * its registries and the health checks all come up exactly as configured, only the contents are
- * missing. The condition's own {@code required.models.wait.seconds} watchdog cannot report it,
- * because it is scheduled from the activation that did not happen.
+ * Without it the condition registers nothing and the {@link InitialModelLoader}, gated on it,
+ * never activates: nothing is seeded, and nothing reports it, because the condition's own
+ * {@code required.models.wait.seconds} watchdog is scheduled from the activation that did not
+ * happen. Everything else — scope, registries, health checks — comes up as configured.
  * </p>
  *
  * <p>
- * Hence this component, which is deliberately the one thing here that needs no configuration of
- * its own: it exists to notice that a configuration is absent, so it cannot be gated on one. It
- * looks once, {@value #WAIT_SECONDS} seconds in — two orders of magnitude more than the second or
- * so the configurator actually takes — and logs an error if the PID is still not there.
+ * Needs no configuration of its own, on purpose: it exists to notice that a configuration is
+ * absent, so it cannot be gated on one.
  * </p>
  */
 @Component(name = RequiredModelsConfigurationWatchdog.PID, immediate = true,
@@ -79,7 +75,7 @@ public class RequiredModelsConfigurationWatchdog {
         watchdog.shutdownNow();
     }
 
-    /** Looks the PID up and reports it missing. Package visible so a test can drive it. */
+    /** Package visible so a test can drive it. */
     void reportIfUnconfigured() {
         try {
             Configuration[] configurations = configAdmin
@@ -96,9 +92,8 @@ public class RequiredModelsConfigurationWatchdog {
     }
 
     /**
-     * @param configurations what {@link ConfigurationAdmin#listConfigurations(String)} answered —
+     * @param configurations what {@link ConfigurationAdmin#listConfigurations(String)} answered,
      *            {@code null} when nothing matched
-     * @param waitSeconds how long was waited, for the message
      * @return the error to log, or {@code null} when the configuration is there
      */
     static String configurationMissingMessage(Configuration[] configurations, long waitSeconds) {

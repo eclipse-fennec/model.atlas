@@ -35,28 +35,12 @@ import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
 /**
- * The gate {@code RequiredModelsCondition} puts in front of the {@code InitialModelLoader}
- * must not open before the deployment has said what it requires (issue #362).
+ * {@code atlas.initial.models.ready} is registered only from a configured activation: the gate
+ * stays shut while nothing has been configured, and an empty {@code required.models} opens it.
  *
  * <p>
- * An unconfigured activation cannot tell "this deployment requires nothing" from "the
- * configuration has not been delivered yet". Registering {@code atlas.initial.models.ready}
- * from such an activation lets the loader read the seed folder before the model bundles have
- * registered their EPackages, which fails the start with a {@code PackageNotFoundException}
- * about a second before the configuration arrives.
- * </p>
- *
- * <p>
- * So the condition is registered only from a configured activation, and a deployment that
- * requires nothing says so with an empty {@code required.models}. Both halves are asserted
- * here: the gate stays shut while nothing has been configured, and an empty configuration is
- * enough to open it.
- * </p>
- *
- * <p>
- * The assertion is on the {@link Condition} <em>service</em> rather than on the component's
- * state, because the service is what the loader's mandatory reference binds to — a component
- * that activates but registers nothing would otherwise look like a working gate.
+ * Asserted on the {@link Condition} service rather than on the component's state, because the
+ * service is what the loader's mandatory reference binds to.
  * </p>
  */
 @RequireConfigurationAdmin
@@ -93,9 +77,7 @@ public class RequiredModelsConditionGateIntegrationTest {
         ConfigurationAdmin cm = cmAware.waitForService(SETTLE_MS);
         assertNotNull(cm, "ConfigurationAdmin should be available");
 
-        // Whatever another test left behind: this deployment has said nothing about required
-        // models, which is the state a runtime is in between framework start and the
-        // configurator delivering its files.
+        // Whatever an earlier test left behind: this deployment has said nothing.
         cm.getConfiguration(REQUIRED_MODELS_PID, "?").delete();
 
         assertNull(awaitAbsent(readyAware),
@@ -124,10 +106,6 @@ public class RequiredModelsConditionGateIntegrationTest {
                         + REQUIRED_MODELS + ", and the loader must then start");
     }
 
-    /**
-     * The condition may still be registered from an earlier state; give it a chance to go away
-     * before concluding that it is absent.
-     */
     private static Condition awaitAbsent(ServiceAware<Condition> aware) throws InterruptedException {
         long deadline = System.currentTimeMillis() + SETTLE_MS;
         while (System.currentTimeMillis() < deadline) {

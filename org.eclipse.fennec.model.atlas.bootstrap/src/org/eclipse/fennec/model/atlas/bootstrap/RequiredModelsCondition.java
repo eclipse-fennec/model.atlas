@@ -59,12 +59,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * </p>
  *
  * <p>
- * The configuration is required, not optional (issue #362). An activation without one
- * cannot tell "this deployment requires nothing" from "the configuration has not been
- * delivered yet", and registering the condition from such an activation opens the gate
- * about a second before the configurator arrives — long enough for the loader to read
- * the seed folder and fail on a package no bundle has registered yet. A deployment that
- * requires no bundle-shipped model therefore says so explicitly, with an empty
+ * The configuration is required, not optional: an activation without one cannot tell
+ * "this deployment requires nothing" from "the configuration has not arrived yet". A
+ * deployment that requires no bundle-shipped model says so with an empty
  * {@code required.models}.
  * </p>
  *

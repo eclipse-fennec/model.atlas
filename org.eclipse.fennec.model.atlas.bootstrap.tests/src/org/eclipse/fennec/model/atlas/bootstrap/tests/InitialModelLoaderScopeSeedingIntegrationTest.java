@@ -115,8 +115,6 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "registryService.target", value = "(registry.name=" + CommonTestAnnotations.SCHEMA_REGISTRY_NAME
                 + ")"),
         @Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer) })
-// The gate in front of the loader is only registered from a configured activation (issue
-// #362); this test requires no bundle-shipped model, and says so with an empty configuration.
 @WithConfiguration(pid = "InitialModelLoaderRequiredModels", location = "?")
 @DisplayName("InitialModelLoader Scope Seeding Integration Tests")
 public class InitialModelLoaderScopeSeedingIntegrationTest {

@@ -22,17 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.osgi.service.cm.Configuration;
 
 /**
- * Since issue #362 the gate in front of the {@code InitialModelLoader} is only registered from a
- * configured activation, so a deployment that ships no {@code InitialModelLoaderRequiredModels}
- * gets a loader that never activates — and the watchdog inside the gate never runs either, because
- * it is scheduled from the activation that did not happen.
- *
- * <p>
- * Nothing would then be seeded and nothing would say so: the scope, its registries and the health
- * checks all come up exactly as they should, and only the contents are missing. This message is
- * the one thing standing between that and a week of wondering, so it is asserted rather than
- * trusted.
- * </p>
+ * A deployment that ships no {@code InitialModelLoaderRequiredModels} gets a loader that never
+ * activates, and seeds nothing. This message is the only thing that says so, so it is asserted
+ * rather than trusted.
  */
 @DisplayName("InitialModelLoader — the message when the required-models configuration never arrives")
 class RequiredModelsConfigurationWatchdogTest {
@@ -55,8 +47,7 @@ class RequiredModelsConfigurationWatchdogTest {
 	@Test
 	@DisplayName("an empty result reads as absent, not as present")
 	void treatsAnEmptyResultAsMissing() {
-		// ConfigurationAdmin.listConfigurations answers null for 'none matched', but a zero-length
-		// array is just as empty and must not be read as a configuration that is there.
+		// listConfigurations answers null for 'none matched'; an empty array is just as absent.
 		String message = RequiredModelsConfigurationWatchdog.configurationMissingMessage(new Configuration[0], 60);
 
 		assertNotNull(message, "an empty result is still a missing configuration");
