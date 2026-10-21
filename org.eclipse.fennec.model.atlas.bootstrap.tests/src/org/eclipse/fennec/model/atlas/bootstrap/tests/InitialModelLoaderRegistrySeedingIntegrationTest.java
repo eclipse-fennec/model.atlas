@@ -49,6 +49,7 @@ import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.Scalar;
 import org.osgi.test.common.annotation.Property.Type;
+import org.osgi.test.common.annotation.config.WithConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
@@ -112,6 +113,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "registryService.target", value = "(registry.name="
                 + InitialModelLoaderRegistrySeedingIntegrationTest.REGISTRY_NAME + ")"),
         @Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer) })
+@WithConfiguration(pid = "InitialModelLoaderRequiredModels", location = "?")
 @DisplayName("InitialModelLoader Registry Seeding Integration Tests")
 public class InitialModelLoaderRegistrySeedingIntegrationTest {
 
