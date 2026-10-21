@@ -65,11 +65,13 @@ public interface AtlasRuntime {
      * {@link InstanceDTO#endpoints}.
      *
      * <p>
-     * A configuration property rather than a service property, which is what the Jakarta RS
-     * whiteboard uses for the same thing: the change count has to be published through
-     * {@code ServiceRegistration.setProperties}, and that call replaces the whole dictionary, so a
-     * second property set beside it would be dropped on the first update. The endpoints travel in
-     * the snapshot instead, where nothing can wipe them.
+     * A configuration property rather than a service property, because a deployment is what
+     * supplies it — and because it is only half the answer. Where this Atlas actually serves is
+     * taken from the Jakarta RS whiteboard when it is there, and a configured value overrides it;
+     * the snapshot reports whichever applies. A service property could carry only the configured
+     * half, since it is fixed when the service is registered and the whiteboard may publish later,
+     * so filtering on it would silently miss every Atlas that discovered its own endpoint. The
+     * endpoints travel in the snapshot instead, where the two cases read alike.
      * </p>
      */
     String ATLAS_ENDPOINT = "atlas.endpoint";

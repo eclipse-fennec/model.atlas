@@ -4,16 +4,14 @@
 -runbundles.local: org.eclipse.fennec.model.atlas.runtime.config.local
 
 # The runtime service, for looking at a live Atlas from the shell. Local only — the
-# deployed images are not touched. services.model is here because services.api imports
-# org.eclipse.fennec.services from it; without it the api bundle does not resolve.
+# deployed images are not touched.
 #
 # No start level, so these come up after everything else. That is harmless here and only
 # here: the service tracks what is already registered when it opens, so a late start costs
 # it nothing, unlike a bundle that has to be in place before the model loader runs.
 -runbundles.runtimeinfo: \
 	org.eclipse.fennec.model.atlas.runtime.info,\
-	org.eclipse.fennec.services.api,\
-	org.eclipse.fennec.services.model
+	org.eclipse.fennec.services.runtime
 
 # Metrics from the runtime service, local only. The chain is: the logging sender publishes an
 # OpenTelemetry, core.commons turns that into the MeterProvider our component binds. The sender

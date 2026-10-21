@@ -207,13 +207,10 @@ org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.osgi:1.0.0-SNAPSHOT
 
 
 # Runtime service pattern: ChangeCountPublisher and the BrokerRuntime/ClientRuntime
-# precedent the Atlas runtime service follows (eclipse-fennec/emf.services).
-# TODO ask upstream whether ChangeCountPublisher can live in a lighter bundle. Taking it
-# costs two bundles, not one: the api bundle imports org.eclipse.fennec.services, which
-# only the broker's model bundle exports, so an Atlas runtime that wants a change-count
-# publisher installs the broker's EMF model to get it.
-org.eclipse.fennec.services:org.eclipse.fennec.services.api:0.1.0-SNAPSHOT
-org.eclipse.fennec.services:org.eclipse.fennec.services.model:0.1.0-SNAPSHOT
+# precedent the Atlas runtime service follows (eclipse-fennec/emf.services). The runtime
+# package moved into a bundle of its own there, free of the broker's EMF model, so this is
+# one bundle now rather than the api and model pair it used to take.
+org.eclipse.fennec.services:org.eclipse.fennec.services.runtime:0.1.0-SNAPSHOT
 
 # OpenTelemetry, for org.eclipse.fennec.model.atlas.telemetry only. The repack carries
 # both the API and the SDK; the integrations are what a deployment installs beside it.
