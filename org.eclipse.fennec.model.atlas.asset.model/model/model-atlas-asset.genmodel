@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.asset.model/src" modelPluginID="org.eclipse.fennec.model.atlas.asset.model"
+    modelName="model-atlas-asset" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" suppressGenModelAnnotations="false"
+    copyrightFields="false" operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>model-atlas-asset.ecore</foreignModel>
+  <genPackages prefix="ModelAtlasAsset" basePackage="org.eclipse.fennec.model.atlas.asset.model"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="model-atlas-asset.ecore#/">
+    <genClasses ecoreClass="model-atlas-asset.ecore#//StageableAsset">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/scope"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/registry"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/stage"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/assetType"/>
+    </genClasses>
+    <genClasses ecoreClass="model-atlas-asset.ecore#//FingerprintableAsset">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//FingerprintableAsset/fingerprint"/>
+    </genClasses>
+    <genClasses ecoreClass="model-atlas-asset.ecore#//SchemaAsset">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//SchemaAsset/nsURI"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//SchemaAsset/nsPrefix"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="Inventory" ecorePackage="inventory.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="inventory.ecore#//AssetRelationKind">
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//AssetRelationKind/DEPENDS_ON"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//AssetRelationKind/RUNS_ON"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//AssetRelationKind/CONNECTS_TO"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//AssetRelationKind/PART_OF"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="inventory.ecore#//SourceKind">
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/SERVICE_SPEC"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/DEPLOYMENT"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/EPACKAGE"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/TRANSFORMATION"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/REPORT"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/DOCUMENT"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/DATASET"/>
+      <genEnumLiterals ecoreEnumLiteral="inventory.ecore#//SourceKind/OTHER"/>
+    </genEnums>
+    <genClasses ecoreClass="inventory.ecore#//Asset">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//Asset/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//Asset/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//Asset/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//Asset/owner"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/relations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/sources"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/aspects"/>
+    </genClasses>
+    <genClasses ecoreClass="inventory.ecore#//AssetRelation">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/kind"/>
+      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference inventory.ecore#//AssetRelation/target"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/rationale"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//AssetRelation/source"/>
+    </genClasses>
+    <genClasses ecoreClass="inventory.ecore#//SourceRef">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/kind"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/format"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/uri"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/sourceRevision"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/name"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//SourceRef/object"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="inventory.ecore#//Aspect"/>
+  </genPackages>
+</genmodel:GenModel>
