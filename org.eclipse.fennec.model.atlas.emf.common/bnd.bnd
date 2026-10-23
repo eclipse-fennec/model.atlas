@@ -1,3 +1,8 @@
 -library: enableEMF
 -workingset: atlas
+
+# EPackageVersions states a version as org.osgi.framework.Version.
+-buildpath: \
+	osgi.core
+
 -testpath: junit-jupiter-api

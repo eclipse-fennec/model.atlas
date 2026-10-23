@@ -1,0 +1,25 @@
+Bundle-Name: Model Atlas - Runtime Service Integration Tests
+Bundle-Description: OSGi integration tests for the Atlas runtime service: that it is \
+ registered exactly once, that it is there when nothing it reports on is, and that its \
+ change count actually reaches a watcher.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot
+
+Private-Package: \
+	org.eclipse.fennec.model.atlas.runtime.info.tests
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.runtime.info
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

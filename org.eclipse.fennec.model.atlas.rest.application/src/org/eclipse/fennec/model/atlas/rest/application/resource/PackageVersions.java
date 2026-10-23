@@ -14,7 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.osgi.framework.Version;
 
 import jakarta.ws.rs.WebApplicationException;

@@ -43,7 +43,7 @@ import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
-import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
