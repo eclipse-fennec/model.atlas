@@ -37,7 +37,6 @@ Bundle-Developers: \
 	fennecTest,\
 	fennecEMF,\
 	fennecM2X,\
-	fennecJPA,\
 	fennecQVT,\
 	fennecUtil,\
 	geckoMessaging,\
