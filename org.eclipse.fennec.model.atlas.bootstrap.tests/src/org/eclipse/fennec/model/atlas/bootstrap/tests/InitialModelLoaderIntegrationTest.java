@@ -49,6 +49,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
+import org.osgi.test.common.annotation.config.WithConfiguration;
 import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
@@ -71,6 +72,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
+@WithConfiguration(pid = "InitialModelLoaderRequiredModels", location = "?")
 @DisplayName("InitialModelLoader OSGi Integration Tests")
 public class InitialModelLoaderIntegrationTest {
 

@@ -59,13 +59,18 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * </p>
  *
  * <p>
- * Without a configuration nothing is required and the condition is registered right
- * away, so a deployment that seeds no bundle-shipped model is not held back. A model
- * that never arrives keeps the loader from starting; after
+ * The configuration is required, not optional: an activation without one cannot tell
+ * "this deployment requires nothing" from "the configuration has not arrived yet". A
+ * deployment that requires no bundle-shipped model says so with an empty
+ * {@code required.models}.
+ * </p>
+ *
+ * <p>
+ * A model that never arrives keeps the loader from starting; after
  * {@code required.models.wait.seconds} the missing nsURIs are logged.
  * </p>
  */
-@Component(name = RequiredModelsCondition.PID, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Component(name = RequiredModelsCondition.PID, immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = RequiredModelsCondition.Config.class)
 public class RequiredModelsCondition {
 
