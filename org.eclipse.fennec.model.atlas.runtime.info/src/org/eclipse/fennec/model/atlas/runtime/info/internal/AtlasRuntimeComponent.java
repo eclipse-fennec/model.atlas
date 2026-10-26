@@ -274,7 +274,8 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
     @Override
     public AtlasRuntimeDTO snapshot() {
         return SnapshotBuilder.build(name, instance(), changeCount.get(), System.currentTimeMillis(), trackedScopes(),
-                trackedPackages(), codecTypes(), trackedContributors(), FailureScanner.scan(componentRuntime));
+                trackedPackages(), resourceSetTypes(), trackedContributors(),
+                FailureScanner.scan(componentRuntime));
     }
 
     private InstanceDTO instance() {
@@ -353,7 +354,17 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
         return tracked;
     }
 
-    private List<String> codecTypes() {
+    /**
+     * What the resource set announces, as a flat list of strings.
+     *
+     * <p>
+     * Flat is all there is: {@code SupportedMediatype} derives it from the resource set's
+     * content-type map and appends the formats a bundle announces without a {@code Resource.Factory}
+     * behind them, and by here the two are one list. The snapshot says so rather than guessing which
+     * is which.
+     * </p>
+     */
+    private List<String> resourceSetTypes() {
         SupportedMediatype types = supportedMediatype;
         if (types == null) {
             return List.of();

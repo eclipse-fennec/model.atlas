@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.runtime.info.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -205,7 +204,7 @@ class SnapshotBuilderTest {
     }
 
     @Test
-    @DisplayName("a contributor's media type is reported as a contributor's, not as a codec's")
+    @DisplayName("a contributor's media type names its service; a resource-set type names none")
     void mediaTypeOriginIsReported() {
         AtlasRuntimeDTO dto = SnapshotBuilder.build("atlas", new InstanceDTO(), 0L, 0L, List.of(), List.of(),
                 List.of("application/json", "text/html"), List.of(new TrackedContributor(42L, List.of("text/html"))),
@@ -215,10 +214,9 @@ class SnapshotBuilderTest {
         var json = dto.mediaTypes.stream().filter(t -> "application/json".equals(t.mediaType)).findFirst().orElseThrow();
         var html = dto.mediaTypes.stream().filter(t -> "text/html".equals(t.mediaType)).findFirst().orElseThrow();
 
-        assertEquals(SnapshotBuilder.ORIGIN_CODEC, json.origin);
-        assertTrue(json.universal);
+        assertEquals(SnapshotBuilder.ORIGIN_RESOURCE_SET, json.origin);
+        assertEquals(-1L, json.serviceId, "the resource set's list carries no service to name");
         assertEquals(SnapshotBuilder.ORIGIN_CONTRIBUTOR, html.origin, "a contributor's claim wins: it is why it is served");
         assertEquals(42L, html.serviceId);
-        assertFalse(html.universal, "announced for the whole REST layer, produced only where a writer exists");
     }
 }

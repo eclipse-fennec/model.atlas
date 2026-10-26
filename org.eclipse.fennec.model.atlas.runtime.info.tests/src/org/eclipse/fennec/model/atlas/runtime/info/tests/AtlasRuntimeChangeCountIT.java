@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.runtime.info.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Dictionary;
@@ -160,8 +159,7 @@ public class AtlasRuntimeChangeCountIT {
         AtlasRuntimeDTO withContributor = context.getService(reference()).snapshot();
         MediaTypeDTO entry = withContributor.mediaTypes.stream()
                 .filter(type -> "application/vnd.origin+xml".equals(type.mediaType)).findFirst().orElseThrow();
-        assertEquals("CONTRIBUTOR", entry.origin, "a declared type is not a codec's");
-        assertFalse(entry.universal, "announced for the whole REST layer, produced only where a writer exists");
+        assertEquals("CONTRIBUTOR", entry.origin, "a declared type is not one the resource set announced");
         assertTrue(entry.serviceId > 0, "the entry names who announced it");
 
         long beforeRemoval = publishedCount();

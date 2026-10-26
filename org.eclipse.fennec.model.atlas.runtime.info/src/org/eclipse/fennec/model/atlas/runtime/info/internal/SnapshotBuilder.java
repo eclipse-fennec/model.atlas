@@ -70,8 +70,8 @@ final class SnapshotBuilder {
     /** The built-in root scope, whose content is the globally registered packages. */
     static final String ATLAS_SCOPE = "atlas";
 
-    /** What a media type reports as {@code origin} when a codec announced it. */
-    static final String ORIGIN_CODEC = "CODEC";
+    /** What a media type reports as {@code origin} when the resource set announces it. */
+    static final String ORIGIN_RESOURCE_SET = "RESOURCE_SET";
 
     /** What a media type reports as {@code origin} when a contributor declared it. */
     static final String ORIGIN_CONTRIBUTOR = "CONTRIBUTOR";
@@ -88,13 +88,13 @@ final class SnapshotBuilder {
      * @param takenAt       the moment of the snapshot, in epoch milliseconds
      * @param scopes        the live scope services
      * @param packages      the live EPackage services that carry a scope
-     * @param codecTypes    the media types the resource set announces
+     * @param resourceSetTypes the media types the resource set announces
      * @param contributors  the declared media types, by contributor
      * @param scanned       the failures the component runtime knows about
      * @return the snapshot; never {@code null}
      */
     static AtlasRuntimeDTO build(String name, InstanceDTO instance, long changeCount, long takenAt,
-            List<TrackedScope> scopes, List<TrackedPackage> packages, List<String> codecTypes,
+            List<TrackedScope> scopes, List<TrackedPackage> packages, List<String> resourceSetTypes,
             List<TrackedContributor> contributors, ScannedFailures scanned) {
 
         AtlasRuntimeDTO dto = new AtlasRuntimeDTO();
@@ -102,7 +102,7 @@ final class SnapshotBuilder {
         dto.changeCount = changeCount;
         dto.takenAt = takenAt;
         dto.instance = instance;
-        dto.mediaTypes = mediaTypes(codecTypes, contributors);
+        dto.mediaTypes = mediaTypes(resourceSetTypes, contributors);
 
         List<ScopeRuntimeDTO> scopeDtos = new ArrayList<>();
         List<FailedScopeDTO> failedScopes = new ArrayList<>(scanned.scopes());
@@ -308,26 +308,25 @@ final class SnapshotBuilder {
         return failed;
     }
 
-    private static List<MediaTypeDTO> mediaTypes(List<String> codecTypes, List<TrackedContributor> contributors) {
+    private static List<MediaTypeDTO> mediaTypes(List<String> resourceSetTypes,
+            List<TrackedContributor> contributors) {
         Map<String, MediaTypeDTO> byType = new LinkedHashMap<>();
-        for (String type : codecTypes) {
+        for (String type : resourceSetTypes) {
             MediaTypeDTO dto = new MediaTypeDTO();
             dto.mediaType = type;
-            dto.origin = ORIGIN_CODEC;
+            dto.origin = ORIGIN_RESOURCE_SET;
             dto.serviceId = -1;
-            dto.universal = true;
             byType.put(type, dto);
         }
-        // A contributor's types are announced for the whole REST layer whether or not every
-        // endpoint can produce them, so a type a contributor declares is reported as its own even
-        // when the codec list already carries it: the origin is what a reader needs.
+        // A type a contributor declares is reported as its own even when the resource set's list
+        // already carries it: the contributor is the one thing here with a service behind it, so
+        // naming it is strictly more than the other branch can say.
         for (TrackedContributor contributor : contributors) {
             for (String type : contributor.mediaTypes()) {
                 MediaTypeDTO dto = new MediaTypeDTO();
                 dto.mediaType = type;
                 dto.origin = ORIGIN_CONTRIBUTOR;
                 dto.serviceId = contributor.serviceId();
-                dto.universal = false;
                 byType.put(type, dto);
             }
         }
