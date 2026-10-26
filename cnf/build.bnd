@@ -45,7 +45,8 @@ Bundle-Developers: \
 	jakartaREST,\
 	fennecCodec,\
 	fennecEMFModels,\
-	fennecMCP
+	fennecMCP,\
+	fennecPersistence
 
 
 # Needed because we enabled library 'gecko-dimc'

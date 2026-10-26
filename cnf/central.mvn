@@ -221,3 +221,6 @@ org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.openteleme
 org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.core.sender.logging:0.1.0-SNAPSHOT
 org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.integration.cm:0.1.0-SNAPSHOT
 org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.integration.scr:0.1.0-SNAPSHOT
+
+#Persistence
+org.eclipse.fennec.persistence:org.eclipse.fennec.persistence.workspace.library:0.1.0-SNAPSHOT

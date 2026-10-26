@@ -1,2 +1,3 @@
 -library: enableEMF
 
+-buildpath: org.eclipse.fennec.model.atlas.asset.model;version=snapshot

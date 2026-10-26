@@ -13,7 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.asset.api;
 
+import org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset;
 import org.osgi.annotation.versioning.ProviderType;
+
+import inventory.AssetRelation;
 
 /**
  * 
@@ -23,6 +26,12 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface AssetService {
 
-	// TODO: interface provided by template
+	StageableAsset saveAsset(StageableAsset asset);
+	
+	StageableAsset getAssetById(String assetId);
+	
+	boolean deleteAsset(String assetId);
+	
+	boolean addAssetRelation(AssetRelation assetRelation, String assetId);
 
 }

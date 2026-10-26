@@ -1,0 +1,6 @@
+-library: enableEMF
+-buildpath: \
+	org.eclipse.fennec.model.atlas.asset.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.asset.model;version=snapshot,\
+	org.eclipse.fennec.persistence.repository,\
+	org.eclipse.fennec.model.atlas.action.api
