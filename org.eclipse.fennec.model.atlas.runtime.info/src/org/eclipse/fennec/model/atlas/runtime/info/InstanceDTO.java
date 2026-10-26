@@ -13,8 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.runtime.info;
 
-import java.util.List;
-
 import org.osgi.dto.DTO;
 
 /**
@@ -26,9 +24,6 @@ public class InstanceDTO extends DTO {
 
     /** How this instance is identified, where a deployment says so. */
     public String id;
-
-    /** The base URL(s) this Atlas serves on, as the {@code atlas.endpoint} property carries them. */
-    public List<String> endpoints;
 
     /**
      * The version of the Atlas implementation itself.

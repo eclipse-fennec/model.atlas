@@ -10,16 +10,16 @@ Bundle-Description: What this Atlas holds, as OSGi DTOs: every live scope with i
 -library: enableEMF
 
 -buildpath: \
-	osgi.core,\
-	osgi.cmpn,\
-	org.osgi.service.component.annotations,\
-	org.osgi.annotation.versioning,\
-	org.osgi.annotation.bundle,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.annotation.versioning;version=latest,\
+	org.osgi.annotation.bundle;version=latest,\
 	org.eclipse.fennec.services.runtime;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
-	org.eclipse.fennec.emf.osgi.api
+	org.eclipse.fennec.emf.osgi.api;version=latest,\
+	org.osgi.dto;version=latest,\
+	org.osgi.service.component;version=latest
 
 -testpath: junit-jupiter-api

@@ -17,11 +17,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.fennec.model.atlas.mediatypes.api.MediatypeContributor;
 import org.eclipse.fennec.model.atlas.runtime.info.AtlasRuntime;
 import org.eclipse.fennec.model.atlas.runtime.info.AtlasRuntimeDTO;
@@ -30,10 +35,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
@@ -46,7 +53,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
  *
  * <p>
  * The unit tests prove what a snapshot says about a given state. What they cannot prove is the part
- * that only exists in a framework: that the count moves when something the service tracks arrives,
+ * that only exists in a framework: that the count moves when something the service observes arrives,
  * that the moved count is published onto the service registration, and that the framework delivers
  * it as a property change. That is the whole subscription protocol, and it is three separate things
  * that can each silently not happen.
@@ -70,11 +77,17 @@ public class AtlasRuntimeChangeCountIT {
 
     private ServiceRegistration<MediatypeContributor> contributor;
 
+    private ServiceRegistration<EPackage> ePackage;
+
     @AfterEach
     public void unregisterContributor() {
         if (contributor != null) {
             contributor.unregister();
             contributor = null;
+        }
+        if (ePackage != null) {
+            ePackage.unregister();
+            ePackage = null;
         }
     }
 
@@ -100,7 +113,7 @@ public class AtlasRuntimeChangeCountIT {
     }
 
     @Test
-    @DisplayName("a service the runtime tracks arriving moves the published change count")
+    @DisplayName("a service the runtime observes arriving moves the published change count")
     void trackedArrivalMovesTheCount() throws Exception {
         long before = publishedCount();
         assertTrue(before >= 0, "the property must be there before anything changes");
@@ -159,6 +172,46 @@ public class AtlasRuntimeChangeCountIT {
         AtlasRuntimeDTO without = context.getService(reference()).snapshot();
         assertTrue(without.mediaTypes.stream().noneMatch(type -> "application/vnd.origin+xml".equals(type.mediaType)),
                 "a withdrawn contributor's types go with it");
+    }
+
+    @Test
+    @DisplayName("an EPackage is observed through its reference and never asked for")
+    void ePackagesAreObservedWithoutBeingDereferenced() throws Exception {
+        AtomicInteger dereferenced = new AtomicInteger();
+        ServiceFactory<EPackage> factory = new ServiceFactory<>() {
+
+            @Override
+            public EPackage getService(Bundle bundle, ServiceRegistration<EPackage> registration) {
+                dereferenced.incrementAndGet();
+                return EcorePackage.eINSTANCE;
+            }
+
+            @Override
+            public void ungetService(Bundle bundle, ServiceRegistration<EPackage> registration, EPackage service) {
+                // nothing to release: the instance is the singleton Ecore package
+            }
+        };
+        Dictionary<String, Object> properties = new Hashtable<>();
+        properties.put("emf.nsURI", "http://example.org/untouched");
+        properties.put("emf.name", "untouched");
+
+        long before = publishedCount();
+        ePackage = context.registerService(EPackage.class, factory, properties);
+
+        awaitCountAbove(before);
+
+        // The runtime binds EPackages as ServiceReferences, and everything it reports about one
+        // comes off the service properties. Asking for the object would activate the component
+        // behind it, which turns a snapshot — taken on every telemetry collection — into something
+        // that starts things up.
+        assertEquals(0, dereferenced.get(), "a snapshot observes packages, it does not activate them");
+
+        long beforeRemoval = publishedCount();
+        ePackage.unregister();
+        ePackage = null;
+        awaitCountAbove(beforeRemoval);
+
+        assertEquals(0, dereferenced.get(), "nor on the way out");
     }
 
     private ServiceRegistration<MediatypeContributor> register(String mediaType) {

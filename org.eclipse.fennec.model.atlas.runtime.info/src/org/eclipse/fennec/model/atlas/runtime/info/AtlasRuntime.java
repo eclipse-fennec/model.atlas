@@ -61,22 +61,6 @@ import org.osgi.framework.Constants;
 public interface AtlasRuntime {
 
     /**
-     * The configuration property naming the base URL(s) this Atlas serves on, reported as
-     * {@link InstanceDTO#endpoints}.
-     *
-     * <p>
-     * A configuration property rather than a service property, because a deployment is what
-     * supplies it — and because it is only half the answer. Where this Atlas actually serves is
-     * taken from the Jakarta RS whiteboard when it is there, and a configured value overrides it;
-     * the snapshot reports whichever applies. A service property could carry only the configured
-     * half, since it is fixed when the service is registered and the whiteboard may publish later,
-     * so filtering on it would silently miss every Atlas that discovered its own endpoint. The
-     * endpoints travel in the snapshot instead, where the two cases read alike.
-     * </p>
-     */
-    String ATLAS_ENDPOINT = "atlas.endpoint";
-
-    /**
      * What this Atlas holds now.
      *
      * <p>

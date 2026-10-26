@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.runtime.info.SchemaPackageDTO;
 import org.eclipse.fennec.model.atlas.runtime.info.ScopeRuntimeDTO;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
@@ -63,8 +64,21 @@ import io.opentelemetry.api.metrics.ObservableLongGauge;
  * the Atlas changed, which no gauge over the current state can answer — a scope that comes and goes
  * between two collections looks unchanged to every one of them.
  * </p>
+ *
+ * <p>
+ * <strong>It requires its configuration.</strong> Metrics cost money per series, and
+ * {@link TelemetryConfig#packageSeries()} is the switch that decides whether this Atlas reports an
+ * unbounded number of them — that is a deployment's decision, and a component that starts without
+ * one has made it on the deployment's behalf. So no configuration, no gauges: the same stance the
+ * OpenTelemetry sender below this component takes, which is why the local runtime ships
+ * {@code configs/telemetry.json} for both. The cost of
+ * {@link ConfigurationPolicy#REQUIRE} is that adding this bundle without that file is silent, and
+ * it is the right way round — telemetry that is quiet is a missing graph, telemetry that defaults
+ * itself on is a bill.
+ * </p>
  */
-@Component(configurationPid = "org.eclipse.fennec.model.atlas.telemetry", immediate = true)
+@Component(configurationPid = "org.eclipse.fennec.model.atlas.telemetry",
+        configurationPolicy = ConfigurationPolicy.REQUIRE, immediate = true)
 public class AtlasTelemetry {
 
     private static final Logger LOG = Logger.getLogger(AtlasTelemetry.class.getName());
