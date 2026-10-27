@@ -36,6 +36,7 @@ import org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.impl.StageableAssetImpl#getRegistry <em>Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.impl.StageableAssetImpl#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.impl.StageableAssetImpl#getAssetType <em>Asset Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.impl.StageableAssetImpl#getObjectId <em>Object Id</em>}</li>
  * </ul>
  *
  * @generated
@@ -120,6 +121,26 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 	 * @ordered
 	 */
 	protected String assetType = ASSET_TYPE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getObjectId() <em>Object Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getObjectId()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String OBJECT_ID_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getObjectId() <em>Object Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getObjectId()
+	 * @generated
+	 * @ordered
+	 */
+	protected String objectId = OBJECT_ID_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -238,6 +259,29 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 	 * @generated
 	 */
 	@Override
+	public String getObjectId() {
+		return objectId;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setObjectId(String newObjectId) {
+		String oldObjectId = objectId;
+		objectId = newObjectId;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ModelAtlasAssetPackage.STAGEABLE_ASSET__OBJECT_ID, oldObjectId, objectId));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case ModelAtlasAssetPackage.STAGEABLE_ASSET__SCOPE:
@@ -248,6 +292,8 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 				return getStage();
 			case ModelAtlasAssetPackage.STAGEABLE_ASSET__ASSET_TYPE:
 				return getAssetType();
+			case ModelAtlasAssetPackage.STAGEABLE_ASSET__OBJECT_ID:
+				return getObjectId();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -271,6 +317,9 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 				return;
 			case ModelAtlasAssetPackage.STAGEABLE_ASSET__ASSET_TYPE:
 				setAssetType((String)newValue);
+				return;
+			case ModelAtlasAssetPackage.STAGEABLE_ASSET__OBJECT_ID:
+				setObjectId((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -296,6 +345,9 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 			case ModelAtlasAssetPackage.STAGEABLE_ASSET__ASSET_TYPE:
 				setAssetType(ASSET_TYPE_EDEFAULT);
 				return;
+			case ModelAtlasAssetPackage.STAGEABLE_ASSET__OBJECT_ID:
+				setObjectId(OBJECT_ID_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -316,6 +368,8 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 				return STAGE_EDEFAULT == null ? stage != null : !STAGE_EDEFAULT.equals(stage);
 			case ModelAtlasAssetPackage.STAGEABLE_ASSET__ASSET_TYPE:
 				return ASSET_TYPE_EDEFAULT == null ? assetType != null : !ASSET_TYPE_EDEFAULT.equals(assetType);
+			case ModelAtlasAssetPackage.STAGEABLE_ASSET__OBJECT_ID:
+				return OBJECT_ID_EDEFAULT == null ? objectId != null : !OBJECT_ID_EDEFAULT.equals(objectId);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -338,6 +392,8 @@ public class StageableAssetImpl extends AssetImpl implements StageableAsset {
 		result.append(stage);
 		result.append(", assetType: ");
 		result.append(assetType);
+		result.append(", objectId: ");
+		result.append(objectId);
 		result.append(')');
 		return result.toString();
 	}

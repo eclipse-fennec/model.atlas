@@ -38,7 +38,7 @@ public class ModelAtlasAssetEPackageConfigurator implements EPackageConfigurator
 	 * service property.
 	 * @generated
 	 */
-	public static final String FINGERPRINT = "fp1:4f15cb85321f327f9887bcda98c62456d94aaa4c3afd4ac87143e0807361fd9a";
+	public static final String FINGERPRINT = "fp1:f7f8286adc48a55181e34582be0f2b19a6cdb552558d1e0e44ff4c420ce4821e";
 
 	private ModelAtlasAssetPackage ePackage;
 

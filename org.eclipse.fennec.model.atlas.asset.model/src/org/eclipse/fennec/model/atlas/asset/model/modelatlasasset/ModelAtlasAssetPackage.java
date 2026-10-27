@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ModelAtlasAssetPackage.eNS_URI, fingerprint = "fp1:4f15cb85321f327f9887bcda98c62456d94aaa4c3afd4ac87143e0807361fd9a", genModel = "/model/model-atlas-asset.genmodel", genModelSourceLocations = {"model/model-atlas-asset.genmodel","org.eclipse.fennec.model.atlas.asset.model/model/model-atlas-asset.genmodel"}, ecore = "/model/model-atlas-asset.ecore", ecoreSourceLocations = "/model/model-atlas-asset.ecore")
+@EPackage(uri = ModelAtlasAssetPackage.eNS_URI, fingerprint = "fp1:f7f8286adc48a55181e34582be0f2b19a6cdb552558d1e0e44ff4c420ce4821e", genModel = "/model/model-atlas-asset.genmodel", genModelSourceLocations = {"model/model-atlas-asset.genmodel","org.eclipse.fennec.model.atlas.asset.model/model/model-atlas-asset.genmodel"}, ecore = "/model/model-atlas-asset.ecore", ecoreSourceLocations = "/model/model-atlas-asset.ecore")
 public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -186,13 +186,22 @@ public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 	int STAGEABLE_ASSET__ASSET_TYPE = InventoryPackage.ASSET_FEATURE_COUNT + 3;
 
 	/**
+	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGEABLE_ASSET__OBJECT_ID = InventoryPackage.ASSET_FEATURE_COUNT + 4;
+
+	/**
 	 * The number of structural features of the '<em>Stageable Asset</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STAGEABLE_ASSET_FEATURE_COUNT = InventoryPackage.ASSET_FEATURE_COUNT + 4;
+	int STAGEABLE_ASSET_FEATURE_COUNT = InventoryPackage.ASSET_FEATURE_COUNT + 5;
 
 	/**
 	 * The number of operations of the '<em>Stageable Asset</em>' class.
@@ -311,6 +320,15 @@ public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int FINGERPRINTABLE_ASSET__ASSET_TYPE = STAGEABLE_ASSET__ASSET_TYPE;
+
+	/**
+	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int FINGERPRINTABLE_ASSET__OBJECT_ID = STAGEABLE_ASSET__OBJECT_ID;
 
 	/**
 	 * The feature id for the '<em><b>Fingerprint</b></em>' attribute.
@@ -449,6 +467,15 @@ public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 	int SCHEMA_ASSET__ASSET_TYPE = FINGERPRINTABLE_ASSET__ASSET_TYPE;
 
 	/**
+	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCHEMA_ASSET__OBJECT_ID = FINGERPRINTABLE_ASSET__OBJECT_ID;
+
+	/**
 	 * The feature id for the '<em><b>Fingerprint</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -547,6 +574,17 @@ public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getStageableAsset_AssetType();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getObjectId <em>Object Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Object Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getObjectId()
+	 * @see #getStageableAsset()
+	 * @generated
+	 */
+	EAttribute getStageableAsset_ObjectId();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.FingerprintableAsset <em>Fingerprintable Asset</em>}'.
@@ -665,6 +703,14 @@ public interface ModelAtlasAssetPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute STAGEABLE_ASSET__ASSET_TYPE = eINSTANCE.getStageableAsset_AssetType();
+
+		/**
+		 * The meta object literal for the '<em><b>Object Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGEABLE_ASSET__OBJECT_ID = eINSTANCE.getStageableAsset_ObjectId();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.impl.FingerprintableAssetImpl <em>Fingerprintable Asset</em>}' class.

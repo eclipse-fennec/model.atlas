@@ -13,18 +13,83 @@
  */
 package org.eclipse.fennec.model.atlas.asset.impl;
 
+import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
-import org.eclipse.fennec.model.atlas.action.api.Promise;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
+import org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.ModelAtlasAssetFactory;
+import org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.SchemaAsset;
+import org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+import org.osgi.util.promise.Promise;
+import org.osgi.util.promise.Promises;
+
 
 /**
  * 
  * @author ilenia
  * @since Oct 26, 2026
  */
+@Component(name = "AssetStageActionService", service = StageActionService.class, 
+configurationPid = AssetStageActionService.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Designate(ocd = AssetStageActionService.Config.class)
 public class AssetStageActionService implements StageActionService {
+
+	
+	private static final Logger LOGGER = Logger.getLogger(AssetStageActionService.class.getName());
+    private static final String EPACKAGE_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString();
+
+	static final String PID = "AssetStageActionService";
+	
+	private final WritableScopeService<EObject> scopeService;
+	
+	private final Set<String> supportedObjTypes;
+	private final Set<String> triggerStages;
+	private final String inventoryRegistry;
+	private final String inventoryStage;
+	
+	@ObjectClassDefinition(name = "Asset Stage Action Service Configuration")
+	public @interface Config {
+		
+		@AttributeDefinition(name = "Triggers", description = "The scope:registry:stage tuples that should trigger this action. A part that is blank or * matches anything. Only the stage part is honoured so far: the scope and the registry an action answers for are decided by the registry that binds it")
+		String[] triggers() default {};
+		
+		@AttributeDefinition(name = "Supported Object Types", description = "The array of supported object types for this action")
+		String[] supported_object_types() default {};
+		
+		@AttributeDefinition(name = "Inventory Registry", description = "The registry where the inventory assets should be written to")
+		String inventory_registry();
+		
+		@AttributeDefinition(name = "Inventory Stage", description =  "The stage of the inventory registry where the assets should be written to")
+		String inventory_stage();
+	}
+	
+	@Activate
+	public AssetStageActionService(@Reference(name = "scopeService") WritableScopeService<EObject> scopeService, Config config) {
+		this.supportedObjTypes = toSet(config.supported_object_types());
+		this.triggerStages = toTriggerStages(config.triggers());
+		this.scopeService = scopeService;
+		this.inventoryRegistry = config.inventory_registry();
+		this.inventoryStage = config.inventory_stage();
+	}
+	
 
 	/* 
 	 * (non-Javadoc)
@@ -32,8 +97,9 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public boolean supportsObjectType(String objectType) {
-		// TODO Auto-generated method stub
-		return false;
+		// an immutable set throws on contains(null), and an object whose type the storage
+		// never resolved reaches here with none
+		return objectType != null && supportedObjTypes.contains(objectType);
 	}
 
 	/* 
@@ -42,8 +108,7 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public Set<String> getTriggerStages() {
-		// TODO Auto-generated method stub
-		return null;
+		return triggerStages;
 	}
 
 	/* 
@@ -52,8 +117,7 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public Set<ActionEvent> getTriggerEvents() {
-		// TODO Auto-generated method stub
-		return null;
+		return Set.of(ActionEvent.ENTER, ActionEvent.UPDATE, ActionEvent.EXIT);
 	}
 
 	/* 
@@ -62,8 +126,7 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public Promise<Void> onEnter(ActionContext ctx) {
-		// TODO Auto-generated method stub
-		return null;
+		return updateAsset(ctx);
 	}
 
 	/* 
@@ -72,8 +135,7 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public Promise<Void> onUpdate(ActionContext ctx) {
-		// TODO Auto-generated method stub
-		return null;
+		return updateAsset(ctx);
 	}
 
 	/* 
@@ -82,8 +144,12 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public Promise<Void> onExit(ActionContext ctx) {
-		// TODO Auto-generated method stub
-		return null;
+		if (fromInventory(ctx)) {
+			return Promises.resolved(null);
+		}
+		String objectId = assetId(ctx);
+		return resolveRemoval(scopeService.deleteFromStageForRegistry(inventoryRegistry, inventoryStage, objectId),
+				objectId);
 	}
 
 	/* 
@@ -92,7 +158,6 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public boolean requiresReplayOnStartup() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -102,8 +167,221 @@ public class AssetStageActionService implements StageActionService {
 	 */
 	@Override
 	public boolean requiresReplayOnShutdown() {
-		// TODO Auto-generated method stub
 		return false;
 	}
+	
+	private static Set<String> toSet(String[] values) {
+		if (values == null) {
+			return Set.of();
+		}
+		Set<String> set = new LinkedHashSet<>();
+		for (String value : values) {
+			if (!blank(value)) {
+				set.add(value.trim());
+			}
+		}
+		return Set.copyOf(set);
+	}
 
+
+	private static boolean blank(String value) {
+		return value == null || value.isBlank();
+	}
+
+	/**
+	 * The stages named by the configured {@code scope:registry:stage} triggers.
+	 *
+	 * <p>
+	 * An empty set is what the workflow reads as "every stage", so that is what no trigger
+	 * at all returns, and also what a trigger that leaves its stage part open returns: a
+	 * set of the stages the other triggers name would be narrower than what was configured.
+	 * </p>
+	 *
+	 * @param triggers the configured tuples, or {@code null}
+	 * @return the trigger stages, empty for every stage
+	 * @throws IllegalArgumentException for an entry that is no tuple
+	 */
+	private static Set<String> toTriggerStages(String[] triggers) {
+		if (triggers == null) {
+			return Set.of();
+		}
+		Set<String> stages = new LinkedHashSet<>();
+		for (String trigger : triggers) {
+			if (blank(trigger)) {
+				continue;
+			}
+			String[] parts = trigger.split(":", -1);
+			if (parts.length != 3) {
+				throw new IllegalArgumentException(
+						String.format("triggers entry '%s' is no scope:registry:stage tuple", trigger));
+			}
+			String stage = parts[2].trim();
+			if (stage.isEmpty() || "*".equals(stage)) {
+				return Set.of();
+			}
+			stages.add(stage);
+		}
+		return Set.copyOf(stages);
+	}
+	
+	private Promise<Void> updateAsset(ActionContext ctx) {
+//		TODO We need to add the SourceRef of the assets, which should contain the url where we can reach the actual object and metadata
+		if (fromInventory(ctx)) {
+			return Promises.resolved(null);
+		}
+		String objectId = assetId(ctx);
+		StageableAsset stageableAsset = null;
+		if(EPACKAGE_TYPE.equals(ctx.objectType())) {
+			stageableAsset = createSchemaAsset(ctx, objectId);
+		} else {
+			stageableAsset = createStageableAsset(ctx, objectId, ctx.objectType());
+		}
+
+		ObjectMetadata existing = scopeService.getMetadataFromStageForRegistry(inventoryRegistry, inventoryStage, objectId);
+		// The lookup falls back to the parent scope's final stage, and an asset found there
+		// is not one this stage can update: updateInStage reads the local metadata and would
+		// work on null. Only an asset this very scope holds counts as present.
+		boolean present = existing != null && scopeService.getScopeName().equals(existing.getScope());
+
+		Promise<ObjectMetadata> written;
+		String outcome;
+		if (present) {
+			written = scopeService.updateInStageForRegistry(inventoryRegistry, inventoryStage, stageableAsset, objectId,
+					versionOf(ctx));
+			outcome = "updated";
+		} else {
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(objectId);
+			metadata.setUploadTime(Instant.now());
+			metadata.setVersion(versionOf(ctx));
+			// the type the asset actually is, derived the way the storage layer derives it,
+			// so a SchemaAsset stays findable as one
+			metadata.setObjectType(EcoreUtil.getURI(stageableAsset.eClass()).toString());
+			written = scopeService.uploadToStageForRegistry(inventoryRegistry, inventoryStage, stageableAsset, metadata);
+			outcome = "created";
+		}
+		return resolve(written, objectId, outcome);
+	}
+
+	/**
+	 * The id the asset of one registry object is stored under.
+	 *
+	 * <p>
+	 * Every asset lands in one stage of one registry, and the inventory scope need not be
+	 * the scope the object came from, so the id carries the whole address the asset is
+	 * about: an objectId is unique per stage, not across stages (issue #211), and not
+	 * across registries or scopes either. No {@code #} in the separator - EMF reads one in
+	 * an ID attribute back as a cross-document href.
+	 * </p>
+	 */
+	private static String assetId(ActionContext ctx) {
+		return String.join("_", "asset", ctx.scope(), ctx.registry(), ctx.stage(), ctx.objectId());
+	}
+
+	/**
+	 * Whether the event is about the inventory this action writes into.
+	 *
+	 * <p>
+	 * Writing an asset raises ENTER or UPDATE on the inventory registry in turn, and
+	 * nothing in the configuration stops that registry from binding this action - the
+	 * action may well sit in the scope it writes to. An event from there is ignored here
+	 * rather than left to the object types a configuration happens to list.
+	 * </p>
+	 */
+	private boolean fromInventory(ActionContext ctx) {
+		return inventoryRegistry.equals(ctx.registry()) && scopeService.getScopeName().equals(ctx.scope());
+	}
+
+	/**
+	 * Which revision of the source object the asset reflects. A fingerprint names one
+	 * exactly; an object that carries none has nothing better to say than that this is the
+	 * current one.
+	 */
+	private static String versionOf(ActionContext ctx) {
+		String fingerprint = ctx.fingerprint();
+		return fingerprint == null ? "1.0" : fingerprint;
+	}
+
+	/**
+	 * The write's outcome, as this action's own promise.
+	 *
+	 * <p>
+	 * A failure is returned rather than thrown. The workflow catches only an
+	 * {@code InvocationTargetException} from the promise it waits on, so an exception
+	 * thrown by the callback itself escapes the dispatch and fails the upload of the
+	 * object the event was about. The inventory is a side effect of that upload: what a
+	 * failure here should cost is a diagnostic on the object and whatever the registry's
+	 * action chain says about {@code onFailure}, not the upload.
+	 * </p>
+	 */
+	private Promise<Void> resolve(Promise<ObjectMetadata> written, String objectId, String outcome) {
+		try {
+			written.getValue();
+			LOGGER.info(() -> String.format("Asset '%s' %s in %s/%s/%s.", objectId, outcome,
+					scopeService.getScopeName(), inventoryRegistry, inventoryStage));
+			return Promises.resolved(null);
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause() == null ? e : e.getCause();
+			return Promises.failed(new IllegalStateException(
+					String.format("The Asset '%s' could not be written: %s", objectId,
+							cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()),
+					cause));
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return Promises.failed(new IllegalStateException(
+					String.format("Interrupted while writing the Asset '%s'.", objectId), e));
+		}
+	}
+
+	/** Same waiting and the same failure as a write, for the call that removes instead. */
+	private Promise<Void> resolveRemoval(Promise<Boolean> removed, String objectId) {
+		try {
+			Boolean gone = removed.getValue();
+			LOGGER.info(() -> String.format("Asset '%s' %s in %s/%s/%s.", objectId,
+					Boolean.TRUE.equals(gone) ? "removed" : "was not there to remove",
+					scopeService.getScopeName(), inventoryRegistry, inventoryStage));
+			return Promises.resolved(null);
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause() == null ? e : e.getCause();
+			return Promises.failed(new IllegalStateException(
+					String.format("The Asset '%s' could not be removed: %s", objectId,
+							cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()),
+					cause));
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return Promises.failed(new IllegalStateException(
+					String.format("Interrupted while removing the Asset '%s'.", objectId), e));
+		}
+	}
+
+	/** A metadata value as a string, or {@code null} when it is absent or is something else. */
+	private static String text(Object value) {
+		return value instanceof String s ? s : null;
+	}
+
+   private StageableAsset createStageableAsset(ActionContext ctx, String assetId, String assetType) {
+	   StageableAsset stageableAsset = ModelAtlasAssetFactory.eINSTANCE.createStageableAsset();
+		stageableAsset.setId(assetId);
+		stageableAsset.setObjectId(ctx.objectId());
+		stageableAsset.setAssetType(assetType);
+		stageableAsset.setScope(ctx.scope());
+		stageableAsset.setStage(ctx.stage());
+		stageableAsset.setRegistry(ctx.registry());
+		return stageableAsset;
+   }
+
+   private SchemaAsset createSchemaAsset(ActionContext ctx, String assetId) {
+	   SchemaAsset schemaAsset = ModelAtlasAssetFactory.eINSTANCE.createSchemaAsset();
+		schemaAsset.setId(assetId);
+		schemaAsset.setObjectId(ctx.objectId());
+		schemaAsset.setAssetType(ctx.objectType());
+		schemaAsset.setFingerprint(ctx.fingerprint());
+		schemaAsset.setScope(ctx.scope());
+		schemaAsset.setStage(ctx.stage());
+		schemaAsset.setRegistry(ctx.registry());
+		// no display name: the workflow puts only the fingerprint and the nsUri into the
+		// event's metadata, so there is nothing here to read one from
+		schemaAsset.setNsURI(text(ctx.metadata().get(WorkflowConstants.NS_URI_METADATA_PROPERTY)));
+		return schemaAsset;
+   }
 }

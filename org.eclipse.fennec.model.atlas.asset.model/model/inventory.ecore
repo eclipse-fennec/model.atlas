@@ -47,6 +47,7 @@
         eType="#//Aspect" volatile="true" transient="true" derived="true" resolveProxies="false">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Context-specific extensions."/>
+        <details key="get" value="java.util.List&lt;Aspect> aspects = new java.util.ArrayList&lt;>();&#xA;for (AssetRelation relation : getRelations()) {&#xA;      if (relation instanceof Aspect aspect) {&#xA;          aspects.add(aspect);&#xA;      }&#xA;  }&#xA;  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList&lt;>(aspects.size(), aspects.toArray());"/>
       </eAnnotations>
     </eStructuralFeatures>
   </eClassifiers>

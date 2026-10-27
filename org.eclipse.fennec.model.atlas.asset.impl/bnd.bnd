@@ -2,5 +2,11 @@
 -buildpath: \
 	org.eclipse.fennec.model.atlas.asset.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.asset.model;version=snapshot,\
-	org.eclipse.fennec.persistence.repository,\
-	org.eclipse.fennec.model.atlas.action.api
+	org.eclipse.fennec.persistence.repository;version=latest,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
+	org.osgi.util.promise;version=latest,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
+
+-testpath: junit-jupiter-api

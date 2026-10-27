@@ -190,6 +190,7 @@ public interface Asset extends EObject {
 	 * @return the value of the '<em>Aspects</em>' reference list.
 	 * @see inventory.InventoryPackage#getAsset_Aspects()
 	 * @model resolveProxies="false" transient="true" volatile="true" derived="true"
+	 *        annotation="http://www.eclipse.org/emf/2002/GenModel get='java.util.List&lt;Aspect&gt; aspects = new java.util.ArrayList&lt;&gt;();\nfor (AssetRelation relation : getRelations()) {\n      if (relation instanceof Aspect aspect) {\n          aspects.add(aspect);\n      }\n  }\n  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList&lt;&gt;(aspects.size(), aspects.toArray());'"
 	 * @generated
 	 */
 	EList<Aspect> getAspects();

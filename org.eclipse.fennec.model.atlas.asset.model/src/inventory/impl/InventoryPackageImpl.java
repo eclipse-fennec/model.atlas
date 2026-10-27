@@ -593,7 +593,8 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 		  (getAsset_Aspects(),
 		   source,
 		   new String[] {
-			   "documentation", "Context-specific extensions."
+			   "documentation", "Context-specific extensions.",
+			   "get", "java.util.List<Aspect> aspects = new java.util.ArrayList<>();\nfor (AssetRelation relation : getRelations()) {\n      if (relation instanceof Aspect aspect) {\n          aspects.add(aspect);\n      }\n  }\n  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList<>(aspects.size(), aspects.toArray());"
 		   });
 		addAnnotation
 		  (assetRelationEClass,

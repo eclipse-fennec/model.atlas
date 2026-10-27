@@ -24,6 +24,11 @@
         <details key="documentation" value="The object type of the asset, as it is saved in the corresponding ObjectMetadata#objectType"/>
       </eAnnotations>
     </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="objectId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="This is the object id of the object stored in the model.atlas. It cannot be set to the Asset id because in the model.atlas we can have the same objectId in different stages."/>
+      </eAnnotations>
+    </eStructuralFeatures>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="FingerprintableAsset" eSuperTypes="#//StageableAsset">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

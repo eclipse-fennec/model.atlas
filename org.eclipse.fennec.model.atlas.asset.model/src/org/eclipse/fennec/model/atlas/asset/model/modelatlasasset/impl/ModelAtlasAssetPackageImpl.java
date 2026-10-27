@@ -179,6 +179,16 @@ public class ModelAtlasAssetPackageImpl extends EPackageImpl implements ModelAtl
 	 * @generated
 	 */
 	@Override
+	public EAttribute getStageableAsset_ObjectId() {
+		return (EAttribute)stageableAssetEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getFingerprintableAsset() {
 		return fingerprintableAssetEClass;
 	}
@@ -257,6 +267,7 @@ public class ModelAtlasAssetPackageImpl extends EPackageImpl implements ModelAtl
 		createEAttribute(stageableAssetEClass, STAGEABLE_ASSET__REGISTRY);
 		createEAttribute(stageableAssetEClass, STAGEABLE_ASSET__STAGE);
 		createEAttribute(stageableAssetEClass, STAGEABLE_ASSET__ASSET_TYPE);
+		createEAttribute(stageableAssetEClass, STAGEABLE_ASSET__OBJECT_ID);
 
 		fingerprintableAssetEClass = createEClass(FINGERPRINTABLE_ASSET);
 		createEAttribute(fingerprintableAssetEClass, FINGERPRINTABLE_ASSET__FINGERPRINT);
@@ -307,6 +318,7 @@ public class ModelAtlasAssetPackageImpl extends EPackageImpl implements ModelAtl
 		initEAttribute(getStageableAsset_Registry(), ecorePackage.getEString(), "registry", null, 0, 1, StageableAsset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStageableAsset_Stage(), ecorePackage.getEString(), "stage", null, 0, 1, StageableAsset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStageableAsset_AssetType(), ecorePackage.getEString(), "assetType", null, 0, 1, StageableAsset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageableAsset_ObjectId(), ecorePackage.getEString(), "objectId", null, 0, 1, StageableAsset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(fingerprintableAssetEClass, FingerprintableAsset.class, "FingerprintableAsset", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getFingerprintableAsset_Fingerprint(), ecorePackage.getEString(), "fingerprint", null, 0, 1, FingerprintableAsset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -370,6 +382,12 @@ public class ModelAtlasAssetPackageImpl extends EPackageImpl implements ModelAtl
 		   source,
 		   new String[] {
 			   "documentation", "The object type of the asset, as it is saved in the corresponding ObjectMetadata#objectType"
+		   });
+		addAnnotation
+		  (getStageableAsset_ObjectId(),
+		   source,
+		   new String[] {
+			   "documentation", "This is the object id of the object stored in the model.atlas. It cannot be set to the Asset id because in the model.atlas we can have the same objectId in different stages."
 		   });
 		addAnnotation
 		  (fingerprintableAssetEClass,

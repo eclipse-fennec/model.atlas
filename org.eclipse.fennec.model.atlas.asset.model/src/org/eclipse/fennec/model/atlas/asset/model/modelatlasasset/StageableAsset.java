@@ -34,6 +34,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getRegistry <em>Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getAssetType <em>Asset Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getObjectId <em>Object Id</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.ModelAtlasAssetPackage#getStageableAsset()
@@ -132,5 +133,30 @@ public interface StageableAsset extends Asset {
 	 * @generated
 	 */
 	void setAssetType(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is the object id of the object stored in the model.atlas. It cannot be set to the Asset id because in the model.atlas we can have the same objectId in different stages.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Object Id</em>' attribute.
+	 * @see #setObjectId(String)
+	 * @see org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.ModelAtlasAssetPackage#getStageableAsset_ObjectId()
+	 * @model
+	 * @generated
+	 */
+	String getObjectId();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.asset.model.modelatlasasset.StageableAsset#getObjectId <em>Object Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Object Id</em>' attribute.
+	 * @see #getObjectId()
+	 * @generated
+	 */
+	void setObjectId(String value);
 
 } // StageableAsset

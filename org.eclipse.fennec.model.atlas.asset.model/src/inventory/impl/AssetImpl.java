@@ -300,11 +300,13 @@ public class AssetImpl extends MinimalEObjectImpl.Container implements Asset {
 	 */
 	@Override
 	public EList<Aspect> getAspects() {
-		// TODO: implement this method to return the 'Aspects' reference list
-		// Ensure that you remove @generated or mark it @generated NOT
-		// The list is expected to implement org.eclipse.emf.ecore.util.InternalEList and org.eclipse.emf.ecore.EStructuralFeature.Setting
-		// so it's likely that an appropriate subclass of org.eclipse.emf.ecore.util.EcoreEList should be used.
-		throw new UnsupportedOperationException();
+		java.util.List<Aspect> aspects = new java.util.ArrayList<>();
+		for (AssetRelation relation : getRelations()) {
+		      if (relation instanceof Aspect aspect) {
+		          aspects.add(aspect);
+		      }
+		  }
+		  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList<>(aspects.size(), aspects.toArray());
 	}
 
 	/**

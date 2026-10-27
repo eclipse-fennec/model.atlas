@@ -13,6 +13,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/registry"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/stage"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/assetType"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//StageableAsset/objectId"/>
     </genClasses>
     <genClasses ecoreClass="model-atlas-asset.ecore#//FingerprintableAsset">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute model-atlas-asset.ecore#//FingerprintableAsset/fingerprint"/>
@@ -46,7 +47,8 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//Asset/owner"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/relations"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/sources"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/aspects"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//Asset/aspects"
+          get="java.util.List&lt;Aspect> aspects = new java.util.ArrayList&lt;>();&#xA;for (AssetRelation relation : getRelations()) {&#xA;      if (relation instanceof Aspect aspect) {&#xA;          aspects.add(aspect);&#xA;      }&#xA;  }&#xA;  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList&lt;>(aspects.size(), aspects.toArray());"/>
     </genClasses>
     <genClasses ecoreClass="inventory.ecore#//AssetRelation">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/id"/>
