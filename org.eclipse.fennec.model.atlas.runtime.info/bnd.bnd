@@ -13,7 +13,6 @@ Bundle-Description: What this Atlas holds, as OSGi DTOs: every live scope with i
 	org.osgi.service.component.annotations;version=latest,\
 	org.osgi.annotation.versioning;version=latest,\
 	org.osgi.annotation.bundle;version=latest,\
-	org.eclipse.fennec.services.runtime;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

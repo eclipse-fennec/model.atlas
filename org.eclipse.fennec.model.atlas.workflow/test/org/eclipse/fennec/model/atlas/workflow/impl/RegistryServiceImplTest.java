@@ -145,7 +145,7 @@ public class RegistryServiceImplTest {
         when(config.root_eclass_uri()).thenReturn(rootEClassUris);
         // lenient: never read when an earlier config value already fails activation
         org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(derivedEClassUris);
-        return new RegistryServiceImpl<>(storageServices, resourceSet, EcorePackage.eINSTANCE, config);
+        return new RegistryServiceImpl<>(storageServices, resourceSet, EcorePackage.eINSTANCE, config, null);
     }
 
     @Nested
@@ -211,7 +211,6 @@ public class RegistryServiceImplTest {
             verify(stageAction).onEnter(any());
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         @DisplayName("A stage action service without startup replay is not replayed on late binding")
         void lateBoundStageActionServiceWithoutReplayIsNotReplayed() {
@@ -984,7 +983,7 @@ public class RegistryServiceImplTest {
                     "{\"name\": \"frozen\", \"writable\": false, \"final\": false}" });
             when(config.root_eclass_uri()).thenReturn(new String[] { TEST_NS_URI + "#//Person" });
             org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(new String[0]);
-            service = new RegistryServiceImpl<>(List.of(storage), resourceSet, EcorePackage.eINSTANCE, config);
+            service = new RegistryServiceImpl<>(List.of(storage), resourceSet, EcorePackage.eINSTANCE, config, null);
 
             stageAction = mock(StageActionService.class);
             org.mockito.Mockito.lenient().when(stageAction.requiresReplayOnStartup()).thenReturn(false);

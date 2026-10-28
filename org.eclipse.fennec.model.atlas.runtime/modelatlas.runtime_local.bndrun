@@ -10,8 +10,7 @@
 # here: the service tracks what is already registered when it opens, so a late start costs
 # it nothing, unlike a bundle that has to be in place before the model loader runs.
 -runbundles.runtimeinfo: \
-	org.eclipse.fennec.model.atlas.runtime.info,\
-	org.eclipse.fennec.services.runtime
+	org.eclipse.fennec.model.atlas.runtime.info
 
 # Metrics from the runtime service, local only. The chain is: the logging sender publishes an
 # OpenTelemetry, core.commons turns that into the MeterProvider our component binds. Both the

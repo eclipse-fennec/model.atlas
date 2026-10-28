@@ -68,7 +68,7 @@ public class ScopeServiceImplSchemaRegistryGuardTest {
 		when(config.scope_name()).thenReturn(SCOPE);
 		when(config.scope_description()).thenReturn("a scope under test");
 		when(config.scope_parent()).thenReturn("atlas");
-		scopeService = new ScopeServiceImpl<>(config);
+		scopeService = new ScopeServiceImpl<>(config, null);
 	}
 
 	@Test

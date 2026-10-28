@@ -48,10 +48,17 @@ import java.util.stream.Collectors;
  *
  * <pre>
  * &#64;Activate
- * void activate(Map&lt;String, Object&gt; properties) {
- *     UnrecognisedProperties.warn(LOGGER, "MyService[" + name + "]", MyServiceConfig.class, properties);
+ * public MyService(MyServiceConfig config, Map&lt;String, Object&gt; properties) {
+ *     UnrecognisedProperties.warn(LOGGER, "MyService[" + config.name() + "]", MyServiceConfig.class, properties);
  * }
  * </pre>
+ *
+ * <p>
+ * On the constructor rather than in a second {@code &#64;Activate} method, which would give
+ * the component two entry points with the references bound between them (112.5.6). An
+ * {@code &#64;Activate} method is still the place for it in a component that has no
+ * {@code &#64;Activate} constructor to add a parameter to.
+ * </p>
  *
  * <p>
  * {@link #report(String, Class, Map, Set)} returns the same findings without

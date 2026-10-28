@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.runtime.info.internal;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,11 +30,11 @@ import org.eclipse.fennec.model.atlas.runtime.info.AtlasRuntimeDTO;
 import org.eclipse.fennec.model.atlas.runtime.info.InstanceDTO;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
-import org.eclipse.fennec.services.runtime.ChangeCountPublisher;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.Version;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -51,11 +52,10 @@ import org.osgi.service.component.runtime.ServiceComponentRuntime;
  * <strong>It registers the service itself rather than letting DS do it</strong>, and that is the
  * one thing about this component that is not a preference.
  * {@link Constants#SERVICE_CHANGECOUNT} can only be moved through
- * {@code ServiceRegistration.setProperties}, and a DS-declared service hands out no registration to
+ * {@link ServiceRegistration#setProperties}, and a DS-declared service hands out no registration to
  * call it on: its properties are fixed when it is registered and move only when its configuration
- * does. So the component activates, registers, and keeps the handle — through
- * {@link ChangeCountPublisher}, which already does this for the broker and client runtimes and
- * coalesces the updates onto a daemon thread.
+ * does. So the component activates, registers {@link AtlasRuntime} itself and keeps the handle,
+ * which is what {@link #changed()} sets the count on.
  * </p>
  *
  * <p>
@@ -71,12 +71,14 @@ import org.osgi.service.component.runtime.ServiceComponentRuntime;
  * </p>
  *
  * <p>
- * <strong>Everything it reports arrives as a reference, and every reference is optional.</strong>
- * A runtime service that needed a scope in order to start would be absent in exactly the situation
- * it exists to report — an Atlas where nothing came up — and an integration test waiting for it
- * would wait forever rather than being told. The references are bound by method rather than by
- * field: the bind call is where the change count moves, and a field gives no callback to move it
- * in.
+ * <strong>Everything it reports arrives as a reference, and none of those references is
+ * mandatory.</strong> A runtime service that needed a scope in order to start would be absent in
+ * exactly the situation it exists to report — an Atlas where nothing came up — and an integration
+ * test waiting for it would wait forever rather than being told. They are bound by method rather
+ * than by field: the bind call is where the change count moves, and a field gives no callback to
+ * move it in. The component runtime is the exception on both counts — it is the framework's own
+ * service, there whenever this component is, and nothing about it is reported — so it is a plain
+ * mandatory field.
  * </p>
  *
  * <p>
@@ -95,6 +97,10 @@ import org.osgi.service.component.runtime.ServiceComponentRuntime;
 @Component(name = "AtlasRuntime", immediate = true, configurationPolicy = ConfigurationPolicy.IGNORE,
         property = AtlasRuntimeComponent.ATLAS_NAME + "=atlas", service = {})
 public class AtlasRuntimeComponent implements AtlasRuntime {
+
+    /** Where the failure half of the snapshot comes from: what is configured and did not come up. */
+    @Reference
+    ServiceComponentRuntime componentRuntime;
 
     /**
      * The component property naming this Atlas, declared with its default on the component itself.
@@ -141,32 +147,46 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
 
     private volatile SupportedMediatype supportedMediatype;
 
-    /**
-     * Optional on purpose (see the class comment): without it the failure half of the snapshot is
-     * empty, which is a weaker answer than usual but still an answer.
-     */
-    private volatile ServiceComponentRuntime componentRuntime;
-
     private BundleContext context;
 
     private String name;
 
-    private ChangeCountPublisher<AtlasRuntime> publisher;
+    /**
+     * The handle the change count is published on.
+     *
+     * <p>
+     * Null before activation and after deactivation, and neither is an edge case here: DS binds a
+     * dynamic reference before it calls {@code activate} and unbinds it after {@code deactivate}
+     * (112.5.6 and 112.5.11), so the first and the last calls to {@link #changed()} arrive with
+     * nothing to publish onto.
+     * </p>
+     */
+    private volatile ServiceRegistration<AtlasRuntime> runtimeServiceRegistration;
 
+    /**
+     * Registers the service with the count as it already stands.
+     *
+     * <p>
+     * Not with zero: every reference bound on the way in has already raised it, and a first
+     * published value that ignored them would be a number a watcher had to see move twice before
+     * it meant anything. Synchronized against {@link #changed()}, so a service arriving on another
+     * thread while this runs is either counted here or published there, never neither.
+     * </p>
+     */
     @Activate
-    void activate(BundleContext context, Map<String, Object> properties) {
+    synchronized void activate(BundleContext context, Map<String, Object> properties) {
         this.context = context;
         this.name = string(properties.get(ATLAS_NAME), "atlas");
-
-        publisher = new ChangeCountPublisher<>(context, AtlasRuntime.class, this, changeCount::get,
-                "Atlas runtime service");
-        publisher.open();
+        runtimeServiceRegistration = context.registerService(AtlasRuntime.class, this,
+                withChangeCount(changeCount.get()));
     }
 
     @Deactivate
-    void deactivate() {
-        if (publisher != null) {
-            publisher.close();
+    synchronized void deactivate() {
+        ServiceRegistration<AtlasRuntime> live = runtimeServiceRegistration;
+        runtimeServiceRegistration = null;
+        if (live != null) {
+            live.unregister();
         }
     }
 
@@ -174,17 +194,17 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
             policy = ReferencePolicy.DYNAMIC)
     void addScope(ReadableScopeService<?> scope, Map<String, Object> properties) {
         scopes.put(serviceId(properties), scope);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void updatedScope(ReadableScopeService<?> scope, Map<String, Object> properties) {
         scopes.put(serviceId(properties), scope);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void removeScope(ReadableScopeService<?> scope, Map<String, Object> properties) {
         scopes.remove(serviceId(properties), scope);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     /**
@@ -201,34 +221,34 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
             policy = ReferencePolicy.DYNAMIC)
     void addPackage(ServiceReference<EPackage> reference) {
         packages.put(serviceId(reference), reference);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void updatedPackage(ServiceReference<EPackage> reference) {
         // Nothing to store: the reference held is the one whose properties changed, and a
         // reference reads them live. What a watcher needs is the number moving.
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void removePackage(ServiceReference<EPackage> reference) {
         packages.remove(serviceId(reference), reference);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     @Reference(name = "contributor", cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addContributor(MediatypeContributor contributor, Map<String, Object> properties) {
         contributors.put(serviceId(properties), contributor);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void updatedContributor(MediatypeContributor contributor, Map<String, Object> properties) {
         contributors.put(serviceId(properties), contributor);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void removeContributor(MediatypeContributor contributor, Map<String, Object> properties) {
         contributors.remove(serviceId(properties), contributor);
-        changeCount.incrementAndGet();
+        changed();
     }
 
     /**
@@ -242,33 +262,19 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
     @Reference(name = "mediatypes", cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
     void setMediatypes(SupportedMediatype supportedMediatype, Map<String, Object> properties) {
         this.supportedMediatype = supportedMediatype;
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void updatedMediatypes(SupportedMediatype supportedMediatype, Map<String, Object> properties) {
         this.supportedMediatype = supportedMediatype;
-        changeCount.incrementAndGet();
+        changed();
     }
 
     void unsetMediatypes(SupportedMediatype supportedMediatype) {
         if (this.supportedMediatype == supportedMediatype) {
             this.supportedMediatype = null;
         }
-        changeCount.incrementAndGet();
-    }
-
-    @Reference(name = "componentRuntime", cardinality = ReferenceCardinality.OPTIONAL,
-            policy = ReferencePolicy.DYNAMIC)
-    void setComponentRuntime(ServiceComponentRuntime componentRuntime) {
-        this.componentRuntime = componentRuntime;
-        changeCount.incrementAndGet();
-    }
-
-    void unsetComponentRuntime(ServiceComponentRuntime componentRuntime) {
-        if (this.componentRuntime == componentRuntime) {
-            this.componentRuntime = null;
-        }
-        changeCount.incrementAndGet();
+        changed();
     }
 
     @Override
@@ -383,5 +389,51 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
 
     private static String string(Object value, String fallback) {
         return value == null ? fallback : String.valueOf(value);
+    }
+
+    /**
+     * The registration's properties, which are the change count and nothing else.
+     *
+     * <p>
+     * Built fresh rather than read back from the reference and amended: everything else on a
+     * registration is set by the framework, and {@code setProperties} ignores those keys anyway, so
+     * carrying them along would only suggest they were being maintained here.
+     * </p>
+     */
+    private static Hashtable<String, Object> withChangeCount(long count) {
+        Hashtable<String, Object> properties = new Hashtable<>();
+        properties.put(Constants.SERVICE_CHANGECOUNT, count);
+        return properties;
+    }
+
+    /**
+     * Something the snapshot would say differently: raise the count and publish it.
+     *
+     * <p>
+     * Called from every bind, update and unbind callback. Synchronized so the published number only
+     * ever moves forward — two callbacks racing would otherwise be free to set their counts in the
+     * opposite order, and a watcher reads the number, not the order it was set in. Publishing is a
+     * property change, so each call also costs a synchronous callback to every bound watcher; the
+     * number is deliberately dumb to keep that cheap, and what changed is another snapshot.
+     * </p>
+     *
+     * <p>
+     * With no registration yet, or none any more, the count still moves and nothing is published:
+     * see {@link #runtimeServiceRegistration}. Activation publishes where it has got to, and after
+     * deactivation there is no service left for the number to mean anything to.
+     * </p>
+     */
+    synchronized void changed() {
+        long count = changeCount.incrementAndGet();
+        ServiceRegistration<AtlasRuntime> live = runtimeServiceRegistration;
+        if (live == null) {
+            return;
+        }
+        try {
+            live.setProperties(withChangeCount(count));
+        } catch (IllegalStateException alreadyUnregistered) {
+            // The framework got there first, which happens once, on the way down.
+            runtimeServiceRegistration = null;
+        }
     }
 }

@@ -59,16 +59,17 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * </p>
  *
  * <p>
- * Updates are coalesced onto a daemon thread at most once every 200 ms, so these tests wait for the
- * number rather than reading it straight after the change. A coalescing window may delay an update;
- * it may never drop one, and waiting is how that gets asserted.
+ * The count is published on the thread that bound the service, so it is usually there by the time
+ * the registration returns. These tests still wait for it rather than reading it straight after the
+ * change: what is being asserted is that an update arrives at all, and a test that happened to read
+ * before the framework had delivered the property change would fail for the wrong reason.
  * </p>
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 public class AtlasRuntimeChangeCountIT {
 
-    /** Generous next to the 200 ms coalescing window: this asserts arrival, not latency. */
+    /** Generous on purpose: this asserts arrival, not latency. */
     private static final long TIMEOUT_MILLIS = 10_000;
 
     @InjectBundleContext
@@ -108,7 +109,7 @@ public class AtlasRuntimeChangeCountIT {
             Thread.sleep(50);
         }
         throw new AssertionError("the change count never moved past " + previous + " within " + TIMEOUT_MILLIS
-                + "ms; a coalescing window may delay an update, it may never drop one");
+                + "ms; a change the service observes has to reach its published count");
     }
 
     @Test

@@ -98,7 +98,8 @@ public class AtlasTelemetry {
      * Not a field reference, and that is the lesson this class inherits: DS binds the dynamic
      * reference below while it is building the component, and a field reference may not be injected
      * yet at that moment. A constructor parameter is the one thing that is certainly there before
-     * any bind method runs.
+     * any bind method runs — which is why the configuration is taken the same way, see
+     * {@link #apply}.
      * </p>
      */
     private final MeterProvider meters;
@@ -107,9 +108,13 @@ public class AtlasTelemetry {
     private final Map<AtlasRuntime, Watched> watched = new ConcurrentHashMap<>();
 
     /**
-     * The instrumentation scope, with a default that holds before the configuration arrives — DS
-     * binds a reference before it activates the component, so the first runtime can be bound before
-     * {@link #configure} has run.
+     * The instrumentation scope, configured before anything can be bound.
+     *
+     * <p>
+     * The value here is the same default {@link TelemetryConfig#scope()} declares, so it is what
+     * holds when a configuration states nothing; it is not a placeholder for an unconfigured
+     * window, because there is none — see {@link #apply}.
+     * </p>
      */
     private volatile String scope = "org.eclipse.fennec.model.atlas";
 
@@ -117,13 +122,36 @@ public class AtlasTelemetry {
     private volatile boolean packageSeries = false;
 
     @Activate
-    public AtlasTelemetry(@Reference MeterProvider meters) {
+    public AtlasTelemetry(@Reference MeterProvider meters, TelemetryConfig config) {
         this.meters = meters;
+        apply(config);
     }
 
-    @Activate
     @Modified
-    void configure(TelemetryConfig config) {
+    void modify(TelemetryConfig config) {
+        apply(config);
+    }
+
+    /**
+     * Takes the configuration — at construction, and again whenever it is written.
+     *
+     * <p>
+     * <strong>One entry point on the way in, on purpose.</strong> A component can declare both an
+     * {@code @Activate} constructor and an {@code @Activate} method, and then it has two of them
+     * with the references bound <em>between</em> the two: DS constructs at step 4 of activation,
+     * binds at step 6 and calls the activate method at step 7 (112.5.6). A runtime bound in that
+     * window would have had its gauges built against whatever the configuration had not been
+     * applied to yet, and would depend on the rebuild below to put it right. Taking the
+     * configuration as a constructor parameter removes the window rather than coping with it.
+     * </p>
+     *
+     * <p>
+     * A write that changes neither value is a no-op: {@link Modified} is called for any write to
+     * the PID, including one that sets the same values back, and rebuilding would throw away live
+     * instruments for nothing.
+     * </p>
+     */
+    private void apply(TelemetryConfig config) {
         if (config.scope().equals(scope) && config.packageSeries() == packageSeries) {
             return;
         }
