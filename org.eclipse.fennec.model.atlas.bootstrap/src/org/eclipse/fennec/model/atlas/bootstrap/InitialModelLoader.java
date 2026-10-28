@@ -61,7 +61,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -1156,11 +1156,21 @@ public class InitialModelLoader {
         }
     }
 
-    private Dictionary<String, String> serviceProperties(EPackage ePackage) {
+    // Package-private and static so the properties a global registration carries can be
+    // asserted directly; it reads nothing but the package.
+    static Dictionary<String, String> serviceProperties(EPackage ePackage) {
         Dictionary<String, String> props = new Hashtable<>();
         props.put(EMFNamespaces.EMF_NAME, ePackage.getName());
         props.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         props.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_DYNAMIC);
+        // The same version this loader records in a scope's metadata, so a reader of the service
+        // registry and a reader of the registry agree about one model. Omitted rather than guessed
+        // when the model declares none and its nsURI carries none: a consumer can fall back to the
+        // shipping bundle, but it cannot tell an invented version from a stated one.
+        String version = extractVersion(ePackage);
+        if (version != null) {
+            props.put(EMFNamespaces.EMF_MODEL_VERSION, version);
+        }
         EAnnotation annotation = ePackage.getEAnnotation("properties");
         if (annotation != null) {
             for (Entry<String, String> entry : annotation.getDetails()) {

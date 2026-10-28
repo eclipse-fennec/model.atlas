@@ -204,3 +204,14 @@ org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.dcatap.de.model:1.0.0-SNAP
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.api:1.0.0-SNAPSHOT
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.impl:1.0.0-SNAPSHOT
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.osgi:1.0.0-SNAPSHOT
+
+
+# OpenTelemetry, for org.eclipse.fennec.model.atlas.telemetry only. The repack carries
+# both the API and the SDK; the integrations are what a deployment installs beside it.
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.repack:0.1.0-SNAPSHOT
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.core.commons:0.1.0-SNAPSHOT
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.core.sender.http:0.1.0-SNAPSHOT
+# The logging sender needs no collector, which is what makes a local look-at-the-output run possible.
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.core.sender.logging:0.1.0-SNAPSHOT
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.integration.cm:0.1.0-SNAPSHOT
+org.eclipse.osgi-technology.opentelemetry:org.eclipse.osgi-technology.opentelemetry.integration.scr:0.1.0-SNAPSHOT

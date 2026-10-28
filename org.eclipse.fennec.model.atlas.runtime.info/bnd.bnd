@@ -1,0 +1,24 @@
+Bundle-Name: Model Atlas Runtime Service
+Bundle-Description: What this Atlas holds, as OSGi DTOs: every live scope with its \
+ registries, stages and schema packages, and every configured thing that did not come \
+ up, with the reason. The same shape emf.services uses for BrokerRuntime and \
+ ClientRuntime, so a watcher that knows one knows this one. \
+ \
+ Carries no OpenTelemetry: the telemetry bundle binds this one, and neither requires \
+ the other.
+
+-library: enableEMF
+
+-buildpath: \
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.annotation.versioning;version=latest,\
+	org.osgi.annotation.bundle;version=latest,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
+	org.eclipse.fennec.emf.osgi.api;version=latest,\
+	org.osgi.dto;version=latest,\
+	org.osgi.service.component;version=latest
+
+-testpath: junit-jupiter-api
