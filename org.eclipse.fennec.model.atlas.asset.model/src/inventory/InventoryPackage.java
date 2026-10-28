@@ -43,7 +43,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = InventoryPackage.eNS_URI, fingerprint = "fp1:78444bdc5735805465b6b8220c472758780f4d2349ab4a016eaa75eebffd1436", genModel = "/model/model-atlas-asset.genmodel", genModelSourceLocations = {"model/model-atlas-asset.genmodel","org.eclipse.fennec.model.atlas.asset.model/model/model-atlas-asset.genmodel"}, ecore = "/model/inventory.ecore", ecoreSourceLocations = "/model/inventory.ecore")
+@EPackage(uri = InventoryPackage.eNS_URI, fingerprint = "fp1:aa049fa58b5886015829e96de0689ae9e2171c8cea65f3a84d59da0c2d065ab8", genModel = "/model/model-atlas-asset.genmodel", genModelSourceLocations = {"model/model-atlas-asset.genmodel","org.eclipse.fennec.model.atlas.asset.model/model/model-atlas-asset.genmodel"}, ecore = "/model/inventory.ecore", ecoreSourceLocations = "/model/inventory.ecore")
 public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -197,31 +197,31 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	int ASSET_RELATION__KIND = 1;
 
 	/**
-	 * The feature id for the '<em><b>Target</b></em>' container reference.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int ASSET_RELATION__TARGET = 2;
-
-	/**
 	 * The feature id for the '<em><b>Rationale</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int ASSET_RELATION__RATIONALE = 3;
+	int ASSET_RELATION__RATIONALE = 2;
 
 	/**
-	 * The feature id for the '<em><b>Source</b></em>' reference.
+	 * The feature id for the '<em><b>Source Asset Id</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int ASSET_RELATION__SOURCE = 4;
+	int ASSET_RELATION__SOURCE_ASSET_ID = 3;
+
+	/**
+	 * The feature id for the '<em><b>Target Asset Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int ASSET_RELATION__TARGET_ASSET_ID = 4;
 
 	/**
 	 * The number of structural features of the '<em>Asset Relation</em>' class.
@@ -352,15 +352,6 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	int ASPECT__KIND = ASSET_RELATION__KIND;
 
 	/**
-	 * The feature id for the '<em><b>Target</b></em>' container reference.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int ASPECT__TARGET = ASSET_RELATION__TARGET;
-
-	/**
 	 * The feature id for the '<em><b>Rationale</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -370,13 +361,22 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	int ASPECT__RATIONALE = ASSET_RELATION__RATIONALE;
 
 	/**
-	 * The feature id for the '<em><b>Source</b></em>' reference.
+	 * The feature id for the '<em><b>Source Asset Id</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int ASPECT__SOURCE = ASSET_RELATION__SOURCE;
+	int ASPECT__SOURCE_ASSET_ID = ASSET_RELATION__SOURCE_ASSET_ID;
+
+	/**
+	 * The feature id for the '<em><b>Target Asset Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int ASPECT__TARGET_ASSET_ID = ASSET_RELATION__TARGET_ASSET_ID;
 
 	/**
 	 * The number of structural features of the '<em>Aspect</em>' class.
@@ -537,17 +537,6 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getAssetRelation_Kind();
 
 	/**
-	 * Returns the meta object for the container reference '{@link inventory.AssetRelation#getTarget <em>Target</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the container reference '<em>Target</em>'.
-	 * @see inventory.AssetRelation#getTarget()
-	 * @see #getAssetRelation()
-	 * @generated
-	 */
-	EReference getAssetRelation_Target();
-
-	/**
 	 * Returns the meta object for the attribute '{@link inventory.AssetRelation#getRationale <em>Rationale</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -559,15 +548,26 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getAssetRelation_Rationale();
 
 	/**
-	 * Returns the meta object for the reference '{@link inventory.AssetRelation#getSource <em>Source</em>}'.
+	 * Returns the meta object for the attribute '{@link inventory.AssetRelation#getSourceAssetId <em>Source Asset Id</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>Source</em>'.
-	 * @see inventory.AssetRelation#getSource()
+	 * @return the meta object for the attribute '<em>Source Asset Id</em>'.
+	 * @see inventory.AssetRelation#getSourceAssetId()
 	 * @see #getAssetRelation()
 	 * @generated
 	 */
-	EReference getAssetRelation_Source();
+	EAttribute getAssetRelation_SourceAssetId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link inventory.AssetRelation#getTargetAssetId <em>Target Asset Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Target Asset Id</em>'.
+	 * @see inventory.AssetRelation#getTargetAssetId()
+	 * @see #getAssetRelation()
+	 * @generated
+	 */
+	EAttribute getAssetRelation_TargetAssetId();
 
 	/**
 	 * Returns the meta object for class '{@link inventory.SourceRef <em>Source Ref</em>}'.
@@ -791,14 +791,6 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute ASSET_RELATION__KIND = eINSTANCE.getAssetRelation_Kind();
 
 		/**
-		 * The meta object literal for the '<em><b>Target</b></em>' container reference feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EReference ASSET_RELATION__TARGET = eINSTANCE.getAssetRelation_Target();
-
-		/**
 		 * The meta object literal for the '<em><b>Rationale</b></em>' attribute feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -807,12 +799,20 @@ public interface InventoryPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute ASSET_RELATION__RATIONALE = eINSTANCE.getAssetRelation_Rationale();
 
 		/**
-		 * The meta object literal for the '<em><b>Source</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>Source Asset Id</b></em>' attribute feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EReference ASSET_RELATION__SOURCE = eINSTANCE.getAssetRelation_Source();
+		EAttribute ASSET_RELATION__SOURCE_ASSET_ID = eINSTANCE.getAssetRelation_SourceAssetId();
+
+		/**
+		 * The meta object literal for the '<em><b>Target Asset Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute ASSET_RELATION__TARGET_ASSET_ID = eINSTANCE.getAssetRelation_TargetAssetId();
 
 		/**
 		 * The meta object literal for the '{@link inventory.impl.SourceRefImpl <em>Source Ref</em>}' class.

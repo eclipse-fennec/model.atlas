@@ -32,9 +32,9 @@ import org.osgi.annotation.versioning.ProviderType;
  * <ul>
  *   <li>{@link inventory.AssetRelation#getId <em>Id</em>}</li>
  *   <li>{@link inventory.AssetRelation#getKind <em>Kind</em>}</li>
- *   <li>{@link inventory.AssetRelation#getTarget <em>Target</em>}</li>
  *   <li>{@link inventory.AssetRelation#getRationale <em>Rationale</em>}</li>
- *   <li>{@link inventory.AssetRelation#getSource <em>Source</em>}</li>
+ *   <li>{@link inventory.AssetRelation#getSourceAssetId <em>Source Asset Id</em>}</li>
+ *   <li>{@link inventory.AssetRelation#getTargetAssetId <em>Target Asset Id</em>}</li>
  * </ul>
  *
  * @see inventory.InventoryPackage#getAssetRelation()
@@ -97,33 +97,6 @@ public interface AssetRelation extends EObject {
 	void setKind(AssetRelationKind value);
 
 	/**
-	 * Returns the value of the '<em><b>Target</b></em>' container reference.
-	 * It is bidirectional and its opposite is '{@link inventory.Asset#getRelations <em>Relations</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * The related asset.
-	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Target</em>' container reference.
-	 * @see #setTarget(Asset)
-	 * @see inventory.InventoryPackage#getAssetRelation_Target()
-	 * @see inventory.Asset#getRelations
-	 * @model opposite="relations" required="true" transient="false"
-	 * @generated
-	 */
-	Asset getTarget();
-
-	/**
-	 * Sets the value of the '{@link inventory.AssetRelation#getTarget <em>Target</em>}' container reference.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Target</em>' container reference.
-	 * @see #getTarget()
-	 * @generated
-	 */
-	void setTarget(Asset value);
-
-	/**
 	 * Returns the value of the '<em><b>Rationale</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -149,25 +122,47 @@ public interface AssetRelation extends EObject {
 	void setRationale(String value);
 
 	/**
-	 * Returns the value of the '<em><b>Source</b></em>' reference.
+	 * Returns the value of the '<em><b>Source Asset Id</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Source</em>' reference.
-	 * @see #setSource(Asset)
-	 * @see inventory.InventoryPackage#getAssetRelation_Source()
-	 * @model keys="id" required="true"
+	 * @return the value of the '<em>Source Asset Id</em>' attribute.
+	 * @see #setSourceAssetId(String)
+	 * @see inventory.InventoryPackage#getAssetRelation_SourceAssetId()
+	 * @model required="true"
 	 * @generated
 	 */
-	Asset getSource();
+	String getSourceAssetId();
 
 	/**
-	 * Sets the value of the '{@link inventory.AssetRelation#getSource <em>Source</em>}' reference.
+	 * Sets the value of the '{@link inventory.AssetRelation#getSourceAssetId <em>Source Asset Id</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Source</em>' reference.
-	 * @see #getSource()
+	 * @param value the new value of the '<em>Source Asset Id</em>' attribute.
+	 * @see #getSourceAssetId()
 	 * @generated
 	 */
-	void setSource(Asset value);
+	void setSourceAssetId(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Target Asset Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Target Asset Id</em>' attribute.
+	 * @see #setTargetAssetId(String)
+	 * @see inventory.InventoryPackage#getAssetRelation_TargetAssetId()
+	 * @model required="true"
+	 * @generated
+	 */
+	String getTargetAssetId();
+
+	/**
+	 * Sets the value of the '{@link inventory.AssetRelation#getTargetAssetId <em>Target Asset Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Target Asset Id</em>' attribute.
+	 * @see #getTargetAssetId()
+	 * @generated
+	 */
+	void setTargetAssetId(String value);
 
 } // AssetRelation

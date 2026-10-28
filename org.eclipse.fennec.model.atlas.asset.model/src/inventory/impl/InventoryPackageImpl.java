@@ -265,8 +265,8 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 	 * @generated
 	 */
 	@Override
-	public EReference getAssetRelation_Target() {
-		return (EReference)assetRelationEClass.getEStructuralFeatures().get(2);
+	public EAttribute getAssetRelation_Rationale() {
+		return (EAttribute)assetRelationEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -275,7 +275,7 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 	 * @generated
 	 */
 	@Override
-	public EAttribute getAssetRelation_Rationale() {
+	public EAttribute getAssetRelation_SourceAssetId() {
 		return (EAttribute)assetRelationEClass.getEStructuralFeatures().get(3);
 	}
 
@@ -285,8 +285,8 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 	 * @generated
 	 */
 	@Override
-	public EReference getAssetRelation_Source() {
-		return (EReference)assetRelationEClass.getEStructuralFeatures().get(4);
+	public EAttribute getAssetRelation_TargetAssetId() {
+		return (EAttribute)assetRelationEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -430,9 +430,9 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 		assetRelationEClass = createEClass(ASSET_RELATION);
 		createEAttribute(assetRelationEClass, ASSET_RELATION__ID);
 		createEAttribute(assetRelationEClass, ASSET_RELATION__KIND);
-		createEReference(assetRelationEClass, ASSET_RELATION__TARGET);
 		createEAttribute(assetRelationEClass, ASSET_RELATION__RATIONALE);
-		createEReference(assetRelationEClass, ASSET_RELATION__SOURCE);
+		createEAttribute(assetRelationEClass, ASSET_RELATION__SOURCE_ASSET_ID);
+		createEAttribute(assetRelationEClass, ASSET_RELATION__TARGET_ASSET_ID);
 
 		sourceRefEClass = createEClass(SOURCE_REF);
 		createEAttribute(sourceRefEClass, SOURCE_REF__KIND);
@@ -485,7 +485,7 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 		initEAttribute(getAsset_Name(), ecorePackage.getEString(), "name", null, 0, 1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAsset_Description(), ecorePackage.getEString(), "description", null, 0, 1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAsset_Owner(), ecorePackage.getEString(), "owner", null, 0, 1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getAsset_Relations(), this.getAssetRelation(), this.getAssetRelation_Target(), "relations", null, 0, -1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getAsset_Relations(), this.getAssetRelation(), null, "relations", null, 0, -1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		getAsset_Relations().getEKeys().add(this.getAssetRelation_Id());
 		initEReference(getAsset_Sources(), this.getSourceRef(), null, "sources", null, 0, -1, Asset.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getAsset_Aspects(), this.getAspect(), null, "aspects", null, 0, -1, Asset.class, IS_TRANSIENT, IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
@@ -493,10 +493,9 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 		initEClass(assetRelationEClass, AssetRelation.class, "AssetRelation", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getAssetRelation_Id(), ecorePackage.getEString(), "id", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAssetRelation_Kind(), this.getAssetRelationKind(), "kind", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getAssetRelation_Target(), this.getAsset(), this.getAsset_Relations(), "target", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getAssetRelation_Rationale(), ecorePackage.getEString(), "rationale", null, 0, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getAssetRelation_Source(), this.getAsset(), null, "source", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		getAssetRelation_Source().getEKeys().add(this.getAsset_Id());
+		initEAttribute(getAssetRelation_SourceAssetId(), ecorePackage.getEString(), "sourceAssetId", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getAssetRelation_TargetAssetId(), ecorePackage.getEString(), "targetAssetId", null, 1, 1, AssetRelation.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(sourceRefEClass, SourceRef.class, "SourceRef", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getSourceRef_Kind(), this.getSourceKind(), "kind", null, 1, 1, SourceRef.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -613,12 +612,6 @@ public class InventoryPackageImpl extends EPackageImpl implements InventoryPacka
 		   source,
 		   new String[] {
 			   "documentation", "Kind of relation."
-		   });
-		addAnnotation
-		  (getAssetRelation_Target(),
-		   source,
-		   new String[] {
-			   "documentation", "The related asset."
 		   });
 		addAnnotation
 		  (getAssetRelation_Rationale(),

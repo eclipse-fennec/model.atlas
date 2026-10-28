@@ -53,9 +53,9 @@
     <genClasses ecoreClass="inventory.ecore#//AssetRelation">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/id"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/kind"/>
-      <genFeatures property="None" notify="false" createChild="false" ecoreFeature="ecore:EReference inventory.ecore#//AssetRelation/target"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/rationale"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference inventory.ecore#//AssetRelation/source"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/sourceAssetId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//AssetRelation/targetAssetId"/>
     </genClasses>
     <genClasses ecoreClass="inventory.ecore#//SourceRef">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute inventory.ecore#//SourceRef/kind"/>

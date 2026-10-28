@@ -48,6 +48,9 @@ import org.junit.jupiter.api.Test;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
 
+import inventory.SourceKind;
+import inventory.SourceRef;
+
 /**
  * What the action decides, rather than what the registry does with it: which events it answers,
  * what the asset it mints says, where that asset is addressed, and what a failed write costs. The
@@ -182,6 +185,100 @@ class AssetStageActionServiceTest {
 		assertNotEquals(here, scope.writtenId.get());
 	}
 
+	/* ------------------------------------------------------------------ the source reference */
+
+	@Test
+	@DisplayName("the asset says where the object can be read, relative to the REST application by default")
+	void theSourceUriIsRelativeByDefault() {
+		var action = action(new String[0], new String[] { EPACKAGE_TYPE });
+
+		action.onEnter(ePackageContext("draft"));
+
+		SourceRef source = onlySource(scope.written.get());
+		assertEquals("jena/registries/schema/stages/draft/content?objectId=a-package", source.getUri(),
+				"an absolute address would be wrong the moment the atlas comes back up elsewhere");
+		assertEquals(SourceKind.EPACKAGE, source.getKind());
+		assertEquals(OBJECT_ID, source.getName());
+	}
+
+	@Test
+	@DisplayName("the source revision is a revision of the reference, not of the object behind it")
+	void theRevisionBelongsToTheReference() {
+		var action = action(new String[0], new String[] { EPACKAGE_TYPE });
+
+		action.onEnter(ePackageContext("draft"));
+		String first = onlySource(scope.written.get()).getSourceRevision();
+		// the same object, somewhere else entirely: a new fingerprint, the same address
+		action.onUpdate(context(SOURCE_REGISTRY, "draft", OBJECT_ID, EPACKAGE_TYPE,
+				Map.of("fingerprint", "fp1:0000000000000000", "nsUri", NS_URI)));
+
+		assertTrue(first.startsWith("sr1:"),
+				"its own scheme, so that it is not read as the fp1: fingerprint of a model");
+		assertNotEquals(FINGERPRINT, first, "the object's fingerprint says something else entirely");
+		assertEquals(first, onlySource(scope.written.get()).getSourceRevision(),
+				"the object changed, the reference did not");
+	}
+
+	@Test
+	@DisplayName("a reference that states something else gets a new revision")
+	void theRevisionFollowsWhatTheReferenceStates() {
+		String here = revisionOf(action(new String[0], new String[] { EPACKAGE_TYPE }));
+		String published = revisionOf(action(new String[0], new String[] { EPACKAGE_TYPE },
+				"http://localhost:8080/atlas/rest"));
+
+		assertNotEquals(here, published, "the object became reachable under another address");
+		assertEquals(published, revisionOf(action(new String[0], new String[] { EPACKAGE_TYPE },
+				"http://localhost:8080/atlas/rest/")), "the same address, stated the same way, is the same revision");
+	}
+
+	private String revisionOf(AssetStageActionService action) {
+		action.onEnter(ePackageContext("draft"));
+		return onlySource(scope.written.get()).getSourceRevision();
+	}
+
+	@Test
+	@DisplayName("a configured base URI makes the source address absolute, for an inventory handed outside")
+	void aConfiguredBaseUriIsPrefixed() {
+		var action = action(new String[0], new String[] { EPACKAGE_TYPE }, "http://localhost:8080/atlas/rest/");
+
+		action.onEnter(ePackageContext("draft"));
+
+		assertEquals("http://localhost:8080/atlas/rest/jena/registries/schema/stages/draft/content?objectId=a-package",
+				onlySource(scope.written.get()).getUri(), "and a trailing slash does not double up");
+	}
+
+	@Test
+	@DisplayName("an object that is no EPackage is referenced as OTHER, and is still a revisioned reference")
+	void aPlainObjectsSource() {
+		String instanceType = EcoreUtil.getURI(EcorePackage.Literals.EANNOTATION).toString();
+		var action = action(new String[0], new String[] { instanceType });
+
+		action.onEnter(context("configuration", "draft", "an-instance", instanceType, Map.of()));
+
+		SourceRef source = onlySource(scope.written.get());
+		assertEquals(SourceKind.OTHER, source.getKind());
+		assertEquals("jena/registries/configuration/stages/draft/content?objectId=an-instance", source.getUri());
+		assertTrue(source.getSourceRevision().startsWith("sr1:"),
+				"the reference exists whether or not the object it points at carries a fingerprint");
+	}
+
+	@Test
+	@DisplayName("the address is encoded, a path segment as a path and the objectId as the query value it is")
+	void theSourceUriIsEncoded() {
+		var action = action(new String[0], new String[] { EPACKAGE_TYPE });
+
+		action.onEnter(context(SOURCE_REGISTRY, "draft", "a package/1", EPACKAGE_TYPE, Map.of()));
+
+		assertEquals("jena/registries/schema/stages/draft/content?objectId=a+package%2F1",
+				onlySource(scope.written.get()).getUri(),
+				"a '+' is a space in the query string, where the objectId sits; a path segment would need %20");
+	}
+
+	private static SourceRef onlySource(StageableAsset asset) {
+		assertEquals(1, asset.getSources().size(), "one asset is about one object");
+		return asset.getSources().get(0);
+	}
+
 	/* ------------------------------------------------------------------ create or replace */
 
 	@Test
@@ -314,12 +411,22 @@ class AssetStageActionServiceTest {
 		return new AssetStageActionService(scope.service(), config(triggers, objectTypes));
 	}
 
+
+	private AssetStageActionService action(String[] triggers, String[] objectTypes, String baseUri) {
+		return new AssetStageActionService(scope.service(), config(triggers, objectTypes, baseUri));
+	}
+
 	private static AssetStageActionService.Config config(String[] triggers, String[] objectTypes) {
+		return config(triggers, objectTypes, null);
+	}
+
+	private static AssetStageActionService.Config config(String[] triggers, String[] objectTypes, String baseUri) {
 		Map<String, Object> values = new LinkedHashMap<>();
 		values.put("triggers", triggers);
 		values.put("supported_object_types", objectTypes);
 		values.put("inventory_registry", INVENTORY_REGISTRY);
 		values.put("inventory_stage", INVENTORY_STAGE);
+		values.put("base_uri", baseUri);
 		return proxy(AssetStageActionService.Config.class, values);
 	}
 

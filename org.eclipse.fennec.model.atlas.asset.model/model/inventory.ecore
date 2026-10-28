@@ -31,8 +31,7 @@
       </eAnnotations>
     </eStructuralFeatures>
     <eStructuralFeatures xsi:type="ecore:EReference" name="relations" upperBound="-1"
-        eType="#//AssetRelation" containment="true" resolveProxies="false" eOpposite="#//AssetRelation/target"
-        eKeys="#//AssetRelation/id">
+        eType="#//AssetRelation" containment="true" resolveProxies="false" eKeys="#//AssetRelation/id">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Relations to other assets."/>
       </eAnnotations>
@@ -66,19 +65,15 @@
         <details key="documentation" value="Kind of relation."/>
       </eAnnotations>
     </eStructuralFeatures>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="target" lowerBound="1"
-        eType="#//Asset" eOpposite="#//Asset/relations">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="The related asset."/>
-      </eAnnotations>
-    </eStructuralFeatures>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="rationale" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Why the relation exists."/>
       </eAnnotations>
     </eStructuralFeatures>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="source" lowerBound="1"
-        eType="#//Asset" eKeys="#//Asset/id"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="sourceAssetId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="targetAssetId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SourceRef">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

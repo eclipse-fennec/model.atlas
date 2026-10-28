@@ -150,7 +150,6 @@ public interface Asset extends EObject {
 	/**
 	 * Returns the value of the '<em><b>Relations</b></em>' containment reference list.
 	 * The list contents are of type {@link inventory.AssetRelation}.
-	 * It is bidirectional and its opposite is '{@link inventory.AssetRelation#getTarget <em>Target</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
@@ -158,8 +157,7 @@ public interface Asset extends EObject {
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Relations</em>' containment reference list.
 	 * @see inventory.InventoryPackage#getAsset_Relations()
-	 * @see inventory.AssetRelation#getTarget
-	 * @model opposite="target" containment="true" keys="id"
+	 * @model containment="true" keys="id"
 	 * @generated
 	 */
 	EList<AssetRelation> getRelations();

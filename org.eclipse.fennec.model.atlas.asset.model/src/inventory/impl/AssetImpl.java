@@ -33,7 +33,6 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
-import org.eclipse.emf.ecore.util.EObjectContainmentWithInverseEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
 /**
@@ -275,7 +274,7 @@ public class AssetImpl extends MinimalEObjectImpl.Container implements Asset {
 	@Override
 	public EList<AssetRelation> getRelations() {
 		if (relations == null) {
-			relations = new EObjectContainmentWithInverseEList<AssetRelation>(AssetRelation.class, this, InventoryPackage.ASSET__RELATIONS, InventoryPackage.ASSET_RELATION__TARGET);
+			relations = new EObjectContainmentEList<AssetRelation>(AssetRelation.class, this, InventoryPackage.ASSET__RELATIONS);
 		}
 		return relations;
 	}
@@ -307,21 +306,6 @@ public class AssetImpl extends MinimalEObjectImpl.Container implements Asset {
 		      }
 		  }
 		  return new org.eclipse.emf.common.util.BasicEList.UnmodifiableEList<>(aspects.size(), aspects.toArray());
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
-		switch (featureID) {
-			case InventoryPackage.ASSET__RELATIONS:
-				return ((InternalEList<InternalEObject>)(InternalEList<?>)getRelations()).basicAdd(otherEnd, msgs);
-		}
-		return super.eInverseAdd(otherEnd, featureID, msgs);
 	}
 
 	/**

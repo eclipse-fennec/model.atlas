@@ -13,21 +13,16 @@
  */
 package inventory.impl;
 
-import inventory.Asset;
 import inventory.AssetRelation;
 import inventory.AssetRelationKind;
 import inventory.InventoryPackage;
 
 import org.eclipse.emf.common.notify.Notification;
-import org.eclipse.emf.common.notify.NotificationChain;
 
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
-
-import org.eclipse.emf.ecore.util.EcoreUtil;
 
 /**
  * <!-- begin-user-doc -->
@@ -39,9 +34,9 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
  * <ul>
  *   <li>{@link inventory.impl.AssetRelationImpl#getId <em>Id</em>}</li>
  *   <li>{@link inventory.impl.AssetRelationImpl#getKind <em>Kind</em>}</li>
- *   <li>{@link inventory.impl.AssetRelationImpl#getTarget <em>Target</em>}</li>
  *   <li>{@link inventory.impl.AssetRelationImpl#getRationale <em>Rationale</em>}</li>
- *   <li>{@link inventory.impl.AssetRelationImpl#getSource <em>Source</em>}</li>
+ *   <li>{@link inventory.impl.AssetRelationImpl#getSourceAssetId <em>Source Asset Id</em>}</li>
+ *   <li>{@link inventory.impl.AssetRelationImpl#getTargetAssetId <em>Target Asset Id</em>}</li>
  * </ul>
  *
  * @generated
@@ -108,14 +103,44 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	protected String rationale = RATIONALE_EDEFAULT;
 
 	/**
-	 * The cached value of the '{@link #getSource() <em>Source</em>}' reference.
+	 * The default value of the '{@link #getSourceAssetId() <em>Source Asset Id</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getSource()
+	 * @see #getSourceAssetId()
 	 * @generated
 	 * @ordered
 	 */
-	protected Asset source;
+	protected static final String SOURCE_ASSET_ID_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getSourceAssetId() <em>Source Asset Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getSourceAssetId()
+	 * @generated
+	 * @ordered
+	 */
+	protected String sourceAssetId = SOURCE_ASSET_ID_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getTargetAssetId() <em>Target Asset Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getTargetAssetId()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String TARGET_ASSET_ID_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getTargetAssetId() <em>Target Asset Id</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getTargetAssetId()
+	 * @generated
+	 * @ordered
+	 */
+	protected String targetAssetId = TARGET_ASSET_ID_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -188,49 +213,6 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	 * @generated
 	 */
 	@Override
-	public Asset getTarget() {
-		if (eContainerFeatureID() != InventoryPackage.ASSET_RELATION__TARGET) return null;
-		return (Asset)eInternalContainer();
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public NotificationChain basicSetTarget(Asset newTarget, NotificationChain msgs) {
-		msgs = eBasicSetContainer((InternalEObject)newTarget, InventoryPackage.ASSET_RELATION__TARGET, msgs);
-		return msgs;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setTarget(Asset newTarget) {
-		if (newTarget != eInternalContainer() || (eContainerFeatureID() != InventoryPackage.ASSET_RELATION__TARGET && newTarget != null)) {
-			if (EcoreUtil.isAncestor(this, newTarget))
-				throw new IllegalArgumentException("Recursive containment not allowed for " + toString());
-			NotificationChain msgs = null;
-			if (eInternalContainer() != null)
-				msgs = eBasicRemoveFromContainer(msgs);
-			if (newTarget != null)
-				msgs = ((InternalEObject)newTarget).eInverseAdd(this, InventoryPackage.ASSET__RELATIONS, Asset.class, msgs);
-			msgs = basicSetTarget(newTarget, msgs);
-			if (msgs != null) msgs.dispatch();
-		}
-		else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, InventoryPackage.ASSET_RELATION__TARGET, newTarget, newTarget));
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
 	public String getRationale() {
 		return rationale;
 	}
@@ -254,25 +236,8 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	 * @generated
 	 */
 	@Override
-	public Asset getSource() {
-		if (source != null && source.eIsProxy()) {
-			InternalEObject oldSource = (InternalEObject)source;
-			source = (Asset)eResolveProxy(oldSource);
-			if (source != oldSource) {
-				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, InventoryPackage.ASSET_RELATION__SOURCE, oldSource, source));
-			}
-		}
-		return source;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public Asset basicGetSource() {
-		return source;
+	public String getSourceAssetId() {
+		return sourceAssetId;
 	}
 
 	/**
@@ -281,11 +246,11 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	 * @generated
 	 */
 	@Override
-	public void setSource(Asset newSource) {
-		Asset oldSource = source;
-		source = newSource;
+	public void setSourceAssetId(String newSourceAssetId) {
+		String oldSourceAssetId = sourceAssetId;
+		sourceAssetId = newSourceAssetId;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, InventoryPackage.ASSET_RELATION__SOURCE, oldSource, source));
+			eNotify(new ENotificationImpl(this, Notification.SET, InventoryPackage.ASSET_RELATION__SOURCE_ASSET_ID, oldSourceAssetId, sourceAssetId));
 	}
 
 	/**
@@ -294,14 +259,8 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	 * @generated
 	 */
 	@Override
-	public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
-		switch (featureID) {
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				if (eInternalContainer() != null)
-					msgs = eBasicRemoveFromContainer(msgs);
-				return basicSetTarget((Asset)otherEnd, msgs);
-		}
-		return super.eInverseAdd(otherEnd, featureID, msgs);
+	public String getTargetAssetId() {
+		return targetAssetId;
 	}
 
 	/**
@@ -310,26 +269,11 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 	 * @generated
 	 */
 	@Override
-	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
-		switch (featureID) {
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				return basicSetTarget(null, msgs);
-		}
-		return super.eInverseRemove(otherEnd, featureID, msgs);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public NotificationChain eBasicRemoveFromContainerFeature(NotificationChain msgs) {
-		switch (eContainerFeatureID()) {
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				return eInternalContainer().eInverseRemove(this, InventoryPackage.ASSET__RELATIONS, Asset.class, msgs);
-		}
-		return super.eBasicRemoveFromContainerFeature(msgs);
+	public void setTargetAssetId(String newTargetAssetId) {
+		String oldTargetAssetId = targetAssetId;
+		targetAssetId = newTargetAssetId;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, InventoryPackage.ASSET_RELATION__TARGET_ASSET_ID, oldTargetAssetId, targetAssetId));
 	}
 
 	/**
@@ -344,13 +288,12 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 				return getId();
 			case InventoryPackage.ASSET_RELATION__KIND:
 				return getKind();
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				return getTarget();
 			case InventoryPackage.ASSET_RELATION__RATIONALE:
 				return getRationale();
-			case InventoryPackage.ASSET_RELATION__SOURCE:
-				if (resolve) return getSource();
-				return basicGetSource();
+			case InventoryPackage.ASSET_RELATION__SOURCE_ASSET_ID:
+				return getSourceAssetId();
+			case InventoryPackage.ASSET_RELATION__TARGET_ASSET_ID:
+				return getTargetAssetId();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -369,14 +312,14 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 			case InventoryPackage.ASSET_RELATION__KIND:
 				setKind((AssetRelationKind)newValue);
 				return;
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				setTarget((Asset)newValue);
-				return;
 			case InventoryPackage.ASSET_RELATION__RATIONALE:
 				setRationale((String)newValue);
 				return;
-			case InventoryPackage.ASSET_RELATION__SOURCE:
-				setSource((Asset)newValue);
+			case InventoryPackage.ASSET_RELATION__SOURCE_ASSET_ID:
+				setSourceAssetId((String)newValue);
+				return;
+			case InventoryPackage.ASSET_RELATION__TARGET_ASSET_ID:
+				setTargetAssetId((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -396,14 +339,14 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 			case InventoryPackage.ASSET_RELATION__KIND:
 				setKind(KIND_EDEFAULT);
 				return;
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				setTarget((Asset)null);
-				return;
 			case InventoryPackage.ASSET_RELATION__RATIONALE:
 				setRationale(RATIONALE_EDEFAULT);
 				return;
-			case InventoryPackage.ASSET_RELATION__SOURCE:
-				setSource((Asset)null);
+			case InventoryPackage.ASSET_RELATION__SOURCE_ASSET_ID:
+				setSourceAssetId(SOURCE_ASSET_ID_EDEFAULT);
+				return;
+			case InventoryPackage.ASSET_RELATION__TARGET_ASSET_ID:
+				setTargetAssetId(TARGET_ASSET_ID_EDEFAULT);
 				return;
 		}
 		super.eUnset(featureID);
@@ -421,12 +364,12 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 				return ID_EDEFAULT == null ? id != null : !ID_EDEFAULT.equals(id);
 			case InventoryPackage.ASSET_RELATION__KIND:
 				return kind != KIND_EDEFAULT;
-			case InventoryPackage.ASSET_RELATION__TARGET:
-				return getTarget() != null;
 			case InventoryPackage.ASSET_RELATION__RATIONALE:
 				return RATIONALE_EDEFAULT == null ? rationale != null : !RATIONALE_EDEFAULT.equals(rationale);
-			case InventoryPackage.ASSET_RELATION__SOURCE:
-				return source != null;
+			case InventoryPackage.ASSET_RELATION__SOURCE_ASSET_ID:
+				return SOURCE_ASSET_ID_EDEFAULT == null ? sourceAssetId != null : !SOURCE_ASSET_ID_EDEFAULT.equals(sourceAssetId);
+			case InventoryPackage.ASSET_RELATION__TARGET_ASSET_ID:
+				return TARGET_ASSET_ID_EDEFAULT == null ? targetAssetId != null : !TARGET_ASSET_ID_EDEFAULT.equals(targetAssetId);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -447,6 +390,10 @@ public class AssetRelationImpl extends MinimalEObjectImpl.Container implements A
 		result.append(kind);
 		result.append(", rationale: ");
 		result.append(rationale);
+		result.append(", sourceAssetId: ");
+		result.append(sourceAssetId);
+		result.append(", targetAssetId: ");
+		result.append(targetAssetId);
 		result.append(')');
 		return result.toString();
 	}

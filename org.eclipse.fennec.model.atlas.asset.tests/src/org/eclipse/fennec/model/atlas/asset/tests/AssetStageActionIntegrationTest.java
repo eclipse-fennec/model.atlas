@@ -58,6 +58,9 @@ import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
+import inventory.SourceKind;
+import inventory.SourceRef;
+
 /**
  * The asset stage action in a running framework: one action instance bound to two source
  * registries of a scope, writing into a third, the inventory registry.
@@ -117,6 +120,15 @@ public class AssetStageActionIntegrationTest {
 		assertEquals(SCHEMA_REGISTRY, asset.getRegistry());
 		assertEquals("draft", asset.getStage());
 		assertEquals(PACKAGE_ID, asset.getObjectId());
+
+		// the reference is a contained object: that it comes back out of storage at all is
+		// what this test adds to the unit test's reading of the same fields
+		assertEquals(1, asset.getSources().size());
+		SourceRef source = asset.getSources().get(0);
+		assertEquals(SourceKind.EPACKAGE, source.getKind());
+		assertEquals(SCOPE + "/registries/" + SCHEMA_REGISTRY + "/stages/draft/content?objectId=" + PACKAGE_ID,
+				source.getUri(),
+				"the address the object is readable under, relative to the REST application");
 	}
 
 	/* ------------------------------------------------------------------ anything else */

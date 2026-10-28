@@ -14,6 +14,10 @@
 package org.eclipse.fennec.model.atlas.asset.impl;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,6 +45,10 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
 
+import inventory.InventoryFactory;
+import inventory.SourceKind;
+import inventory.SourceRef;
+
 
 /**
  * 
@@ -64,6 +72,7 @@ public class AssetStageActionService implements StageActionService {
 	private final Set<String> triggerStages;
 	private final String inventoryRegistry;
 	private final String inventoryStage;
+	private final String baseUri;
 	
 	@ObjectClassDefinition(name = "Asset Stage Action Service Configuration")
 	public @interface Config {
@@ -79,6 +88,9 @@ public class AssetStageActionService implements StageActionService {
 		
 		@AttributeDefinition(name = "Inventory Stage", description =  "The stage of the inventory registry where the assets should be written to")
 		String inventory_stage();
+		
+		@AttributeDefinition(name = "Base URI", description = "Prefix for the source URI of an asset, e.g. http://localhost:8080/atlas/rest. Left unset, the source URI is written relative to the REST application, which keeps a stored asset correct when the atlas is reachable under another address than the one it was written under. Set it when the inventory is handed out to someone who cannot know that address", required = false)
+		String base_uri() default "";
 	}
 	
 	@Activate
@@ -88,6 +100,7 @@ public class AssetStageActionService implements StageActionService {
 		this.scopeService = scopeService;
 		this.inventoryRegistry = config.inventory_registry();
 		this.inventoryStage = config.inventory_stage();
+		this.baseUri = trimTrailingSlash(config.base_uri());
 	}
 	
 
@@ -225,7 +238,6 @@ public class AssetStageActionService implements StageActionService {
 	}
 	
 	private Promise<Void> updateAsset(ActionContext ctx) {
-//		TODO We need to add the SourceRef of the assets, which should contain the url where we can reach the actual object and metadata
 		if (fromInventory(ctx)) {
 			return Promises.resolved(null);
 		}
@@ -236,6 +248,7 @@ public class AssetStageActionService implements StageActionService {
 		} else {
 			stageableAsset = createStageableAsset(ctx, objectId, ctx.objectType());
 		}
+		stageableAsset.getSources().add(createSourceRef(ctx));
 
 		ObjectMetadata existing = scopeService.getMetadataFromStageForRegistry(inventoryRegistry, inventoryStage, objectId);
 		// The lookup falls back to the parent scope's final stage, and an asset found there
@@ -352,6 +365,95 @@ public class AssetStageActionService implements StageActionService {
 			return Promises.failed(new IllegalStateException(
 					String.format("Interrupted while removing the Asset '%s'.", objectId), e));
 		}
+	}
+
+	/**
+	 * Where the object the asset is about can be read.
+	 *
+	 * <p>
+	 * The URI addresses the object through the REST API, as
+	 * {@code {scope}/registries/{registry}/stages/{stage}/content?objectId=...} - the endpoint
+	 * that reads the object. The path that ends in the objectId is a POST/PUT address and
+	 * answers no GET, so it would hand a reader an address it cannot read. Without a configured
+	 * base URI it stays relative to the REST application: an asset outlives the runtime that
+	 * wrote it, and an atlas that comes back up behind another host or port would otherwise
+	 * hand out an address that never resolves. A reader inside the atlas knows the base; one
+	 * outside it is served by a configuration that states the address the atlas is published
+	 * under.
+	 * </p>
+	 *
+	 * <p>
+	 * The revision is a revision of this reference, not of the object it points at: it is
+	 * derived from what the reference says - its kind, its format and its URI - so it
+	 * changes when the object becomes reachable somewhere else, and stays put while only
+	 * the object behind the URI changes. That the object changed is what a fingerprint
+	 * says, and a fingerprint is on the asset, not here.
+	 * </p>
+	 */
+	private SourceRef createSourceRef(ActionContext ctx) {
+		SourceRef sourceRef = InventoryFactory.eINSTANCE.createSourceRef();
+		sourceRef.setKind(EPACKAGE_TYPE.equals(ctx.objectType()) ? SourceKind.EPACKAGE : SourceKind.OTHER);
+		sourceRef.setName(ctx.objectId());
+		sourceRef.setUri(objectUri(ctx));
+		sourceRef.setSourceRevision(sourceRevision(sourceRef));
+		return sourceRef;
+	}
+
+	/**
+	 * The revision of a source reference: a digest of what the reference states, so that two
+	 * references that say the same thing carry the same revision and any change to what they
+	 * say gives a new one. Derived rather than counted, because the action writes the asset
+	 * whole and has no previous revision in hand to count up from.
+	 *
+	 * <p>
+	 * The scheme prefix is {@code sr1:} and not the {@code fp1:} of a model fingerprint -
+	 * this hashes a reference, and the two must not be read as the same kind of value.
+	 * </p>
+	 */
+	private static String sourceRevision(SourceRef sourceRef) {
+		String stated = String.join("\n", sourceRef.getKind().getName(),
+				sourceRef.getFormat() == null ? "" : sourceRef.getFormat(), sourceRef.getUri());
+		StringBuilder revision = new StringBuilder("sr1:");
+		for (byte b : sha256(stated)) {
+			revision.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
+		}
+		return revision.toString();
+	}
+
+	private static byte[] sha256(String value) {
+		try {
+			return MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-256 is required of every Java runtime", e);
+		}
+	}
+
+	/**
+	 * The object's address, relative to the REST application unless a base URI is configured.
+	 * Relative means relative: no leading slash, which would address the host's root rather
+	 * than the application the atlas is deployed under.
+	 */
+	private String objectUri(ActionContext ctx) {
+		String path = String.join("/", segment(ctx.scope()), "registries", segment(ctx.registry()), "stages",
+				segment(ctx.stage()), "content");
+		return (baseUri.isEmpty() ? path : baseUri + "/" + path) + "?objectId="
+				+ URLEncoder.encode(ctx.objectId(), StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * One path segment, percent-encoded. {@link URLEncoder} writes a space as {@code +},
+	 * which is a space only in a query string - where the objectId sits - and not in a path.
+	 */
+	private static String segment(String value) {
+		return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+	}
+
+	private static String trimTrailingSlash(String uri) {
+		if (blank(uri)) {
+			return "";
+		}
+		String trimmed = uri.trim();
+		return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
 	}
 
 	/** A metadata value as a string, or {@code null} when it is absent or is something else. */
