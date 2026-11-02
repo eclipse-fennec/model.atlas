@@ -27,6 +27,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentConfigurationDTO;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.service.component.runtime.dto.ReferenceDTO;
 import org.osgi.service.component.runtime.dto.UnsatisfiedReferenceDTO;
 import org.osgi.util.promise.Promise;
 
@@ -73,6 +74,23 @@ class FailureScannerTest {
         assertEquals(FailureReasons.REGISTRY_SERVICE_UNSATISFIED, failures.registries().get(1).reason);
         assertEquals("schema", failures.registries().get(1).name);
         assertEquals("jena", failures.registries().get(1).scope);
+    }
+
+    @Test
+    @DisplayName("a constructor-injected reference is classified by the interface it binds")
+    void constructorReferenceIsClassifiedByInterface() {
+        ComponentDescriptionDTO description = description("AtlasSchemaRegistryService", FailureScanner.REGISTRY_SERVICE);
+        ReferenceDTO declared = new ReferenceDTO();
+        declared.name = "$000";
+        declared.interfaceName = "org.eclipse.fennec.model.atlas.management.EObjectStorageService";
+        description.references = new ReferenceDTO[] { declared };
+
+        ScannedFailures failures = FailureScanner.scan(scr(description,
+                configuration(ComponentConfigurationDTO.UNSATISFIED_REFERENCE, Map.of(), unsatisfied("$000", null))));
+
+        assertEquals(FailureReasons.STORAGE_UNAVAILABLE, failures.registries().get(0).reason);
+        assertTrue(failures.registries().get(0).detail.contains("EObjectStorageService"),
+                failures.registries().get(0).detail);
     }
 
     @Test

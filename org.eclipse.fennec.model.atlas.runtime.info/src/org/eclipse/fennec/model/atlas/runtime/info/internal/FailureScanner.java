@@ -26,6 +26,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentConfigurationDTO;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.service.component.runtime.dto.ReferenceDTO;
 import org.osgi.service.component.runtime.dto.UnsatisfiedReferenceDTO;
 
 /**
@@ -104,9 +105,9 @@ final class FailureScanner {
                 detail = "reference '" + reference.name + "' has target " + reference.target
                         + ", which is not a valid filter";
             } else {
-                reason = lower(reference.name).contains("registry") ? FailureReasons.NO_REGISTRIES_BOUND
+                reason = refersTo(description, reference, "registry") ? FailureReasons.NO_REGISTRIES_BOUND
                         : FailureReasons.SCOPE_SERVICE_UNSATISFIED;
-                detail = referenceDetail(reference);
+                detail = referenceDetail(description, reference);
             }
             scopes.add(failedScope(scopeName, reason, pid, configuration.id, detail));
         }
@@ -130,9 +131,9 @@ final class FailureScanner {
                 detail = "reference '" + reference.name + "' has target " + reference.target
                         + ", which is not a valid filter";
             } else {
-                reason = lower(reference.name).contains("storage") ? FailureReasons.STORAGE_UNAVAILABLE
+                reason = refersTo(description, reference, "storage") ? FailureReasons.STORAGE_UNAVAILABLE
                         : FailureReasons.REGISTRY_SERVICE_UNSATISFIED;
-                detail = referenceDetail(reference);
+                detail = referenceDetail(description, reference);
             }
             registries.add(failedRegistry(configuration, reason, pid, detail));
         }
@@ -147,9 +148,33 @@ final class FailureScanner {
         return configuration.failure == null ? detail : detail + ": " + firstLine(configuration.failure);
     }
 
-    private static String referenceDetail(UnsatisfiedReferenceDTO reference) {
-        return "reference '" + reference.name + "'"
+    private static String referenceDetail(ComponentDescriptionDTO description, UnsatisfiedReferenceDTO reference) {
+        String service = interfaceOf(description, reference);
+        return "reference '" + reference.name + "'" + (service == null ? "" : " to " + service)
                 + (reference.target == null ? " is unsatisfied" : " is unsatisfied with target " + reference.target);
+    }
+
+    /**
+     * Whether the reference is about the given kind of service, judged by its name and by the
+     * interface it binds. Both, because constructor-injected references are named {@code $000},
+     * {@code $001}, … and only their interface says what they are.
+     */
+    private static boolean refersTo(ComponentDescriptionDTO description, UnsatisfiedReferenceDTO reference,
+            String kind) {
+        return lower(reference.name).contains(kind) || lower(interfaceOf(description, reference)).contains(kind);
+    }
+
+    /** The interface the named reference binds, from the component description. */
+    private static String interfaceOf(ComponentDescriptionDTO description, UnsatisfiedReferenceDTO reference) {
+        if (description.references == null || reference.name == null) {
+            return null;
+        }
+        for (ReferenceDTO declared : description.references) {
+            if (reference.name.equals(declared.name)) {
+                return declared.interfaceName;
+            }
+        }
+        return null;
     }
 
     private static String stateName(int state) {
