@@ -167,7 +167,7 @@ public interface Company extends EObject {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @model kind="operation"
-	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees.size()'"
+	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees-&gt;size()'"
 	 * @generated
 	 */
 	int getTotalEmployees();
