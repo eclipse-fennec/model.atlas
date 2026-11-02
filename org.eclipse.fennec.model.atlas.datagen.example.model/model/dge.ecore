@@ -52,7 +52,7 @@
     </eOperations>
     <eOperations name="getTotalEmployees" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
       <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
-        <details key="body" value="self.employees.size()"/>
+        <details key="body" value="self.employees->size()"/>
       </eAnnotations>
     </eOperations>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
