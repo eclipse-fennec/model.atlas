@@ -92,6 +92,7 @@
 	org.eclipse.fennec.model.atlas.datagen.rest;version=snapshot;startlevel=1081,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot;startlevel=1082,\
 	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot;startlevel=1083,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot;startlevel=1083,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1084,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot;startlevel=1085,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1086,\

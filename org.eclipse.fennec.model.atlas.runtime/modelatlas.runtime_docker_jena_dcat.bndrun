@@ -111,6 +111,7 @@
 	org.eclipse.fennec.model.atlas.gdpr.diagnostics;version=snapshot;startlevel=1089,\
 	org.eclipse.fennec.model.atlas.gdpr.history;version=snapshot;startlevel=1090,\
 	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot;startlevel=1091,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot;startlevel=1091,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1092,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot;startlevel=1093,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1094,\

@@ -10,6 +10,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 -buildpath: \
 	org.osgi.framework;version=latest,\
 	org.osgi.service.component;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot,\
 	org.apache.felix.healthcheck.api;version=latest,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\

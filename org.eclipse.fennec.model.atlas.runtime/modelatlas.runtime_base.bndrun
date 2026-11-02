@@ -38,6 +38,7 @@ slf4j.runpath:  \
 	bnd.identity;id='org.apache.felix.healthcheck.api',\
 	bnd.identity;id='org.apache.felix.healthcheck.core',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.healthcheck',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.runtime.info',\
 	bnd.identity;id='org.apache.felix.healthcheck.generalchecks',\
 	bnd.identity;id='org.eclipse.fennec.m2x.ocl.engine',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.datagen',\
@@ -171,6 +172,7 @@ slf4j.runpath:  \
 	org.eclipse.fennec.model.atlas.datagen.rest;version=snapshot;startlevel=1081,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot;startlevel=1082,\
 	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot;startlevel=1083,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot;startlevel=1083,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1084,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot;startlevel=1085,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1086,\

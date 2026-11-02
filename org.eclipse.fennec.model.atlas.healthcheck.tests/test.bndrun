@@ -17,14 +17,15 @@
 
 # Deliberately NOT '-resolve.effective: active'. With service requirements in
 # effect, resolving this runtime would also have to satisfy every mandatory
-# @Reference of every included bundle — MediaTypesHealthCheck's SupportedMediatype,
-# the workflow bundle's EObjectStorageService, and so on — which drags in the whole
-# storage stack and makes the resolve depend on unrelated projects being built
-# first. These tests exercise ScopesHealthCheck, which needs no service provider;
-# the components whose references stay unsatisfied simply do not activate.
+# @Reference of every included bundle — the workflow bundle's EObjectStorageService
+# and so on — which drags in the whole storage stack and makes the resolve depend
+# on unrelated projects being built first. The checks read the Atlas runtime
+# service (runtime.info), which needs no provider either; the tests register the
+# scopes themselves.
 -runrequires: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.healthcheck',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.healthcheck.tests',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.runtime.info',\
 	bnd.identity;id='org.apache.felix.scr',\
 	bnd.identity;id='org.apache.felix.gogo.runtime',\
 	bnd.identity;id='org.apache.felix.gogo.shell'

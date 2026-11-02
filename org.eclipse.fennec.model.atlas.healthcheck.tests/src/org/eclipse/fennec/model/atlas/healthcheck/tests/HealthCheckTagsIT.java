@@ -55,19 +55,21 @@ public class HealthCheckTagsIT {
 	private static final String EMF_REGISTRY = "EMF Registry";
 	private static final String LIVENESS = "Liveness";
 	private static final String SCOPES = "Scopes And Registries";
+	private static final String MEDIA_TYPES = "Media Types";
 
 	/**
-	 * MediaTypesHealthCheck is deliberately absent: its mandatory
-	 * SupportedMediatype reference is unsatisfied in this runtime, so DS never
-	 * registers it. The three checks below need no service provider.
+	 * Every readiness check is registered even though this runtime has no
+	 * scopes and no codecs: none of them has a mandatory reference, so a
+	 * missing provider fails the check instead of hiding it.
 	 */
 	@Test
 	public void testReadinessTagSelectsTheReadinessChecks(
 			@InjectService(filter = "(hc.name=" + EMF_REGISTRY + ")", timeout = 5000) HealthCheck emfRegistry,
 			@InjectService(filter = "(hc.name=" + SCOPES + ")", timeout = 5000) HealthCheck scopes,
+			@InjectService(filter = "(hc.name=" + MEDIA_TYPES + ")", timeout = 5000) HealthCheck mediaTypes,
 			@InjectBundleContext BundleContext context) throws InvalidSyntaxException {
 
-		assertEquals(Set.of(EMF_REGISTRY, SCOPES), checksTagged(context, "readiness"),
+		assertEquals(Set.of(EMF_REGISTRY, SCOPES, MEDIA_TYPES), checksTagged(context, "readiness"),
 				"A readiness probe on ?tags=readiness must select the readiness checks");
 	}
 
@@ -85,9 +87,10 @@ public class HealthCheckTagsIT {
 			@InjectService(filter = "(hc.name=" + EMF_REGISTRY + ")", timeout = 5000) HealthCheck emfRegistry,
 			@InjectService(filter = "(hc.name=" + LIVENESS + ")", timeout = 5000) HealthCheck liveness,
 			@InjectService(filter = "(hc.name=" + SCOPES + ")", timeout = 5000) HealthCheck scopes,
+			@InjectService(filter = "(hc.name=" + MEDIA_TYPES + ")", timeout = 5000) HealthCheck mediaTypes,
 			@InjectBundleContext BundleContext context) throws InvalidSyntaxException {
 
-		assertEquals(Set.of(EMF_REGISTRY, LIVENESS, SCOPES), checksTagged(context, "atlas"),
+		assertEquals(Set.of(EMF_REGISTRY, LIVENESS, SCOPES, MEDIA_TYPES), checksTagged(context, "atlas"),
 				"Every Atlas check carries the atlas tag, the one the health servlet is configured with");
 	}
 
