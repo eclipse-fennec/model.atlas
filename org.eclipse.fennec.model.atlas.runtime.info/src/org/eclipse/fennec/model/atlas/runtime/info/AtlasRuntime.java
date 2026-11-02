@@ -36,8 +36,12 @@ import org.osgi.framework.Constants;
  *
  * <p>
  * <strong>How to be told about change.</strong> The service carries
- * {@link Constants#SERVICE_CHANGECOUNT}, and its value changes whenever the snapshot would differ.
- * A consumer binds it dynamically and gets a callback:
+ * {@link Constants#SERVICE_CHANGECOUNT}. It moves whenever a scope, EPackage, media type or
+ * contributor service comes, goes or changes its properties, and whenever a component changes
+ * state (that is where the failure lists come from; the component runtime may batch those by a few
+ * seconds). A change inside a live scope that touches no service registration is not counted — a
+ * reader that needs those takes a fresh snapshot. A consumer binds the service dynamically and gets
+ * a callback:
  * </p>
  *
  * <pre>

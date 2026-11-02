@@ -18,6 +18,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.emf.ecore.EPackage;
@@ -49,68 +50,34 @@ import org.osgi.service.component.runtime.ServiceComponentRuntime;
  * Registers the Atlas runtime service and keeps its change count current.
  *
  * <p>
- * <strong>It registers the service itself rather than letting DS do it</strong>, and that is the
- * one thing about this component that is not a preference.
- * {@link Constants#SERVICE_CHANGECOUNT} can only be moved through
- * {@link ServiceRegistration#setProperties}, and a DS-declared service hands out no registration to
- * call it on: its properties are fixed when it is registered and move only when its configuration
- * does. So the component activates, registers {@link AtlasRuntime} itself and keeps the handle,
- * which is what {@link #changed()} sets the count on.
+ * The service is registered by hand rather than by DS, because {@link Constants#SERVICE_CHANGECOUNT}
+ * can only be moved through {@link ServiceRegistration#setProperties} and a DS-registered service
+ * hands out no registration. Hence {@code service = {}}: without it DS would register a second copy
+ * whose change count never moves.
  * </p>
  *
  * <p>
- * <strong>It takes no configuration</strong>, and that is a lifecycle decision rather than a lack
- * of knobs. This component has no {@code modified} method, so under any configuration-driven
- * policy a configuration arriving, changing or being deleted deactivates it and activates it
- * again — which here means the service is unregistered and a new one registered in its place,
- * with the change count back at zero and every bound watcher silently rebound to a number that
- * has stopped meaning what it meant. A service whose whole contract is "always there, and the
- * count only ever moves forward" cannot be restartable by a dropped config file. The cost is the
- * usual one of {@link ConfigurationPolicy#IGNORE}: a configuration for this component's name is
- * ignored without a word, so there is deliberately no PID to write one against.
+ * The component takes no configuration ({@link ConfigurationPolicy#IGNORE}), so no configuration
+ * event can restart it and reset the count. None of the reported references is mandatory: the
+ * service has to be there precisely when nothing came up.
  * </p>
  *
  * <p>
- * <strong>Everything it reports arrives as a reference, and none of those references is
- * mandatory.</strong> A runtime service that needed a scope in order to start would be absent in
- * exactly the situation it exists to report — an Atlas where nothing came up — and an integration
- * test waiting for it would wait forever rather than being told. They are bound by method rather
- * than by field: the bind call is where the change count moves, and a field gives no callback to
- * move it in. The component runtime is the exception on both counts — it is the framework's own
- * service, there whenever this component is, and nothing about it is reported — so it is a plain
- * mandatory field.
+ * The count moves on every bind, update and unbind of a tracked service, and whenever the
+ * component runtime's own {@code service.changecount} moves — which is how a component that fails
+ * to come up, the failure half of the snapshot, reaches a watcher.
  * </p>
  *
  * <p>
- * <strong>Packages are bound as {@link ServiceReference}s, not as services.</strong> Nothing
- * reported about a package needs the EPackage object, and asking for one activates the component
- * behind it — a snapshot that activates things is not the read-only observation it claims to be,
- * and the telemetry gauges call it on every collection. Binding the reference gives DS's own
- * arrival, property-change and departure callbacks over the service properties without ever
- * dereferencing them.
+ * Packages are bound as {@link ServiceReference}s: nothing reported needs the EPackage object, and
+ * getting it would activate the component behind it.
  * </p>
  */
-// service = {} is load-bearing: the class implements AtlasRuntime, so without it DS would
-// register a second copy of this service beside the one the publisher registers — one with a
-// change count that moves and one with properties that never do, and a consumer binding the
-// wrong one would be told nothing for the lifetime of the framework.
 @Component(name = "AtlasRuntime", immediate = true, configurationPolicy = ConfigurationPolicy.IGNORE,
         property = AtlasRuntimeComponent.ATLAS_NAME + "=atlas", service = {})
 public class AtlasRuntimeComponent implements AtlasRuntime {
 
-    /** Where the failure half of the snapshot comes from: what is configured and did not come up. */
-    @Reference
-    ServiceComponentRuntime componentRuntime;
-
-    /**
-     * The component property naming this Atlas, declared with its default on the component itself.
-     *
-     * <p>
-     * A component property and not a configuration one, for the reason in the class comment. One
-     * framework holds one Atlas, so this names the instance for a reader of the snapshot rather
-     * than telling two of them apart.
-     * </p>
-     */
+    /** The component property naming this Atlas. */
     static final String ATLAS_NAME = "atlas.name";
 
     /** Set by the Atlas when it registers a package out of a registry, absent on a bundle's own. */
@@ -118,28 +85,18 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
 
     private final AtomicLong changeCount = new AtomicLong();
 
-    /**
-     * The live scope services, by {@code service.id}.
-     *
-     * <p>
-     * The service and not a copy of its descriptor: a snapshot asks each scope what it holds at the
-     * moment it is taken, so a registry or stage that changed after the bind is still reported
-     * correctly.
-     * </p>
-     */
+    /** Held by whichever thread is currently publishing; no monitor is held across the call out. */
+    private final AtomicBoolean publishing = new AtomicBoolean();
+
+    /** The last count handed to {@code setProperties}. */
+    private volatile long published = -1;
+
+    /** The live scope services, by {@code service.id}; asked for their state when a snapshot is taken. */
     private final Map<Long, ReadableScopeService<?>> scopes = new ConcurrentHashMap<>();
 
     /**
-     * The live EPackage services, by {@code service.id}, as references.
-     *
-     * <p>
-     * Not filtered on {@code emf.model.scope}, and that is deliberate: a package the Atlas
-     * registered out of a scope registry carries a scope, but a <em>globally</em> registered one
-     * does not — {@code InitialModelLoader} sets only name, nsURI and registration kind on the
-     * top-level models. The built-in {@code atlas} scope's content is defined as exactly those
-     * global registrations, so filtering on a scope property would make the atlas scope
-     * permanently empty however many models were loaded.
-     * </p>
+     * Every live EPackage service, by {@code service.id}. Not filtered on a scope: the globally
+     * registered packages carry none and are the built-in {@code atlas} scope's content.
      */
     private final Map<Long, ServiceReference<EPackage>> packages = new ConcurrentHashMap<>();
 
@@ -147,47 +104,52 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
 
     private volatile SupportedMediatype supportedMediatype;
 
+    private ServiceComponentRuntime componentRuntime;
+
     private BundleContext context;
 
     private String name;
 
     /**
-     * The handle the change count is published on.
-     *
-     * <p>
-     * Null before activation and after deactivation, and neither is an edge case here: DS binds a
-     * dynamic reference before it calls {@code activate} and unbinds it after {@code deactivate}
-     * (112.5.6 and 112.5.11), so the first and the last calls to {@link #changed()} arrive with
-     * nothing to publish onto.
-     * </p>
+     * Null before activation and after deactivation: DS binds dynamic references before
+     * {@code activate} and unbinds them after {@code deactivate}, so those calls count but publish
+     * nothing.
      */
-    private volatile ServiceRegistration<AtlasRuntime> runtimeServiceRegistration;
+    private volatile ServiceRegistration<AtlasRuntime> registration;
 
-    /**
-     * Registers the service with the count as it already stands.
-     *
-     * <p>
-     * Not with zero: every reference bound on the way in has already raised it, and a first
-     * published value that ignored them would be a number a watcher had to see move twice before
-     * it meant anything. Synchronized against {@link #changed()}, so a service arriving on another
-     * thread while this runs is either counted here or published there, never neither.
-     * </p>
-     */
     @Activate
-    synchronized void activate(BundleContext context, Map<String, Object> properties) {
+    void activate(BundleContext context, Map<String, Object> properties) {
         this.context = context;
         this.name = string(properties.get(ATLAS_NAME), "atlas");
-        runtimeServiceRegistration = context.registerService(AtlasRuntime.class, this,
-                withChangeCount(changeCount.get()));
+        long count = changeCount.get();
+        registration = context.registerService(AtlasRuntime.class, this, withChangeCount(count));
+        published = count;
+        // Anything bound while registering has moved the count past what was registered.
+        publish();
     }
 
     @Deactivate
-    synchronized void deactivate() {
-        ServiceRegistration<AtlasRuntime> live = runtimeServiceRegistration;
-        runtimeServiceRegistration = null;
+    void deactivate() {
+        ServiceRegistration<AtlasRuntime> live = registration;
+        registration = null;
         if (live != null) {
-            live.unregister();
+            try {
+                live.unregister();
+            } catch (IllegalStateException alreadyUnregistered) {
+                // the framework got there first
+            }
         }
+    }
+
+    /** Where the failure half of the snapshot comes from. */
+    @Reference(name = "componentRuntime", updated = "updatedComponentRuntime")
+    void setComponentRuntime(ServiceComponentRuntime componentRuntime) {
+        this.componentRuntime = componentRuntime;
+    }
+
+    /** The component runtime moved its change count: some component changed state. */
+    void updatedComponentRuntime(ServiceComponentRuntime componentRuntime, Map<String, Object> properties) {
+        changed();
     }
 
     @Reference(name = "scope", service = ReadableScopeService.class, cardinality = ReferenceCardinality.MULTIPLE,
@@ -207,16 +169,6 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
         changed();
     }
 
-    /**
-     * Every EPackage service, scoped or not, bound without being asked for.
-     *
-     * <p>
-     * Taking the {@link ServiceReference} rather than the service is the whole point of this
-     * reference — see the class comment. Its properties are read live when a snapshot is taken, so
-     * the {@code updated} callback exists to move the change count rather than to re-read
-     * anything.
-     * </p>
-     */
     @Reference(name = "package", service = EPackage.class, cardinality = ReferenceCardinality.MULTIPLE,
             policy = ReferencePolicy.DYNAMIC)
     void addPackage(ServiceReference<EPackage> reference) {
@@ -225,8 +177,7 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
     }
 
     void updatedPackage(ServiceReference<EPackage> reference) {
-        // Nothing to store: the reference held is the one whose properties changed, and a
-        // reference reads them live. What a watcher needs is the number moving.
+        // The held reference reads its properties live; only the count has to move.
         changed();
     }
 
@@ -251,14 +202,7 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
         changed();
     }
 
-    /**
-     * The media types the resource set announces.
-     *
-     * <p>
-     * The {@code updated} callback is the reason this one is a method too: the list is not fixed,
-     * and the service refreshes its properties as codecs register content types.
-     * </p>
-     */
+    /** The media types the resource set announces; refreshed as codecs register content types. */
     @Reference(name = "mediatypes", cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC)
     void setMediatypes(SupportedMediatype supportedMediatype, Map<String, Object> properties) {
         this.supportedMediatype = supportedMediatype;
@@ -315,25 +259,13 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
     }
 
     /**
-     * The package's version by the Atlas's rule, not by whoever registered it.
+     * The package's version by the Atlas's rule. A package the Atlas registered carries the version
+     * it computed. For any other, {@link EPackageVersions} is followed as far as a service reference
+     * allows — a version-shaped nsURI segment, else the registering bundle's version without
+     * qualifier. A foreign {@code emf.version} is not trusted: the Ecore package announces
+     * {@code 2002.0.0}, the year out of its nsURI.
      *
-     * <p>
-     * A package the Atlas registered carries a version it computed itself, so its property is the
-     * answer. Any other registration's {@code emf.version} is a foreign claim made by a looser
-     * rule: the Ecore package arrives announcing {@code 2002.0.0}, which is the year out of
-     * {@code http://www.eclipse.org/emf/2002/Ecore} and not a model version at all.
-     * </p>
-     *
-     * <p>
-     * For those, {@link EPackageVersions} — the same rule an upload applies — is followed as far as
-     * a service reference allows: the nsURI's last segment when it is version-shaped, failing that
-     * the version of the bundle that registered the service, without its build qualifier. The one
-     * step that cannot be taken is the {@code Version} annotation, which needs the EPackage object
-     * and would activate the component behind it.
-     * </p>
-     *
-     * @return the version, or {@code null} when nothing states one — a better answer than a number
-     *         that is not a version
+     * @return the version, or {@code null} when nothing states one
      */
     private static String version(ServiceReference<?> reference, boolean stored, String nsURI) {
         if (stored) {
@@ -360,16 +292,6 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
         return tracked;
     }
 
-    /**
-     * What the resource set announces, as a flat list of strings.
-     *
-     * <p>
-     * Flat is all there is: {@code SupportedMediatype} derives it from the resource set's
-     * content-type map and appends the formats a bundle announces without a {@code Resource.Factory}
-     * behind them, and by here the two are one list. The snapshot says so rather than guessing which
-     * is which.
-     * </p>
-     */
     private List<String> resourceSetTypes() {
         SupportedMediatype types = supportedMediatype;
         if (types == null) {
@@ -391,49 +313,50 @@ public class AtlasRuntimeComponent implements AtlasRuntime {
         return value == null ? fallback : String.valueOf(value);
     }
 
-    /**
-     * The registration's properties, which are the change count and nothing else.
-     *
-     * <p>
-     * Built fresh rather than read back from the reference and amended: everything else on a
-     * registration is set by the framework, and {@code setProperties} ignores those keys anyway, so
-     * carrying them along would only suggest they were being maintained here.
-     * </p>
-     */
     private static Hashtable<String, Object> withChangeCount(long count) {
         Hashtable<String, Object> properties = new Hashtable<>();
         properties.put(Constants.SERVICE_CHANGECOUNT, count);
         return properties;
     }
 
+    /** Something the snapshot would say differently: raise the count and publish it. */
+    void changed() {
+        changeCount.incrementAndGet();
+        publish();
+    }
+
     /**
-     * Something the snapshot would say differently: raise the count and publish it.
+     * Publishes the current count, without holding a monitor across {@code setProperties}.
      *
      * <p>
-     * Called from every bind, update and unbind callback. Synchronized so the published number only
-     * ever moves forward — two callbacks racing would otherwise be free to set their counts in the
-     * opposite order, and a watcher reads the number, not the order it was set in. Publishing is a
-     * property change, so each call also costs a synchronous callback to every bound watcher; the
-     * number is deliberately dumb to keep that cheap, and what changed is another snapshot.
-     * </p>
-     *
-     * <p>
-     * With no registration yet, or none any more, the count still moves and nothing is published:
-     * see {@link #runtimeServiceRegistration}. Activation publishes where it has got to, and after
-     * deactivation there is no service left for the number to mean anything to.
+     * {@code setProperties} delivers its service event synchronously to every listener, and the
+     * callbacks that call this arrive on SCR threads; holding a lock across that call is the classic
+     * OSGi deadlock. Instead one thread at a time publishes, always the latest count, and a thread
+     * that finds another one publishing leaves its increment to it: the publisher re-checks after
+     * releasing, so no increment is left unpublished and the published number only moves forward.
      * </p>
      */
-    synchronized void changed() {
-        long count = changeCount.incrementAndGet();
-        ServiceRegistration<AtlasRuntime> live = runtimeServiceRegistration;
-        if (live == null) {
-            return;
-        }
-        try {
-            live.setProperties(withChangeCount(count));
-        } catch (IllegalStateException alreadyUnregistered) {
-            // The framework got there first, which happens once, on the way down.
-            runtimeServiceRegistration = null;
-        }
+    private void publish() {
+        do {
+            if (!publishing.compareAndSet(false, true)) {
+                return;
+            }
+            try {
+                ServiceRegistration<AtlasRuntime> live = registration;
+                if (live == null) {
+                    return;
+                }
+                long count = changeCount.get();
+                if (count != published) {
+                    live.setProperties(withChangeCount(count));
+                    published = count;
+                }
+            } catch (IllegalStateException alreadyUnregistered) {
+                registration = null;
+                return;
+            } finally {
+                publishing.set(false);
+            }
+        } while (registration != null && changeCount.get() != published);
     }
 }

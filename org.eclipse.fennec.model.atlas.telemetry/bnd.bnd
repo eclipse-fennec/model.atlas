@@ -7,10 +7,9 @@ Bundle-Description: What this Atlas holds, as OpenTelemetry metrics. It binds th
  requires no part of the Atlas beyond the runtime service's API.
 
 -buildpath: \
-	osgi.core,\
-	osgi.cmpn,\
-	org.osgi.service.component.annotations,\
-	org.osgi.service.metatype.annotations,\
+	org.osgi.dto;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest,\
 	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot,\
 	org.eclipse.osgi-technology.opentelemetry.repack;version=latest
 

@@ -48,6 +48,12 @@ public final class FailureReasons {
     public static final String STORAGE_UNAVAILABLE = "STORAGE_UNAVAILABLE";
 
     /**
+     * A registry service is configured but its component is not active for a reason other than
+     * storage — an unsatisfied schema package reference, or an activation that threw.
+     */
+    public static final String REGISTRY_SERVICE_UNSATISFIED = "REGISTRY_SERVICE_UNSATISFIED";
+
+    /**
      * More than one registry of type {@code SCHEMA} in a scope. A scope has at most one, because
      * that is what resolving schemas by type rather than by name depends on.
      */
@@ -78,6 +84,6 @@ public final class FailureReasons {
      * </p>
      */
     public static final List<String> ALL = List.of(SCOPE_SERVICE_UNSATISFIED, NO_REGISTRIES_BOUND,
-            STORAGE_UNAVAILABLE, DUPLICATE_SCHEMA_REGISTRY, PARENT_SCOPE_UNRESOLVED, INVALID_FILTER,
+            STORAGE_UNAVAILABLE, REGISTRY_SERVICE_UNSATISFIED, DUPLICATE_SCHEMA_REGISTRY, PARENT_SCOPE_UNRESOLVED, INVALID_FILTER,
             UNRECOGNISED_PROPERTY, PACKAGE_REGISTRATION_FAILED);
 }

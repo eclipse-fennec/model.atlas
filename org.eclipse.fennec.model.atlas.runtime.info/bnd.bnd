@@ -21,4 +21,6 @@ Bundle-Description: What this Atlas holds, as OSGi DTOs: every live scope with i
 	org.osgi.dto;version=latest,\
 	org.osgi.service.component;version=latest
 
--testpath: junit-jupiter-api
+-testpath: \
+	junit-jupiter-api,\
+	org.osgi.util.promise;version=latest

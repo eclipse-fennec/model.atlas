@@ -13,9 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.runtime.info.internal;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -23,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.fennec.model.atlas.emf.common.ecore.SchemaObjectIds;
 import org.eclipse.fennec.model.atlas.runtime.info.AtlasRuntimeDTO;
 import org.eclipse.fennec.model.atlas.runtime.info.FailedRegistryDTO;
 import org.eclipse.fennec.model.atlas.runtime.info.FailedScopeDTO;
@@ -239,17 +238,9 @@ final class SnapshotBuilder {
         return pkg.scope().isBlank() ? ORIGIN_GLOBAL : ORIGIN_GENERATED;
     }
 
-    /**
-     * The identifier a package has within its registry.
-     *
-     * <p>
-     * The same encoding the schema registry uses, with UTF-8 fixed on both sides so ids stay stable
-     * across platform default charsets. It is a one-line mirror of a private helper there rather
-     * than a second convention.
-     * </p>
-     */
+    /** The identifier a package has within its registry, by the schema registry's own rule. */
     static String objectId(String nsURI) {
-        return nsURI == null ? null : Base64.getUrlEncoder().encodeToString(nsURI.getBytes(StandardCharsets.UTF_8));
+        return SchemaObjectIds.fromNsUri(nsURI);
     }
 
     /** The name of the scope's registry of type {@code SCHEMA}, or {@code null} if it has none. */

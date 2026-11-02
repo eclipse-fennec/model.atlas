@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.runtime.info.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -28,27 +29,25 @@ import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
 import org.osgi.service.component.runtime.dto.UnsatisfiedReferenceDTO;
 
 /**
- * Reads what is configured and not running out of the component runtime.
+ * Reads the scope and registry components that are configured but not running out of the
+ * component runtime.
  *
  * <p>
- * This is the half of the snapshot a service collector cannot supply. Declarative Services leaves an
- * unsatisfiable component unregistered and says nothing a client can see, so the component is
- * absent from every registry and from every collector that watches one. The component runtime is
- * where it is still visible, with the reference that was never satisfied and the filter that was
- * asked for.
+ * DS leaves an unsatisfiable component unregistered, so it is absent from every service collector;
+ * the component runtime is the one place it is still visible. Components are recognised by the
+ * service they would provide, not by bundle or name, so only scopes and registries are reported —
+ * any other inactive component is not this snapshot's subject.
  * </p>
  *
  * <p>
- * Two reasons in {@link FailureReasons} have no producer here yet:
- * {@code UNRECOGNISED_PROPERTY}, which needs each component's declared configuration type, and
- * {@code PACKAGE_REGISTRATION_FAILED}, which needs the registry contents a snapshot does not read.
- * They are declared because they are the shape of the answer, not because something fills them in.
+ * {@code UNRECOGNISED_PROPERTY} and {@code PACKAGE_REGISTRATION_FAILED} have no producer here yet.
  * </p>
  */
 final class FailureScanner {
 
-    /** Only this project's components are reported; the rest of the framework is not our subject. */
-    private static final String ATLAS_PREFIX = "org.eclipse.fennec.model.atlas";
+    static final String SCOPE_SERVICE = "org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService";
+
+    static final String REGISTRY_SERVICE = "org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService";
 
     private FailureScanner() {
     }
@@ -56,7 +55,7 @@ final class FailureScanner {
     /**
      * @param scr the component runtime, or {@code null} when it is not available — in which case
      *            nothing is reported rather than nothing being wrong
-     * @return what is configured and not running
+     * @return the scope and registry components that are configured and not running
      */
     static ScannedFailures scan(ServiceComponentRuntime scr) {
         if (scr == null) {
@@ -66,8 +65,9 @@ final class FailureScanner {
         List<FailedRegistryDTO> registries = new ArrayList<>();
 
         for (ComponentDescriptionDTO description : scr.getComponentDescriptionDTOs()) {
-            if (description.bundle == null || description.bundle.symbolicName == null
-                    || !description.bundle.symbolicName.startsWith(ATLAS_PREFIX)) {
+            boolean scope = provides(description, SCOPE_SERVICE);
+            boolean registry = !scope && provides(description, REGISTRY_SERVICE);
+            if (!scope && !registry) {
                 continue;
             }
             for (ComponentConfigurationDTO configuration : scr.getComponentConfigurationDTOs(description)) {
@@ -75,54 +75,95 @@ final class FailureScanner {
                         || configuration.state == ComponentConfigurationDTO.ACTIVE) {
                     continue;
                 }
-                collect(description, configuration, scopes, registries);
+                if (scope) {
+                    collectScope(description, configuration, scopes);
+                } else {
+                    collectRegistry(description, configuration, registries);
+                }
             }
         }
         return new ScannedFailures(scopes, registries, List.of());
     }
 
-    private static void collect(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration,
-            List<FailedScopeDTO> scopes, List<FailedRegistryDTO> registries) {
+    private static void collectScope(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration,
+            List<FailedScopeDTO> scopes) {
+        String pid = pidOf(configuration, description);
+        String scopeName = scopeNameOf(configuration);
+        UnsatisfiedReferenceDTO[] unsatisfied = configuration.unsatisfiedReferences;
 
+        if (unsatisfied == null || unsatisfied.length == 0) {
+            scopes.add(failedScope(scopeName, FailureReasons.SCOPE_SERVICE_UNSATISFIED, pid, configuration.id,
+                    stateDetail(description, configuration)));
+            return;
+        }
+        for (UnsatisfiedReferenceDTO reference : unsatisfied) {
+            String reason;
+            String detail;
+            if (reference.target != null && !isValidFilter(reference.target)) {
+                reason = FailureReasons.INVALID_FILTER;
+                detail = "reference '" + reference.name + "' has target " + reference.target
+                        + ", which is not a valid filter";
+            } else {
+                reason = lower(reference.name).contains("registry") ? FailureReasons.NO_REGISTRIES_BOUND
+                        : FailureReasons.SCOPE_SERVICE_UNSATISFIED;
+                detail = referenceDetail(reference);
+            }
+            scopes.add(failedScope(scopeName, reason, pid, configuration.id, detail));
+        }
+    }
+
+    private static void collectRegistry(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration,
+            List<FailedRegistryDTO> registries) {
         String pid = pidOf(configuration, description);
         UnsatisfiedReferenceDTO[] unsatisfied = configuration.unsatisfiedReferences;
 
         if (unsatisfied == null || unsatisfied.length == 0) {
-            scopes.add(failedScope(scopeNameOf(configuration), FailureReasons.SCOPE_SERVICE_UNSATISFIED, pid,
-                    configuration.id, "component '" + description.name + "' is in state " + configuration.state));
+            registries.add(failedRegistry(configuration, FailureReasons.REGISTRY_SERVICE_UNSATISFIED, pid,
+                    stateDetail(description, configuration)));
             return;
         }
-
         for (UnsatisfiedReferenceDTO reference : unsatisfied) {
-            String target = reference.target;
-            String detail = "reference '" + reference.name + "'"
-                    + (target == null ? " is unsatisfied" : " is unsatisfied with target " + target);
-
-            if (target != null && !isValidFilter(target)) {
-                scopes.add(failedScope(scopeNameOf(configuration), FailureReasons.INVALID_FILTER, pid,
-                        configuration.id, "reference '" + reference.name + "' has target " + target
-                                + ", which is not a valid filter"));
-                continue;
-            }
-
-            String name = reference.name == null ? "" : reference.name.toLowerCase(Locale.ROOT);
-            if (name.contains("storage")) {
-                FailedRegistryDTO failed = new FailedRegistryDTO();
-                failed.scope = scopeNameOf(configuration);
-                failed.name = registryNameOf(configuration);
-                failed.reason = FailureReasons.STORAGE_UNAVAILABLE;
-                failed.pid = pid;
-                failed.serviceId = configuration.id;
-                failed.detail = detail;
-                registries.add(failed);
-            } else if (name.contains("registry")) {
-                scopes.add(failedScope(scopeNameOf(configuration), FailureReasons.NO_REGISTRIES_BOUND, pid,
-                        configuration.id, detail));
+            String reason;
+            String detail;
+            if (reference.target != null && !isValidFilter(reference.target)) {
+                reason = FailureReasons.INVALID_FILTER;
+                detail = "reference '" + reference.name + "' has target " + reference.target
+                        + ", which is not a valid filter";
             } else {
-                scopes.add(failedScope(scopeNameOf(configuration), FailureReasons.SCOPE_SERVICE_UNSATISFIED, pid,
-                        configuration.id, detail));
+                reason = lower(reference.name).contains("storage") ? FailureReasons.STORAGE_UNAVAILABLE
+                        : FailureReasons.REGISTRY_SERVICE_UNSATISFIED;
+                detail = referenceDetail(reference);
             }
+            registries.add(failedRegistry(configuration, reason, pid, detail));
         }
+    }
+
+    private static boolean provides(ComponentDescriptionDTO description, String service) {
+        return description.serviceInterfaces != null && Arrays.asList(description.serviceInterfaces).contains(service);
+    }
+
+    private static String stateDetail(ComponentDescriptionDTO description, ComponentConfigurationDTO configuration) {
+        String detail = "component '" + description.name + "' is in state " + stateName(configuration.state);
+        return configuration.failure == null ? detail : detail + ": " + firstLine(configuration.failure);
+    }
+
+    private static String referenceDetail(UnsatisfiedReferenceDTO reference) {
+        return "reference '" + reference.name + "'"
+                + (reference.target == null ? " is unsatisfied" : " is unsatisfied with target " + reference.target);
+    }
+
+    private static String stateName(int state) {
+        return switch (state) {
+            case ComponentConfigurationDTO.UNSATISFIED_CONFIGURATION -> "UNSATISFIED_CONFIGURATION";
+            case ComponentConfigurationDTO.UNSATISFIED_REFERENCE -> "UNSATISFIED_REFERENCE";
+            case ComponentConfigurationDTO.FAILED_ACTIVATION -> "FAILED_ACTIVATION";
+            default -> String.valueOf(state);
+        };
+    }
+
+    private static String firstLine(String text) {
+        int newline = text.indexOf('\n');
+        return (newline < 0 ? text : text.substring(0, newline)).strip();
     }
 
     private static boolean isValidFilter(String target) {
@@ -134,20 +175,39 @@ final class FailureScanner {
         }
     }
 
-    private static FailedScopeDTO failedScope(String name, String reason, String pid, long serviceId, String detail) {
+    private static String lower(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    }
+
+    private static FailedScopeDTO failedScope(String name, String reason, String pid, long id, String detail) {
         FailedScopeDTO failed = new FailedScopeDTO();
         failed.name = name;
         failed.reason = reason;
         failed.pid = pid;
-        failed.serviceId = serviceId;
+        failed.serviceId = id;
+        failed.detail = detail;
+        return failed;
+    }
+
+    private static FailedRegistryDTO failedRegistry(ComponentConfigurationDTO configuration, String reason,
+            String pid, String detail) {
+        FailedRegistryDTO failed = new FailedRegistryDTO();
+        failed.scope = scopeNameOf(configuration);
+        failed.name = registryNameOf(configuration);
+        failed.reason = reason;
+        failed.pid = pid;
+        failed.serviceId = configuration.id;
         failed.detail = detail;
         return failed;
     }
 
     private static String pidOf(ComponentConfigurationDTO configuration, ComponentDescriptionDTO description) {
         Object pid = property(configuration, "service.pid");
-        return pid == null ? description.configurationPid == null || description.configurationPid.length == 0 ? null
-                : description.configurationPid[0] : String.valueOf(pid);
+        if (pid != null) {
+            return String.valueOf(pid);
+        }
+        return description.configurationPid == null || description.configurationPid.length == 0 ? null
+                : description.configurationPid[0];
     }
 
     private static String scopeNameOf(ComponentConfigurationDTO configuration) {

@@ -13,14 +13,11 @@
  */
 package org.eclipse.fennec.model.atlas.telemetry.otel;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.ToLongFunction;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.model.atlas.runtime.info.AtlasRuntime;
@@ -40,8 +37,10 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.MeterProvider;
-import io.opentelemetry.api.metrics.ObservableLongGauge;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 
 /**
  * What this Atlas holds, as metrics.
@@ -168,7 +167,7 @@ public class AtlasTelemetry {
     void setRuntime(AtlasRuntime runtime, Map<String, Object> properties) {
         AtlasRuntimeDTO first = runtime.snapshot();
         Attributes atlas = Attributes.of(ATLAS, first.name == null ? "atlas" : first.name);
-        watched.put(runtime, new Watched(() -> gauges(runtime, atlas)));
+        watched.put(runtime, new Watched(() -> instrument(runtime, atlas)));
         LOG.info("[Atlas] watching runtime '" + first.name + "'");
     }
 
@@ -204,31 +203,48 @@ public class AtlasTelemetry {
         }
     }
 
-    private List<ObservableLongGauge> gauges(AtlasRuntime runtime, Attributes atlas) {
-        List<ObservableLongGauge> gauges = new ArrayList<>();
-        gauges.add(gauge("fennec.atlas.scopes", "{scope}", "Live scopes this Atlas holds.", atlas,
-                runtime::snapshot, snapshot -> size(snapshot.scopes)));
-        gauges.add(gauge("fennec.atlas.changes", "{change}",
-                "How often this Atlas's state has changed since it started.", atlas, runtime::snapshot,
-                snapshot -> snapshot.changeCount));
-        gauges.add(gauge("fennec.atlas.mediatypes", "{mediatype}", "Media types the REST layer can serve.", atlas,
-                runtime::snapshot, snapshot -> size(snapshot.mediaTypes)));
+    /**
+     * Builds the instruments for one runtime, observed by a single batch callback.
+     *
+     * <p>
+     * One callback, one snapshot per collection: every instrument of a collection reads the same
+     * state, and the component runtime is scanned once rather than once per instrument.
+     * </p>
+     */
+    private BatchCallback instrument(AtlasRuntime runtime, Attributes atlas) {
+        Meter meter = meters.get(scope);
+        ObservableLongMeasurement scopes = observer(meter, "fennec.atlas.scopes", "{scope}",
+                "Live scopes this Atlas holds.");
+        ObservableLongMeasurement changes = observer(meter, "fennec.atlas.changes", "{change}",
+                "How often this Atlas's state has changed since it started.");
+        ObservableLongMeasurement mediaTypes = observer(meter, "fennec.atlas.mediatypes", "{mediatype}",
+                "Media types the REST layer can serve.");
+        ObservableLongMeasurement registries = observer(meter, "fennec.atlas.registries", "{registry}",
+                "Registries per scope.");
+        ObservableLongMeasurement packages = observer(meter, "fennec.atlas.packages", "{package}",
+                "Schema packages per scope, schema registry and stage.");
+        ObservableLongMeasurement failures = observer(meter, "fennec.atlas.failures", "{failure}",
+                "Configured things that are not live, by reason — the gap between the configuration and the Atlas.");
+        ObservableLongMeasurement perPackage = packageSeries
+                ? observer(meter, "fennec.atlas.package", "{package}",
+                        "One per schema package: which version of which nsURI is live in which stage.")
+                : null;
 
-        gauges.add(series("fennec.atlas.registries", "{registry}", "Registries per scope.", runtime::snapshot,
-                snapshot -> registriesPerScope(snapshot, atlas)));
-        gauges.add(series("fennec.atlas.packages", "{package}",
-                "Schema packages per scope, schema registry and stage.",
-                runtime::snapshot, snapshot -> packagesPerStage(snapshot, atlas)));
-        gauges.add(series("fennec.atlas.failures", "{failure}",
-                "Configured things that are not live, by reason — the gap between the configuration and the Atlas.",
-                runtime::snapshot, snapshot -> failuresPerReason(snapshot, atlas)));
-
-        if (packageSeries) {
-            gauges.add(series("fennec.atlas.package", "{package}",
-                    "One per schema package: which version of which nsURI is live in which stage.",
-                    runtime::snapshot, snapshot -> packageSeries(snapshot, atlas)));
-        }
-        return gauges;
+        Runnable collect = () -> {
+            AtlasRuntimeDTO snapshot = runtime.snapshot();
+            scopes.record(size(snapshot.scopes), atlas);
+            changes.record(snapshot.changeCount, atlas);
+            mediaTypes.record(size(snapshot.mediaTypes), atlas);
+            registriesPerScope(snapshot, atlas).forEach((attributes, value) -> registries.record(value, attributes));
+            packagesPerStage(snapshot, atlas).forEach((attributes, value) -> packages.record(value, attributes));
+            failuresPerReason(snapshot, atlas).forEach((attributes, value) -> failures.record(value, attributes));
+            if (perPackage != null) {
+                packageSeries(snapshot, atlas).forEach((attributes, value) -> perPackage.record(value, attributes));
+            }
+        };
+        return perPackage == null
+                ? meter.batchCallback(collect, scopes, changes, mediaTypes, registries, packages, failures)
+                : meter.batchCallback(collect, scopes, changes, mediaTypes, registries, packages, failures, perPackage);
     }
 
     // The point builders are package-private rather than private so they can be tested against a
@@ -304,17 +320,8 @@ public class AtlasTelemetry {
         return points;
     }
 
-    private <T> ObservableLongGauge gauge(String name, String unit, String description, Attributes attributes,
-            Supplier<T> snapshot, ToLongFunction<T> reading) {
-        return meters.get(scope).gaugeBuilder(name).ofLongs().setUnit(unit).setDescription(description)
-                .buildWithCallback(measurement -> measurement.record(reading.applyAsLong(snapshot.get()), attributes));
-    }
-
-    private <T> ObservableLongGauge series(String name, String unit, String description, Supplier<T> snapshot,
-            Function<T, Map<Attributes, Long>> points) {
-        return meters.get(scope).gaugeBuilder(name).ofLongs().setUnit(unit).setDescription(description)
-                .buildWithCallback(measurement -> points.apply(snapshot.get())
-                        .forEach((attributes, value) -> measurement.record(value, attributes)));
+    private static ObservableLongMeasurement observer(Meter meter, String name, String unit, String description) {
+        return meter.gaugeBuilder(name).ofLongs().setUnit(unit).setDescription(description).buildObserver();
     }
 
     private static <T> List<T> nullSafe(List<T> values) {
@@ -329,14 +336,14 @@ public class AtlasTelemetry {
         return value == null ? "" : value;
     }
 
-    /** One watched runtime: how to instrument it, and what is live. */
-    private final class Watched {
+    /** One watched runtime: how to instrument it, and the callback currently observing it. */
+    private static final class Watched {
 
-        private final Supplier<List<ObservableLongGauge>> instruments;
+        private final Supplier<BatchCallback> instruments;
 
-        private List<ObservableLongGauge> live;
+        private BatchCallback live;
 
-        Watched(Supplier<List<ObservableLongGauge>> instruments) {
+        Watched(Supplier<BatchCallback> instruments) {
             this.instruments = instruments;
             this.live = instruments.get();
         }
@@ -347,10 +354,10 @@ public class AtlasTelemetry {
         }
 
         synchronized void close() {
-            for (ObservableLongGauge gauge : live) {
-                gauge.close();
+            if (live != null) {
+                live.close();
+                live = null;
             }
-            live = List.of();
         }
     }
 }

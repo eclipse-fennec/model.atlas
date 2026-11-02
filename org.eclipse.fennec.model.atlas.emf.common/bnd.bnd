@@ -3,6 +3,6 @@
 
 # EPackageVersions states a version as org.osgi.framework.Version.
 -buildpath: \
-	osgi.core
+	org.osgi.framework;version=latest
 
 -testpath: junit-jupiter-api
