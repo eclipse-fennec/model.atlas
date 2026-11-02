@@ -37,7 +37,7 @@ import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.AfterEach;

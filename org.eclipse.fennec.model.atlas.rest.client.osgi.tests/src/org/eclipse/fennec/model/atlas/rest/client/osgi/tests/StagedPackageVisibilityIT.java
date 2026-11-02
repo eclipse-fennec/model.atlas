@@ -168,7 +168,10 @@ public class StagedPackageVisibilityIT {
 
 		assertNotNull(stagedPackages.waitForService(SERVICE_WAIT_MS),
 				"a package present only at a non-final stage must be published, not merely fetchable on a miss");
-		assertTrue(nsUrisOf(stagedPackages).contains(STAGED_NS),
+		// waitForService returns on the FIRST service matching the stage filter, which is whichever
+		// package the pre-fetch happens to publish first — not necessarily this one. Await the nsURI
+		// itself, as the other tests here do.
+		assertTrue(awaitNsUri(stagedPackages, STAGED_NS),
 				"the staged package should be among the publications, was: " + nsUrisOf(stagedPackages));
 	}
 

@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.workflow;
+package org.eclipse.fennec.model.atlas.emf.common.ecore;
 
 import java.util.function.Consumer;
 import java.util.regex.Pattern;

@@ -43,7 +43,8 @@ import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
-import org.eclipse.fennec.model.atlas.workflow.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.SchemaObjectIds;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -574,7 +575,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	}
 
 	private static String encodeObjectId(String nsUri) {
-		return Base64.getUrlEncoder().encodeToString(nsUri.getBytes(StandardCharsets.UTF_8));
+		return SchemaObjectIds.fromNsUri(nsUri);
 	}
 
 	/**

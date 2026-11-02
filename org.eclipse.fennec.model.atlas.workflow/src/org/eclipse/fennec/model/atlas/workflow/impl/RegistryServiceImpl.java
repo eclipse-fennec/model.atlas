@@ -158,12 +158,24 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * else must point {@code schemaPackage.target} at its own package - the same
      * namespace URI its {@code root.eclass.uri} already starts with.
      * </p>
+     *
+     * <p>
+     * The delivered properties come in as a constructor activation object rather
+     * than through a second {@code @Activate} method. DS binds the references
+     * between a constructor and an activate method (112.5.6), so a component with
+     * both has two entry points and no answer to which of them a bind callback
+     * sees the effects of; one entry point raises no such question.
+     * </p>
      */
     @Activate
     public RegistryServiceImpl(@Reference(name = "storageService", target = ("(scope=no-inject)")) List<EObjectStorageService<T>> storageService,
             @Reference(name = "resourceSet") ResourceSet resourceSet,
             @Reference(name = "schemaPackage", target = ("(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)")) EPackage schemaPackage,
-            RegistryServiceConfig config) {
+            RegistryServiceConfig config, Map<String, Object> properties) {
+        // Says what the configuration asked for that this component does not know - a
+        // property Declarative Services would otherwise drop in silence (issue #261).
+        UnrecognisedProperties.warn(LOGGER, String.format("RegistryService[%s]", config.registry_name()),
+                RegistryServiceConfig.class, properties);
         this.config = config;
         this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
         this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
@@ -177,16 +189,6 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
         derivedEClasses = resolveEClasses(resourceSet, schemaPackage, config.derived_eclass_uri(),
                 "derived.eclass.uri");
-    }
-
-    /**
-     * Says what the configuration asked for that this component does not know - a
-     * property Declarative Services would otherwise drop in silence (issue #261).
-     */
-    @Activate
-    void activate(Map<String, Object> properties) {
-        UnrecognisedProperties.warn(LOGGER, String.format("RegistryService[%s]", config.registry_name()),
-                RegistryServiceConfig.class, properties);
     }
 
     private static List<EClass> resolveEClasses(ResourceSet resourceSet, EPackage schemaPackage, String[] uris,

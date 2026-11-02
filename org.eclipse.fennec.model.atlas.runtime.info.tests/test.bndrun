@@ -1,0 +1,33 @@
+-library: enableOSGi-Test
+
+-runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
+
+-runee: JavaSE-21
+
+-runproperties: \
+	org.osgi.service.http.port=-1,\
+	geckotest=true,\
+	gecko.log.level=INFO,\
+	${if;${is;${driver};gradle};gosh.args=--nointeractive}
+
+-runtrace: false
+
+-runvm: \
+	-ea
+
+# No scopes, no storage, no REST — on purpose. The point of these tests is that the
+# runtime service is there and answers when none of what it reports on came up, which
+# is exactly the situation it exists to describe. Adding the workflow stack here would
+# test a different thing and make the resolve depend on half the workspace.
+-runrequires: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.runtime.info',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.runtime.info.tests',\
+	bnd.identity;id='org.apache.felix.scr',\
+	bnd.identity;id='org.apache.felix.gogo.runtime',\
+	bnd.identity;id='org.apache.felix.gogo.shell'
+
+# Ensure clean environment
+-runkeep: false
+
+-runblacklist: \
+	bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)'

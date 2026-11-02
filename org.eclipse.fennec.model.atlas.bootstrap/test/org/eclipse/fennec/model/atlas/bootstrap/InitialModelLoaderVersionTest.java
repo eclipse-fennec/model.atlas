@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +32,23 @@ import org.junit.jupiter.api.Test;
  */
 @DisplayName("InitialModelLoader — the version of a bootstrapped model")
 class InitialModelLoaderVersionTest {
+
+	@Test
+	@DisplayName("a globally registered model announces its version as a service property")
+	void globalRegistrationCarriesTheVersion() {
+		assertEquals("1.0.0",
+				InitialModelLoader.serviceProperties(ePackage("http://example.org/model/1.0.0", null))
+						.get(EMFNamespaces.EMF_MODEL_VERSION),
+				"the same version the loader records in a scope's metadata");
+	}
+
+	@Test
+	@DisplayName("a model with no stated version announces none, rather than a guess")
+	void globalRegistrationOmitsAnUnknownVersion() {
+		assertNull(InitialModelLoader.serviceProperties(ePackage("http://www.eclipse.org/emf/2002/Ecore", null))
+				.get(EMFNamespaces.EMF_MODEL_VERSION),
+				"2002 is the year in the path; a consumer can fall back to the bundle, it cannot unpick a guess");
+	}
 
 	@Test
 	@DisplayName("a version-shaped last segment is used")

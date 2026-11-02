@@ -67,17 +67,22 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	RegistryService<EPackage> atlasSchemaRegistryService;
 
 
-	@Activate
-	public ScopeServiceImpl(ScopeServiceConfig config) {
-		this.config = config;
-	}
-
 	/**
-	 * Says what the configuration asked for that this component does not know - a
-	 * property Declarative Services would otherwise drop in silence (issue #261).
+	 * Takes the configuration, and the properties it was delivered with.
+	 *
+	 * <p>
+	 * The properties come in as a constructor activation object rather than through
+	 * a second {@code @Activate} method. DS binds the references between a
+	 * constructor and an activate method (112.5.6), so a component with both has two
+	 * entry points and no answer to which of them a bind callback sees the effects
+	 * of; one entry point raises no such question.
+	 * </p>
 	 */
 	@Activate
-	void activate(Map<String, Object> properties) {
+	public ScopeServiceImpl(ScopeServiceConfig config, Map<String, Object> properties) {
+		this.config = config;
+		// Says what the configuration asked for that this component does not know - a
+		// property Declarative Services would otherwise drop in silence (issue #261).
 		UnrecognisedProperties.warn(LOGGER, String.format("ScopeService[%s]", config.scope_name()),
 				ScopeServiceConfig.class, properties);
 	}

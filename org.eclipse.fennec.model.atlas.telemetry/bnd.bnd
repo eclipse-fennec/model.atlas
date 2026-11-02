@@ -1,0 +1,16 @@
+Bundle-Name: Model Atlas Telemetry
+Bundle-Description: What this Atlas holds, as OpenTelemetry metrics. It binds the Atlas \
+ runtime service and turns each snapshot into a handful of gauges, reaching into nothing: \
+ everything here comes from a DTO the Atlas decided to hand out. \
+ \
+ Optional in both directions — nothing in the Atlas requires this bundle, and this bundle \
+ requires no part of the Atlas beyond the runtime service's API.
+
+-buildpath: \
+	org.osgi.dto;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest,\
+	org.eclipse.fennec.model.atlas.runtime.info;version=snapshot,\
+	org.eclipse.osgi-technology.opentelemetry.repack;version=latest
+
+-testpath: junit-jupiter-api

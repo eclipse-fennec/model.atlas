@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -106,7 +105,7 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("the scope service names the key it ignored, and what it expected")
     void scopeServiceReportsTheKeyItIgnored() {
-        scopeService().activate(props("scope.name", "jena", "parent.scope", "platform"));
+        activateScopeService(props("scope.name", "jena", "parent.scope", "platform"));
 
         assertEquals(1, scopeRecords.size(), "exactly one property is unrecognised");
         String message = message(scopeRecords.get(0));
@@ -119,7 +118,7 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("a configuration that only sets known keys stays quiet")
     void aKnownConfigurationIsQuiet() {
-        scopeService().activate(props(
+        activateScopeService(props(
                 "atlas.scope", "jena",
                 "scope.name", "jena",
                 "scope.description", "City Jena Scope",
@@ -132,7 +131,7 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("the properties Declarative Services and the framework own are not the user's typos")
     void frameworkOwnedPropertiesAreNotReported() {
-        scopeService().activate(props(
+        activateScopeService(props(
                 "scope.name", "jena",
                 "component.name", "ScopeService",
                 "component.id", 7L,
@@ -151,7 +150,7 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("the registry service reports its own unrecognised keys")
     void registryServiceReportsTheKeyItIgnored() {
-        registryService().activate(props("registry.name", "schema", "delete.after.transitions", true));
+        activateRegistryService(props("registry.name", "schema", "delete.after.transitions", true));
 
         assertEquals(1, registryRecords.size(), "exactly one property is unrecognised");
         String message = message(registryRecords.get(0));
@@ -165,7 +164,7 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("every key of the shipped jena registry configuration is recognised")
     void theShippedRegistryConfigurationIsQuiet() {
-        registryService().activate(props(
+        activateRegistryService(props(
                 "registry.type", "SCHEMA",
                 "registry.name", "schema",
                 "registry.description", "The schema registry to store EPackage objects",
@@ -183,39 +182,45 @@ public class UnrecognisedConfigurationPropertyTest {
     @Test
     @DisplayName("a key that resembles nothing is still reported, without a guess")
     void anUnrelatedKeyIsReportedWithoutASuggestion() {
-        scopeService().activate(props("scope.name", "jena", "colour.of.the.bikeshed", "green"));
+        activateScopeService(props("scope.name", "jena", "colour.of.the.bikeshed", "green"));
 
         String message = message(scopeRecords.get(0));
         assertTrue(message.contains("'colour.of.the.bikeshed'"), () -> "the ignored key must be named: " + message);
         assertTrue(!message.contains("Did you mean"), () -> "no plausible key to suggest: " + message);
     }
 
-    private ScopeServiceImpl<EObject> scopeService() {
+    /**
+     * Activates a scope service with these properties, which is to say constructs one.
+     *
+     * <p>
+     * The component takes the delivered properties as a constructor activation object, so there is
+     * no second entry point to call and nothing may be cleared after construction — what the
+     * constructor logged is the whole of what this test is about.
+     * </p>
+     */
+    private void activateScopeService(Map<String, Object> properties) {
         ScopeServiceConfig config = mock(ScopeServiceConfig.class);
         when(config.scope_name()).thenReturn("jena");
-        ScopeServiceImpl<EObject> scopeService = new ScopeServiceImpl<>(config);
-        scopeRecords.clear();
-        return scopeService;
+        new ScopeServiceImpl<>(config, properties);
     }
 
-    private RegistryServiceImpl<EObject> registryService() {
+    /** The registry's half of the same thing; see {@link #activateScopeService}. */
+    private void activateRegistryService(Map<String, Object> properties) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
         when(config.registry_name()).thenReturn("schema");
         when(config.registry_description()).thenReturn("");
         when(config.registry_type()).thenReturn("SCHEMA");
         when(config.workflow_transitions()).thenReturn(new String[] { "draft:release" });
-        when(config.stage_storage_mappings()).thenReturn(new String[] { "draft:file", "release:file" });
+        // No stage is mapped to a storage type, so none is reported as missing: the storage
+        // warning construction used to emit would otherwise land among the findings under test,
+        // which are the configuration's own keys.
+        when(config.stage_storage_mappings()).thenReturn(new String[0]);
         when(config.stages()).thenReturn(new String[] {
                 "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
         when(config.root_eclass_uri()).thenReturn(new String[] { TEST_NS_URI + "#//Person" });
         when(config.derived_eclass_uri()).thenReturn(new String[0]);
-        RegistryServiceImpl<EObject> registryService = new RegistryServiceImpl<>(List.of(), resourceSet,
-                testPackage, config);
-        // What construction complains about (no storage service is injected here) is not
-        // what this test is about: only activation reports the configuration's own keys.
-        registryRecords.clear();
-        return registryService;
+        new RegistryServiceImpl<>(List.of(), resourceSet, testPackage, config, properties);
     }
 
     /**
