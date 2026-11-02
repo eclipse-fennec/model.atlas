@@ -38,7 +38,7 @@ public class DGEPackageConfigurator implements EPackageConfigurator {
 	 * service property.
 	 * @generated
 	 */
-	public static final String FINGERPRINT = "fp1:f32309bbe75c77f1f730c3cb618b10341350b73f4b302a8fb88670c8c5a031ba";
+	public static final String FINGERPRINT = "fp1:81b7f9f41d97e6b016107eb2dbf12c485ae89caec6293c8584259737ae4af236";
 
 	private DGPackage ePackage;
 

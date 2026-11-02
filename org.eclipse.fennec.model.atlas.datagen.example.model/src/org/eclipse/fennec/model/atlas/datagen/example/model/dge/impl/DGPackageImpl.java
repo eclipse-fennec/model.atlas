@@ -577,7 +577,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		  (getCompany__GetTotalEmployees(),
 		   source,
 		   new String[] {
-			   "body", "self.employees.size()"
+			   "body", "self.employees->size()"
 		   });
 		addAnnotation
 		  (getCompany_EmployeesNames(),
