@@ -7,18 +7,18 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -buildpath: \
 	org.osgi.framework;version=latest,\
-	org.osgi.service.jakartars,\
-	org.osgi.util.tracker,\
-	org.osgi.service.cm,\
+	org.osgi.service.jakartars;version=latest,\
+	org.osgi.util.tracker;version=latest,\
+	org.osgi.service.cm;version=latest,\
 	org.eclipse.fennec.model.atlas.management,\
-	org.osgi.test.junit5.cm,\
-	jakarta.ws.rs-api,\
-	org.eclipse.fennec.model.atlas.datagen.example.model,\
-	org.eclipse.fennec.model.atlas.validation.model,\
-	org.eclipse.fennec.model.atlas.workflow,\
-	org.osgi.util.promise,\
-	org.eclipse.fennec.m2x.ocl.api,\
-	org.eclipse.fennec.model.atlas.tests.common,\
+	org.osgi.test.junit5.cm;version=latest,\
+	jakarta.ws.rs-api;version=latest,\
+	org.eclipse.fennec.model.atlas.datagen.example.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.osgi.util.promise;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 	
 Private-Package: \
