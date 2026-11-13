@@ -39,6 +39,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.util.InternalEList;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
+import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.mgmt.conversion.InstantConversionDelegateFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -64,6 +65,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     protected static final String METADATA_EXTENSION = ".metadata.xmi";
     protected static final String FILE_EXTENSION_PROPERTY = "file.extension";
     protected static final String CONTENT_TYPE_PROPERTY = "content.type";
+    private static final Resource.Factory ECORE_RESOURCE_FACTORY = new EcoreResourceFactoryImpl();
 
     protected final ResourceSet resourceSet;
 
@@ -229,6 +231,26 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     }
 
     /**
+     * Creates the resource an EPackage is persisted into: always an Ecore resource,
+     * whatever factory the storage URI or the content type would select.
+     *
+     * <p>
+     * The Ecore resource's save options produce the classic {@code .ecore} form. A
+     * plain XMI resource writes a supertype list that mixes another document with the
+     * package itself in element form ({@code <eSuperTypes href="#//X"/>}), which loads
+     * back as lazy proxies bound to the storage location instead of resolving during
+     * load (issue #382). Ecore is XMI, so every read path still accepts the file.
+     * </p>
+     */
+    protected ResourceOperation createEcoreStorageResource(URI uri) {
+        Resource resource = ECORE_RESOURCE_FACTORY.createResource(uri);
+        synchronized (resourceSet) {
+            resourceSet.getResources().add(resource);
+        }
+        return new ResourceOperation(resource, resourceSet);
+    }
+
+    /**
      * Loads a resource and returns a ResourceOperation for cleanup.
      */
     public ResourceOperation loadResource(URI uri) throws IOException {
@@ -257,8 +279,10 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         // object type recorded for an instance of a package that was stored before.
         Placement placement = Placement.of(object);
         // Extension first, content type as fallback — the same lookup loadEObject uses
-        // (see createStorageResource / issue #213).
-        ResourceOperation objectOp = createStorageResource(objectUri, contentType);
+        // (see createStorageResource / issue #213). An EPackage is the exception: it is
+        // always written by the Ecore factory (issue #382).
+        ResourceOperation objectOp = object instanceof EPackage ? createEcoreStorageResource(objectUri)
+                : createStorageResource(objectUri, contentType);
         try {
             objectOp.getResource().getContents().add(object);
             objectOp.getResource().save(Collections.emptyMap());
