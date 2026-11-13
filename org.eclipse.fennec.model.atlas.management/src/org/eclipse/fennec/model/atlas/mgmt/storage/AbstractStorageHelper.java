@@ -37,7 +37,9 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.util.InternalEList;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
+import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.mgmt.conversion.InstantConversionDelegateFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -63,6 +65,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     protected static final String METADATA_EXTENSION = ".metadata.xmi";
     protected static final String FILE_EXTENSION_PROPERTY = "file.extension";
     protected static final String CONTENT_TYPE_PROPERTY = "content.type";
+    private static final Resource.Factory ECORE_RESOURCE_FACTORY = new EcoreResourceFactoryImpl();
 
     protected final ResourceSet resourceSet;
 
@@ -228,6 +231,26 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     }
 
     /**
+     * Creates the resource an EPackage is persisted into: always an Ecore resource,
+     * whatever factory the storage URI or the content type would select.
+     *
+     * <p>
+     * The Ecore resource's save options produce the classic {@code .ecore} form. A
+     * plain XMI resource writes a supertype list that mixes another document with the
+     * package itself in element form ({@code <eSuperTypes href="#//X"/>}), which loads
+     * back as lazy proxies bound to the storage location instead of resolving during
+     * load (issue #382). Ecore is XMI, so every read path still accepts the file.
+     * </p>
+     */
+    protected ResourceOperation createEcoreStorageResource(URI uri) {
+        Resource resource = ECORE_RESOURCE_FACTORY.createResource(uri);
+        synchronized (resourceSet) {
+            resourceSet.getResources().add(resource);
+        }
+        return new ResourceOperation(resource, resourceSet);
+    }
+
+    /**
      * Loads a resource and returns a ResourceOperation for cleanup.
      */
     public ResourceOperation loadResource(URI uri) throws IOException {
@@ -256,8 +279,10 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         // object type recorded for an instance of a package that was stored before.
         Placement placement = Placement.of(object);
         // Extension first, content type as fallback — the same lookup loadEObject uses
-        // (see createStorageResource / issue #213).
-        ResourceOperation objectOp = createStorageResource(objectUri, contentType);
+        // (see createStorageResource / issue #213). An EPackage is the exception: it is
+        // always written by the Ecore factory (issue #382).
+        ResourceOperation objectOp = object instanceof EPackage ? createEcoreStorageResource(objectUri)
+                : createStorageResource(objectUri, contentType);
         try {
             objectOp.getResource().getContents().add(object);
             objectOp.getResource().save(Collections.emptyMap());
@@ -397,10 +422,59 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             if (resource.getContents().isEmpty()) {
                 return null;
             }
+            // The resource is detached below. A reference into the same document that
+            // is still a proxy then points at the storage URI, which nothing resolves
+            // any more: a local supertype written in element form (<eSuperTypes
+            // href="#//X"/>) would be lost for good (issue #382). Resolve those now,
+            // while the resource is still in the ResourceSet. Cross-document proxies
+            // are left alone - the shared management ResourceSet must not demand-load
+            // nsURIs; they resolve later wherever the object is anchored.
+            resolveDocumentLocalProxies(resource);
             return resource.getContents().get(0);
         } finally {
             operation.cleanup();
         }
+    }
+
+    /**
+     * Resolves every proxy in {@code resource} that refers to an object of the same
+     * resource, leaving proxies into other documents untouched.
+     *
+     * @param resource the loaded resource; must still be attached to its ResourceSet
+     */
+    static void resolveDocumentLocalProxies(Resource resource) {
+        URI resourceUri = resource.getURI();
+        if (resourceUri == null) {
+            return;
+        }
+        for (TreeIterator<EObject> contents = resource.getAllContents(); contents.hasNext();) {
+            EObject eObject = contents.next();
+            for (EReference reference : eObject.eClass().getEAllReferences()) {
+                if (reference.isContainment() || reference.isContainer() || reference.isDerived()
+                        || !reference.isResolveProxies() || !eObject.eIsSet(reference)) {
+                    continue;
+                }
+                if (reference.isMany()) {
+                    if (!(eObject.eGet(reference, false) instanceof InternalEList<?> list)) {
+                        continue;
+                    }
+                    @SuppressWarnings("unchecked")
+                    InternalEList<EObject> values = (InternalEList<EObject>) list;
+                    for (int i = 0; i < values.size(); i++) {
+                        if (isProxyInto(values.basicGet(i), resourceUri)) {
+                            values.get(i);
+                        }
+                    }
+                } else if (isProxyInto((EObject) eObject.eGet(reference, false), resourceUri)) {
+                    eObject.eGet(reference, true);
+                }
+            }
+        }
+    }
+
+    private static boolean isProxyInto(EObject value, URI resourceUri) {
+        return value != null && value.eIsProxy()
+                && resourceUri.equals(((InternalEObject) value).eProxyURI().trimFragment());
     }
 
     private EObject loadWithLeasedResourceSet(ComponentServiceObjects<ResourceSet> cso, String scope, String stage,
