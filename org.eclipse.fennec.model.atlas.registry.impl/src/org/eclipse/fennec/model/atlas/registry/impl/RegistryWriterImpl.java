@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -49,6 +50,9 @@ import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.util.promise.Promise;
 
 /**
@@ -64,19 +68,30 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 	private static final Logger LOGGER = Logger.getLogger(RegistryWriterImpl.class.getName());
 
+	/** The objectType a stored EPackage records. */
+	private static final String EPACKAGE_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString();
+
 	private final ScopeLookup lookup;
 	private final RegistryServiceCollector registryCollector;
 	private final ManagementFactory mgmtFactory;
-	private final EPackageLuceneIndex ePackageIndex;
+	private final SearchIndex searchIndex = new SearchIndex();
 
 	@Activate
 	public RegistryWriterImpl(@Reference ScopeServiceCollector scopeCollector,
-			@Reference RegistryServiceCollector registryCollector, @Reference ManagementFactory mgmtFactory,
-			@Reference EPackageLuceneIndex ePackageIndex) {
+			@Reference RegistryServiceCollector registryCollector, @Reference ManagementFactory mgmtFactory) {
 		this.lookup = new ScopeLookup(scopeCollector);
 		this.registryCollector = registryCollector;
 		this.mgmtFactory = mgmtFactory;
-		this.ePackageIndex = ePackageIndex;
+	}
+
+	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+			policyOption = ReferencePolicyOption.GREEDY)
+	void bindEPackageIndex(EPackageLuceneIndex index) {
+		searchIndex.bind(index);
+	}
+
+	void unbindEPackageIndex(EPackageLuceneIndex index) {
+		searchIndex.unbind(index);
 	}
 
 	// ======================
@@ -169,6 +184,10 @@ public class RegistryWriterImpl implements RegistryWriter {
 			throw new IllegalStateException(
 					String.format("Object %s deletion failed but causes are unknown", address.objectId()));
 		}
+		// a package stored by id rather than by nsURI is still in the search index
+		if (EPACKAGE_TYPE.equals(existing.getObjectType())) {
+			searchIndex.remove(RegistryAddress.of(existing));
+		}
 		return WriteResult.of(WriteOutcome.DELETED);
 	}
 
@@ -203,8 +222,8 @@ public class RegistryWriterImpl implements RegistryWriter {
 		WritableScopeService<EObject> scopeService = scope(write.scope());
 		EPackage ePackage = write.content();
 		String nsUri = validateAndResolveNsUri(write.nsUri(), ePackage);
-		String version = PackageVersions.resolve(ePackage, write.version(), nsUri);
-		String registry = schemaRegistry(scopeService);
+		String version = PackageVersions.resolve(ePackage, write.version(), nsUri, write.lenientVersion());
+		String registry = packageRegistry(scopeService, write.registry(), ePackage);
 
 		ObjectMetadata existing = findByNsUri(scopeService, registry, write.stage(), nsUri);
 		if (existing != null) {
@@ -230,7 +249,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 							existing.getObjectId(), Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
 									Boolean.toString(write.dcat()))));
 				}
-				ePackageIndex.index(metadata, ePackage);
+				searchIndex.index(metadata, ePackage);
 				return WriteResult.of(WriteOutcome.UPDATED, metadata);
 			}
 		}
@@ -253,7 +272,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 				Boolean.toString(Boolean.TRUE.equals(write.dcat())));
 
 		metadata = await(scopeService.uploadToStageForRegistry(registry, write.stage(), ePackage, metadata));
-		ePackageIndex.index(metadata, ePackage);
+		searchIndex.index(metadata, ePackage);
 		return WriteResult.of(WriteOutcome.CREATED, metadata);
 	}
 
@@ -262,8 +281,8 @@ public class RegistryWriterImpl implements RegistryWriter {
 		WritableScopeService<EObject> scopeService = scope(write.scope());
 		EPackage ePackage = write.content();
 		String nsUri = validateAndResolveNsUri(write.nsUri(), ePackage);
-		String version = PackageVersions.resolve(ePackage, write.version(), nsUri);
-		String registry = schemaRegistry(scopeService);
+		String version = PackageVersions.resolve(ePackage, write.version(), nsUri, write.lenientVersion());
+		String registry = packageRegistry(scopeService, write.registry(), ePackage);
 
 		ObjectMetadata existing = findByNsUri(scopeService, registry, write.stage(), nsUri);
 		if (existing == null) {
@@ -284,7 +303,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		}
 		ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(registry, write.stage(), ePackage,
 				existing.getObjectId(), version));
-		ePackageIndex.index(metadata, ePackage);
+		searchIndex.index(metadata, ePackage);
 		return WriteResult.of(WriteOutcome.UPDATED, metadata);
 	}
 
@@ -339,7 +358,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		}
 		// Only this stage's copy is gone: the same id may be held by other stages of this
 		// registry, and those entries must stay searchable (issue #252)
-		ePackageIndex.remove(RegistryAddress.of(existing));
+		searchIndex.remove(RegistryAddress.of(existing));
 		return WriteResult.of(WriteOutcome.DELETED);
 	}
 
@@ -454,6 +473,18 @@ public class RegistryWriterImpl implements RegistryWriter {
 		return ScopeLookup.schemaRegistry(scopeService);
 	}
 
+	/**
+	 * The registry a package goes to: the scope's schema registry unless the caller names
+	 * another, which then has to accept the package like any client content.
+	 */
+	private String packageRegistry(WritableScopeService<?> scopeService, String registry, EPackage ePackage) {
+		if (registry == null) {
+			return schemaRegistry(scopeService);
+		}
+		requireClientType(registry, ePackage);
+		return registry;
+	}
+
 	private static ObjectMetadata findByNsUri(WritableScopeService<?> scopeService, String registry, String stage,
 			String nsUri) {
 		return ScopeLookup.findByNsUri(scopeService, registry, stage, nsUri);
@@ -496,21 +527,24 @@ public class RegistryWriterImpl implements RegistryWriter {
 	 */
 	private void reindexAfterTransition(WritableScopeService<?> scopeService, String registry, ObjectMetadata metadata,
 			String sourceStage, String targetStage) {
+		if (!searchIndex.isAvailable()) {
+			return;
+		}
 		String objectId = metadata.getObjectId();
 		try {
 			Object content = scopeService.getContentFromStageForRegistry(registry, targetStage, objectId);
 			if (content instanceof EPackage ePackage) {
-				ePackageIndex.index(metadata, ePackage);
+				searchIndex.index(metadata, ePackage);
 			} else {
 				LOGGER.log(Level.WARNING,
 						"Could not re-index object {0} after its transition to stage {1}: no EPackage content in the target stage. Removing its stale index entry.",
 						new Object[] { objectId, targetStage });
-				ePackageIndex.remove(addressIn(metadata, targetStage));
+				searchIndex.remove(addressIn(metadata, targetStage));
 			}
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, e, () -> "Could not re-index object " + objectId
 					+ " after its transition to stage " + targetStage + "; removing its stale index entry");
-			ePackageIndex.remove(addressIn(metadata, targetStage));
+			searchIndex.remove(addressIn(metadata, targetStage));
 		}
 		dropSourceEntryIfMoved(scopeService, registry, metadata, sourceStage);
 	}
@@ -527,7 +561,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		String objectId = metadata.getObjectId();
 		try {
 			if (scopeService.getMetadataFromStageForRegistry(registry, sourceStage, objectId) == null) {
-				ePackageIndex.remove(addressIn(metadata, sourceStage));
+				searchIndex.remove(addressIn(metadata, sourceStage));
 			}
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, e, () -> "Could not check whether object " + objectId

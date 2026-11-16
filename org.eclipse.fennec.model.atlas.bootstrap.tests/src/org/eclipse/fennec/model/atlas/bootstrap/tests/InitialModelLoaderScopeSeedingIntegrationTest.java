@@ -32,6 +32,9 @@ import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
+import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.junit.jupiter.api.AfterEach;
@@ -168,7 +171,8 @@ public class InitialModelLoaderScopeSeedingIntegrationTest {
             @InjectService(cardinality = 0, timeout = 30000,
                     filter = "(&(" + EMFNamespaces.EMF_MODEL_NSURI + "=" + NS_URI + ")("
                             + WorkflowConstants.ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY + "="
-                            + CommonTestAnnotations.STAGE_DRAFT + "))") ServiceAware<EPackage> ePackageAware)
+                            + CommonTestAnnotations.STAGE_DRAFT + "))") ServiceAware<EPackage> ePackageAware,
+            @InjectService(cardinality = 0) ServiceAware<RegistryReader> readerAware)
             throws Exception {
 
         copyTestData(context, "scope-seeding", tempDir);
@@ -190,6 +194,13 @@ public class InitialModelLoaderScopeSeedingIntegrationTest {
         assertEquals(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, seeded.getRegistry());
         assertEquals(CommonTestAnnotations.STAGE_DRAFT, seeded.getStage());
         assertEquals("1.0.0", seeded.getVersion(), "The version should be derived from the nsURI");
+
+        // seeding writes through the RegistryWriter like a REST upload, so the package is
+        // searchable (issue #386; the loader used to skip the search index)
+        PackageSearchResult hits = readerAware.waitForService(5000).searchPackages(SCOPE_NAME,
+                new PackageSearch(null, null, NS_URI, null, null, null, null, null, null, 10, 0));
+        assertEquals(1, hits.hits().size(), "The seeded package should be in the package search index");
+        assertEquals(seeded.getObjectId(), hits.hits().get(0).getObjectId());
 
         // restart the loader with the same folder: the nsURI is already present in
         // the stage, so the seeding must skip it instead of uploading a duplicate

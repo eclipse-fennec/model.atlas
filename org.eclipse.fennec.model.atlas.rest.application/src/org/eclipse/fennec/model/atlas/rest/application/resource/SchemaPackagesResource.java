@@ -317,9 +317,9 @@ public class SchemaPackagesResource {
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            WriteResult result = registryWriter.createPackage(new PackageWrite(scopeName, stageName, ePackage, nsUri,
-                    name, version, dcat, overwrite ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
-                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
+            WriteResult result = registryWriter.createPackage(new PackageWrite(scopeName, null, stageName, ePackage,
+                    nsUri, name, version, dcat, overwrite ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
             ObjectMetadata metadata = result.metadata();
             Response.ResponseBuilder rb = Response
                     .status(result.outcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
@@ -492,9 +492,9 @@ public class SchemaPackagesResource {
             @RequestBody(description = "The new schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            WriteResult result = registryWriter.updatePackage(new PackageWrite(scopeName, stageName, ePackage, nsUri,
-                    null, version, null, null,
-                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
+            WriteResult result = registryWriter.updatePackage(new PackageWrite(scopeName, null, stageName, ePackage,
+                    nsUri, null, version, null, null,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
             if (result.outcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }

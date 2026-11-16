@@ -13,6 +13,9 @@
  */
 package org.eclipse.fennec.model.atlas.registry.impl;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
@@ -67,6 +70,8 @@ import org.osgi.framework.Version;
  */
 final class PackageVersions {
 
+	private static final Logger LOGGER = Logger.getLogger(PackageVersions.class.getName());
+
 	private PackageVersions() {
 	}
 
@@ -96,6 +101,36 @@ final class PackageVersions {
 
 		Version inferred = fromNsUri(nsUri);
 		return inferred == null ? null : inferred.toString();
+	}
+
+	/**
+	 * Like {@link #resolve(EPackage, String, String)}, but with {@code lenient} a Version annotation
+	 * that is not a version is logged and passed over instead of refused — for a loader that must
+	 * not abort over a junk annotation. An explicit {@code versionParam} is checked either way.
+	 */
+	static String resolve(EPackage ePackage, String versionParam, String nsUri, boolean lenient) {
+		if (!lenient || (versionParam != null && !versionParam.isBlank())) {
+			return resolve(ePackage, versionParam, nsUri);
+		}
+		String declared = EPackageVersions.declared(ePackage);
+		if (declared != null && isVersion(declared)) {
+			return declared;
+		}
+		if (declared != null) {
+			LOGGER.log(Level.WARNING, () -> nsUri + " declares the version '" + declared
+					+ "' in its Version annotation, which is not a valid version - ignoring it");
+		}
+		Version inferred = fromNsUri(nsUri);
+		return inferred == null ? null : inferred.toString();
+	}
+
+	private static boolean isVersion(String version) {
+		try {
+			Version.parseVersion(version);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
 	}
 
 	/**

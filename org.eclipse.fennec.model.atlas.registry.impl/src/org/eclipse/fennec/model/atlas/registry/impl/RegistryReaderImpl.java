@@ -36,6 +36,9 @@ import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * The {@link RegistryReader} on top of the workflow's scope services and the package search
@@ -46,14 +49,22 @@ public class RegistryReaderImpl implements RegistryReader {
 
 	private final ScopeServiceCollector scopeCollector;
 	private final ScopeLookup lookup;
-	private final EPackageLuceneIndex ePackageIndex;
+	private final SearchIndex searchIndex = new SearchIndex();
 
 	@Activate
-	public RegistryReaderImpl(@Reference ScopeServiceCollector scopeCollector,
-			@Reference EPackageLuceneIndex ePackageIndex) {
+	public RegistryReaderImpl(@Reference ScopeServiceCollector scopeCollector) {
 		this.scopeCollector = scopeCollector;
 		this.lookup = new ScopeLookup(scopeCollector);
-		this.ePackageIndex = ePackageIndex;
+	}
+
+	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+			policyOption = ReferencePolicyOption.GREEDY)
+	void bindEPackageIndex(EPackageLuceneIndex index) {
+		searchIndex.bind(index);
+	}
+
+	void unbindEPackageIndex(EPackageLuceneIndex index) {
+		searchIndex.unbind(index);
 	}
 
 	@Override
@@ -133,7 +144,9 @@ public class RegistryReaderImpl implements RegistryReader {
 				.limit(search.limit())
 				.offset(search.offset())
 				.build();
-		SearchResult result = ePackageIndex.search(query);
+		EPackageLuceneIndex index = searchIndex.get()
+				.orElseThrow(() -> new IllegalStateException("The package search index is not available"));
+		SearchResult result = index.search(query);
 		return new PackageSearchResult(resolve(result.hits(), scope), result.totalHits());
 	}
 
