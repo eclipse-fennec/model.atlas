@@ -14,29 +14,30 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.codec.constants.CodecOptions;
 import org.eclipse.fennec.codec.rest.annotations.EMFResourceOptions;
 import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
-import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
+import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
+import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
+import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailableExceptionMapper;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -66,7 +67,6 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 /**
  * REST API for managing Storage Objects within scopes. Provides endpoints for
@@ -87,7 +87,7 @@ public class ObjectRegistryResource {
     private ScopeServiceCollector scopeCollector;
 
     @Reference
-    private RegistryServiceCollector registryCollector;
+    private RegistryWriter registryWriter;
 
     @Reference
     private ManagementFactory mgmtFactory;
@@ -255,7 +255,6 @@ public class ObjectRegistryResource {
      * @param object       the storage object content
      * @return StorageObjectMetadata
      */
-    @SuppressWarnings("unchecked")
     @POST
     @PUT
     @Path("/stages/{stageName}/{objectId}")
@@ -281,81 +280,21 @@ public class ObjectRegistryResource {
             @Parameter(description = "Override option. If set to true and the object already exists, an update will be made. If set to false and the object already exists, it will result in a 409", required = false) @QueryParam("override") boolean override,
             @RequestBody(description = "The storage object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject object) {
 
-        // Get schema registry for validation
-        RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
-        if (registryService == null) {
-            return Response.status(Status.BAD_REQUEST).entity("Unknown or unconfigured registry: " + registryName)
-                    .build();
-        }
-
-        // Derived artifacts (compiled units, diagnostics, …) are produced by the
-        // Atlas itself; accepting them here would let a client forge them.
-        if (registryService.isDerivedEClass(object.eClass())) {
-            return Response.status(Status.FORBIDDEN)
-                    .entity(String.format(
-                            "Object type %s is derived content of registry %s and is written by the Atlas only",
-                            EcoreUtil.getURI(object.eClass()), registryName))
-                    .build();
-        }
-        // Validate object type
-        if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
-                            EcoreUtil.getURI(object.eClass()), registryName,
-                            acceptedRootEClasses(registryService)))
-                    .build();
-        }
-
-        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
-                    objectId);
-            if (existingMetadata != null) {
-                if (!override) {
-                    return Response.status(Response.Status.CONFLICT)
-                            .entity(String.format(
-                                    "Object %s already exists and override flag is false. Cannot update object.",
-                                    objectId))
-                            .build();
-                } else {
-                    if (existingMetadata.isIsReadOnly()) {
-                        return Response.status(Response.Status.FORBIDDEN)
-                                .entity(String.format("Object %s is read-only. Cannot update it.", objectId)).build();
-                    }
-                    // If-Match validation (optimistic locking via the content ETag — override replaces
-                    // the content of an existing object).
-                    Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                            ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-                    if (preconditionResponse != null) {
-                        return preconditionResponse;
-                    }
-                    ObjectMetadata metadata = scopeService
-                            .updateInStageForRegistry(registryName, stageName, object, objectId, version).getValue();
-                    Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                            .location(objectLocation(scopeName, registryName, stageName, objectId))
-                            .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-                    ObjectMetadataResponseFilter.attach(requestContext, metadata,
-                            ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                    return rb.build();
-                }
-            }
-            ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setObjectName(name);
-            metadata.setUploadTime(Instant.now());
-            metadata.setStage(stageName);
-            metadata.setScope(scopeName);
-            metadata.setRegistry(registryName);
-            metadata.setVersion(version);
-            metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
-
-            metadata = scopeService.uploadToStageForRegistry(registryName, stageName, object, metadata).getValue();
-            Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
+            WriteResult result = registryWriter.createObject(new ObjectWrite(
+                    new ObjectAddress(scopeName, registryName, stageName, objectId), object, name, version,
+                    override ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
+            ObjectMetadata metadata = result.metadata();
+            Response.ResponseBuilder rb = Response
+                    .status(result.outcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
                     .location(objectLocation(scopeName, registryName, stageName, objectId))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
             throw e;
@@ -521,7 +460,6 @@ public class ObjectRegistryResource {
      * @param objectId     the object identifier
      * @return Storage object content in requested format
      */
-    @SuppressWarnings("unchecked")
     @PUT
     @POST
     @Path("/stages/{stageName}/content")
@@ -543,70 +481,21 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId,
             @RequestBody(description = "The new object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
 
-        // Get schema registry for validation
-        RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
-        if (registryService == null) {
-            return Response.status(Status.BAD_REQUEST).entity("Unknown or unconfigured registry: " + registryName)
-                    .build();
-        }
-
-        // Derived artifacts are produced by the Atlas itself; accepting them here
-        // would let a client forge them.
-        if (registryService.isDerivedEClass(eObject.eClass())) {
-            return Response.status(Status.FORBIDDEN)
-                    .entity(String.format(
-                            "Object type %s is derived content of registry %s and is written by the Atlas only",
-                            EcoreUtil.getURI(eObject.eClass()), registryName))
-                    .build();
-        }
-        // Validate object type
-        if (!registryService.isEClassCompatibleWithRegistry(eObject.eClass())) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
-                            EcoreUtil.getURI(eObject.eClass()), registryName,
-                            acceptedRootEClasses(registryService)))
-                    .build();
-        }
-
-        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
-                    objectId);
-            if (existingMetadata == null) {
+            WriteResult result = registryWriter.updateObject(new ObjectWrite(
+                    new ObjectAddress(scopeName, registryName, stageName, objectId), eObject, null, version, null,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
+            if (result.outcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            // We might want to check if the metadata is read only (e.g. if it was retrieved
-            // from a parent final stage
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Object %s is in read-only state", objectId)).build();
-            }
-
-            // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                    ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-
-            // Content-aware skip: if content hasn't changed, skip the update
-            String newContentHash = AbstractEObjectStorageService.computeContentHash(eObject);
-            if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
-                Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                        .entity(existingMetadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-                ObjectMetadataResponseFilter.attach(requestContext, existingMetadata,
-                        ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                return rb.build();
-            }
-
-            ObjectMetadata metadata = scopeService
-                    .updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-            ObjectMetadataResponseFilter.attach(requestContext, metadata,
+                    .entity(result.metadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
+            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -648,34 +537,20 @@ public class ObjectRegistryResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
-                    objectId);
-            if (existingMetadata == null) {
+            WriteResult result = registryWriter.deleteObject(
+                    new ObjectAddress(scopeName, registryName, stageName, objectId), force,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT));
+            if (result.outcome() == WriteOutcome.NOT_FOUND) {
                 // Nothing to delete. 204 without a body: a 204 carries no entity, and the
                 // status alone is now unambiguous because a delete that happened is 200.
                 return Response.noContent().build();
             }
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Object %s is in read-only state", objectId)).build();
-            }
-
-            // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                    ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-
-            boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId, force)
-                    .getValue();
-            if (deleted)
-                // 200, as this endpoint's @ApiResponse documents and as the sibling
-                // SchemaPackagesResource.deletePackage answers, so that success is
-                // distinguishable from the 204 above.
-                return Response.status(Response.Status.OK).build();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(String.format("Object %s deletion failed but causes are unknown", objectId)).build();
+            // 200, as this endpoint's @ApiResponse documents and as the sibling
+            // SchemaPackagesResource.deletePackage answers, so that success is
+            // distinguishable from the 204 above.
+            return Response.status(Response.Status.OK).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -722,38 +597,20 @@ public class ObjectRegistryResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            String objectId = transitionRequest.getObjectId();
-            String targetStage = transitionRequest.getTargetStage();
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
-                    objectId);
-            if (existingMetadata == null) {
-                // Object not in source stage — check if already in target (idempotent retry)
-                ObjectMetadata targetMetadata = scopeService.getMetadataFromStageForRegistry(registryName, targetStage,
-                        objectId);
-                if (targetMetadata != null) {
-                    ObjectMetadataResponseFilter.attach(requestContext, targetMetadata,
-                            ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                    return Response.status(Response.Status.OK).entity(targetMetadata)
-                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
-                }
+            WriteResult result = registryWriter.transitionObject(
+                    new ObjectAddress(scopeName, registryName, stageName, transitionRequest.getObjectId()),
+                    transitionRequest.getTargetStage(), overwrite,
+                    // a transition changes metadata, not content
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
+            if (result.outcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Object %s is in read-only state", objectId)).build();
-            }
-            // If-Match validation (optimistic locking via the metadata ETag — a transition changes
-            // metadata, not content).
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
+            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName,
-                    targetStage, overwrite);
-            ObjectMetadataResponseFilter.attach(requestContext, metadata,
-                    ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+            return Response.status(Response.Status.OK).entity(result.metadata())
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -770,10 +627,6 @@ public class ObjectRegistryResource {
         return scopeCollector.getScopeServiceByScopeName(scopeName);
     }
 
-    private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
-        return registryCollector.getRegistryServiceByRegistryName(registryName);
-    }
-
     /**
      * The {@code Location} of an object in a stage, absolute and built from the request's
      * base URI. The object id is client-chosen (a file name like
@@ -787,10 +640,5 @@ public class ObjectRegistryResource {
                 .path("{scope}/registries/{registry}/stages/{stage}")
                 .queryParam("objectId", "{objectId}")
                 .build(scopeName, registryName, stageName, objectId);
-    }
-
-    private static String acceptedRootEClasses(RegistryService<?> registryService) {
-        return registryService.getRootEClasses().stream().map(EcoreUtil::getURI).map(Object::toString)
-                .collect(Collectors.joining(", "));
     }
 }

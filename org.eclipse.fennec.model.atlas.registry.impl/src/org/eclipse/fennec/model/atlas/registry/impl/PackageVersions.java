@@ -11,15 +11,14 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.resource;
+package org.eclipse.fennec.model.atlas.registry.impl;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException.Reason;
 import org.osgi.framework.Version;
 
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 /**
  * Decides the version a schema package is stored under.
@@ -80,7 +79,7 @@ final class PackageVersions {
 	 * @param nsUri        the package's namespace URI
 	 * @return the resolved version, or {@code null} when no version was declared and none can
 	 *         be read from the nsURI
-	 * @throws WebApplicationException {@code 400} if the parameter, or the version the package
+	 * @throws RegistryAccessException {@link Reason#INVALID} if the parameter, or the version the package
 	 *                                 declares, cannot be parsed
 	 */
 	static String resolve(EPackage ePackage, String versionParam, String nsUri) {
@@ -104,7 +103,7 @@ final class PackageVersions {
 	 *
 	 * @param ePackage the package to inspect; may be {@code null}
 	 * @return the declared version verbatim, or {@code null} when the package declares none
-	 * @throws WebApplicationException {@code 400} if what it declares is not a version — a
+	 * @throws RegistryAccessException {@link Reason#INVALID} if what it declares is not a version — a
 	 *                                 declaration that cannot be honoured is reported rather
 	 *                                 than quietly ignored
 	 */
@@ -133,7 +132,7 @@ final class PackageVersions {
 		try {
 			Version.parseVersion(version);
 		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity(message).build());
+			throw new RegistryAccessException(Reason.INVALID, message);
 		}
 	}
 }

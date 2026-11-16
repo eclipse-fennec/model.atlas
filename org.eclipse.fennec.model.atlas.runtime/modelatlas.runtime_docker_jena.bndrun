@@ -176,6 +176,8 @@
 	org.eclipse.fennec.model.atlas.qvt.gdpr;version=snapshot;startlevel=1093,\
 	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot;startlevel=1094,\
 	org.eclipse.fennec.model.atlas.rest.application;version=snapshot;startlevel=1095,\
+	org.eclipse.fennec.model.atlas.registry.api;version=snapshot;startlevel=1095,\
+	org.eclipse.fennec.model.atlas.registry.impl;version=snapshot;startlevel=1095,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot;startlevel=1096,\
 	org.eclipse.fennec.model.atlas.rest.ecore.xmi;version=snapshot;startlevel=1097,\
 	org.eclipse.fennec.model.atlas.rest.filter;version=snapshot;startlevel=1098,\

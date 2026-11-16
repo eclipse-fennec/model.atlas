@@ -1,0 +1,17 @@
+Bundle-Name: Model Atlas Registry API — client access to registry content
+Bundle-Description: The single entry point through which external clients (the REST layer, \
+ the initial-model bootstrap, batch imports) write registry content. It owns the client \
+ rules — type gate, conflict handling, read-only and precondition checks, package identity \
+ and versioning, search indexing — and reports refusals protocol-neutrally. Trusted \
+ internal writers (stage actions) keep using the workflow API directly. Issue #386.
+
+-workingset: workflow
+
+-library: enableEMF
+
+-buildpath: \
+	org.osgi.annotation.versioning;version=latest,\
+	org.osgi.annotation.bundle;version=latest,\
+	org.eclipse.fennec.model.atlas.management;version=project
+
+-testpath: junit-jupiter-api
