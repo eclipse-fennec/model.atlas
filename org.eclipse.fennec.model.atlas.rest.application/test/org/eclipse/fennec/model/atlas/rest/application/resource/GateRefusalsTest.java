@@ -23,15 +23,17 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
 import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.ErrorResponse;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,15 +50,14 @@ import jakarta.ws.rs.core.Response.Status;
  * no refusal is left to the endpoint.
  */
 @DisplayName("GateRefusals")
-@SuppressWarnings({ "unchecked", "rawtypes" })
 class GateRefusalsTest {
 
-    private ScopeService scopeService;
+    private RegistryReader reader;
     private ObjectMetadata metadata;
 
     @BeforeEach
     void setUp() {
-        scopeService = mock(ScopeService.class);
+        reader = mock(RegistryReader.class);
         metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId("Announce");
         metadata.setStage("draft");
@@ -71,9 +72,9 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal with an address answers 409 with the source-stage metadata as body")
     void refusalWithAddressCarriesTheMetadata() {
-        when(scopeService.getMetadataFromStageForRegistry("transformations", "draft", "Announce")).thenReturn(metadata);
+        when(reader.metadata(new ObjectAddress("s", "transformations", "draft", "Announce"))).thenReturn(Optional.of(metadata));
 
-        Response response = GateRefusals.conflict(refusal(), scopeService, null);
+        Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
         assertSame(metadata, response.getEntity(), "the body is the object's metadata, not an error document");
@@ -83,11 +84,11 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal inside a failed promise is found, and the body takes the request's media type")
     void wrappedRefusalFollowsTheRequest() {
-        when(scopeService.getMetadataFromStageForRegistry("transformations", "draft", "Announce")).thenReturn(metadata);
+        when(reader.metadata(new ObjectAddress("s", "transformations", "draft", "Announce"))).thenReturn(Optional.of(metadata));
         ContainerRequestContext requestContext = mock(ContainerRequestContext.class);
         when(requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE)).thenReturn("application/xmi");
 
-        Response response = GateRefusals.conflict(new InvocationTargetException(refusal()), scopeService,
+        Response response = GateRefusals.conflict(new InvocationTargetException(refusal()), reader, "s",
                 requestContext);
 
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
@@ -98,9 +99,9 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal whose object cannot be re-read keeps the 409 with the plain error body")
     void unreadableObjectFallsBackToTheErrorBody() {
-        when(scopeService.getMetadataFromStageForRegistry(any(), any(), any())).thenReturn(null);
+        when(reader.metadata(any())).thenReturn(Optional.empty());
 
-        Response response = GateRefusals.conflict(refusal(), scopeService, null);
+        Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
         ErrorResponse body = assertInstanceOf(ErrorResponse.class, response.getEntity());
@@ -111,10 +112,9 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A failing re-read is a fallback, not a 500")
     void failingReadFallsBack() {
-        when(scopeService.getMetadataFromStageForRegistry(any(), any(), any()))
-                .thenThrow(new IllegalStateException("storage down"));
+        when(reader.metadata(any())).thenThrow(new IllegalStateException("storage down"));
 
-        Response response = GateRefusals.conflict(refusal(), scopeService, null);
+        Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
         assertInstanceOf(ErrorResponse.class, response.getEntity());
@@ -123,7 +123,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal raised without an address is answered with the error body")
     void legacyRefusalKeepsTheErrorBody() {
-        Response response = GateRefusals.conflict(new StageGateRefusedException("the gate says no"), scopeService,
+        Response response = GateRefusals.conflict(new StageGateRefusedException("the gate says no"), reader, "s",
                 null);
 
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
@@ -133,8 +133,8 @@ class GateRefusalsTest {
     @Test
     @DisplayName("Anything that is no refusal is left to the endpoint")
     void otherFailuresAreNotAnswered() {
-        assertNull(GateRefusals.conflict(new IllegalStateException("boom"), scopeService, null));
-        assertNull(GateRefusals.conflict(new InvocationTargetException(new RuntimeException("boom")), scopeService,
+        assertNull(GateRefusals.conflict(new IllegalStateException("boom"), reader, "s", null));
+        assertNull(GateRefusals.conflict(new InvocationTargetException(new RuntimeException("boom")), reader, "s",
                 null));
     }
 }

@@ -17,9 +17,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.rest.application.exception.StageGateRefusedExceptionMapper;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MediaType;
@@ -61,17 +62,19 @@ final class GateRefusals {
      *
      * @param failure        what the endpoint caught; a refusal may sit anywhere in its
      *                       cause chain, the workflow raises it inside a promise
-     * @param scopeService   the scope the request addressed, to re-read the object
+     * @param registryReader to re-read the object
+     * @param scope          the scope the request addressed
      * @param requestContext the request, for the media type it resolved to; may be
      *                       {@code null}
      * @return the response to return, or {@code null}
      */
-    static Response conflict(Throwable failure, ScopeService<?> scopeService, ContainerRequestContext requestContext) {
+    static Response conflict(Throwable failure, RegistryReader registryReader, String scope,
+            ContainerRequestContext requestContext) {
         StageGateRefusedException refusal = StageGateRefusedExceptionMapper.findInChain(failure);
         if (refusal == null) {
             return null;
         }
-        ObjectMetadata metadata = reread(scopeService, refusal);
+        ObjectMetadata metadata = reread(registryReader, scope, refusal);
         if (metadata == null) {
             return StageGateRefusedExceptionMapper.conflict(refusal);
         }
@@ -96,14 +99,16 @@ final class GateRefusals {
      * names no address or the read does not succeed. A failure here must not turn the
      * refusal into a {@code 500}: the status is the answer, the body a courtesy.
      */
-    private static ObjectMetadata reread(ScopeService<?> scopeService, StageGateRefusedException refusal) {
-        if (scopeService == null || refusal.registry() == null || refusal.stage() == null
+    private static ObjectMetadata reread(RegistryReader registryReader, String scope,
+            StageGateRefusedException refusal) {
+        if (registryReader == null || refusal.registry() == null || refusal.stage() == null
                 || refusal.objectId() == null) {
             return null;
         }
         try {
-            return scopeService.getMetadataFromStageForRegistry(refusal.registry(), refusal.stage(),
-                    refusal.objectId());
+            return registryReader
+                    .metadata(new ObjectAddress(scope, refusal.registry(), refusal.stage(), refusal.objectId()))
+                    .orElse(null);
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, String.format(
                     "A stage gate refused %s in (%s, %s, %s), but its metadata could not be re-read for the response body",

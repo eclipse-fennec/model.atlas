@@ -29,6 +29,7 @@ import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
 import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
 import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
@@ -37,8 +38,6 @@ import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailabl
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -84,7 +83,7 @@ import jakarta.ws.rs.core.Response;
 public class ObjectRegistryResource {
 
     @Reference
-    private ScopeServiceCollector scopeCollector;
+    private RegistryReader registryReader;
 
     @Reference
     private RegistryWriter registryWriter;
@@ -124,14 +123,15 @@ public class ObjectRegistryResource {
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(registryName);
+            List<ObjectMetadata> objectsMetadata = registryReader.listAll(scopeName, registryName);
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
             return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -160,14 +160,15 @@ public class ObjectRegistryResource {
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(registryName);
+            List<ObjectMetadata> objectsMetadata = registryReader.listFinal(scopeName, registryName);
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
             return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -203,11 +204,10 @@ public class ObjectRegistryResource {
             @Parameter(description = "Exact id of the of the object to retrieve") @QueryParam("objectId") String objectId,
             @Parameter(description = "Object name filter (supports wildcards, e.g., Billing*)") @QueryParam("name") String name) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             if (objectId != null) {
-                ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
-                        objectId);
+                ObjectMetadata metadata = registryReader
+                        .metadata(new ObjectAddress(scopeName, registryName, stageName, objectId)).orElse(null);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -218,8 +218,7 @@ public class ObjectRegistryResource {
                     return rb.build();
                 }
             } else if (name != null) {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(registryName,
-                        stageName, name);
+                List<ObjectMetadata> objectsMetadata = registryReader.listByName(scopeName, registryName, stageName, name);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -227,7 +226,7 @@ public class ObjectRegistryResource {
                 container.getMetadata().addAll(objectsMetadata);
                 return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             } else {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(registryName, stageName);
+                List<ObjectMetadata> objectsMetadata = registryReader.list(scopeName, registryName, stageName);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -236,6 +235,8 @@ public class ObjectRegistryResource {
                 return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -350,10 +351,10 @@ public class ObjectRegistryResource {
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            ObjectMetadata contentMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
-            EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
+            ObjectAddress address = new ObjectAddress(scopeName, registryName, stageName, objectId);
+            ObjectMetadata contentMetadata = registryReader.metadata(address).orElse(null);
+            EObject eObject = registryReader.content(address).orElse(null);
             if (eObject == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -365,6 +366,8 @@ public class ObjectRegistryResource {
             }
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -422,10 +425,10 @@ public class ObjectRegistryResource {
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            ObjectMetadata contentMetadata = scopeService.getMetadataFromFinalStageForRegistry(registryName, objectId);
-            Optional<?> optionalContent = scopeService.get(registryName, objectId);
+            ObjectMetadata contentMetadata = registryReader.finalMetadata(scopeName, registryName, objectId)
+                    .orElse(null);
+            Optional<EObject> optionalContent = registryReader.finalContent(scopeName, registryName, objectId);
             if (optionalContent.isEmpty()) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -437,6 +440,8 @@ public class ObjectRegistryResource {
             }
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -535,7 +540,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId,
             @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             WriteResult result = registryWriter.deleteObject(
                     new ObjectAddress(scopeName, registryName, stageName, objectId), force,
@@ -555,7 +559,7 @@ public class ObjectRegistryResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             // a gate's refusal is answered with the object's metadata as the 409 body (issue #295)
-            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            Response refused = GateRefusals.conflict(e, registryReader, scopeName, requestContext);
             if (refused != null) {
                 return refused;
             }
@@ -595,7 +599,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "Overwrite option. If the target stage holds a different object under this objectId, false (the default) rejects the transition with a 409 and true replaces that object. Replacing an earlier copy of the object being promoted needs no flag - that is what a promotion is for", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content(schema = @Schema(implementation = StageTransitionRequest.class))) StageTransitionRequest transitionRequest) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             WriteResult result = registryWriter.transitionObject(
                     new ObjectAddress(scopeName, registryName, stageName, transitionRequest.getObjectId()),
@@ -615,16 +618,12 @@ public class ObjectRegistryResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             // a gate's refusal is answered with the source-stage metadata as the 409 body (issue #295)
-            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            Response refused = GateRefusals.conflict(e, registryReader, scopeName, requestContext);
             if (refused != null) {
                 return refused;
             }
             throw EndpointFailures.propagate(e);
         }
-    }
-
-    private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
-        return scopeCollector.getScopeServiceByScopeName(scopeName);
     }
 
     /**
