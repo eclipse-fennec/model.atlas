@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.registry.impl;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -28,13 +29,35 @@ import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 /**
  * How the reader and the writer find a scope, its schema registry and a package in it — one
  * place, so that both answer an unknown scope and a missing schema registry alike.
+ *
+ * <p>
+ * It holds the scope service collector its owner binds dynamically and greedily — like the
+ * request filter does — so that a higher-ranked collector takes over without restarting the
+ * owner and, with it, every REST resource that references it.
+ * </p>
  */
 final class ScopeLookup {
 
-	private final ScopeServiceCollector scopeCollector;
+	private final AtomicReference<ScopeServiceCollector> scopeCollector = new AtomicReference<>();
 
-	ScopeLookup(ScopeServiceCollector scopeCollector) {
-		this.scopeCollector = scopeCollector;
+	void bind(ScopeServiceCollector collector) {
+		scopeCollector.set(collector);
+	}
+
+	void unbind(ScopeServiceCollector collector) {
+		scopeCollector.compareAndSet(collector, null);
+	}
+
+	/**
+	 * @return the bound collector
+	 * @throws IllegalStateException if none is bound
+	 */
+	ScopeServiceCollector collector() {
+		ScopeServiceCollector collector = scopeCollector.get();
+		if (collector == null) {
+			throw new IllegalStateException("No scope service collector is available");
+		}
+		return collector;
 	}
 
 	/**
@@ -43,7 +66,7 @@ final class ScopeLookup {
 	 */
 	@SuppressWarnings("unchecked")
 	WritableScopeService<EObject> scope(String scopeName) {
-		WritableScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
+		WritableScopeService<?> scopeService = collector().getScopeServiceByScopeName(scopeName);
 		if (scopeService == null) {
 			throw new RegistryAccessException(Reason.UNKNOWN_SCOPE, "Scope [" + scopeName + "] not found.");
 		}

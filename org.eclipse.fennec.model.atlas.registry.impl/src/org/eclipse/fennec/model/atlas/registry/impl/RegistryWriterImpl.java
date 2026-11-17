@@ -79,17 +79,25 @@ public class RegistryWriterImpl implements RegistryWriter {
 	/** The objectType a stored EPackage records. */
 	private static final String EPACKAGE_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString();
 
-	private final ScopeLookup lookup;
+	private final ScopeLookup lookup = new ScopeLookup();
 	private final RegistryServiceCollector registryCollector;
 	private final ManagementFactory mgmtFactory;
 	private final SearchIndex searchIndex = new SearchIndex();
 
 	@Activate
-	public RegistryWriterImpl(@Reference ScopeServiceCollector scopeCollector,
-			@Reference RegistryServiceCollector registryCollector, @Reference ManagementFactory mgmtFactory) {
-		this.lookup = new ScopeLookup(scopeCollector);
+	public RegistryWriterImpl(@Reference RegistryServiceCollector registryCollector,
+			@Reference ManagementFactory mgmtFactory) {
 		this.registryCollector = registryCollector;
 		this.mgmtFactory = mgmtFactory;
+	}
+
+	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+	void bindScopeCollector(ScopeServiceCollector scopeCollector) {
+		lookup.bind(scopeCollector);
+	}
+
+	void unbindScopeCollector(ScopeServiceCollector scopeCollector) {
+		lookup.unbind(scopeCollector);
 	}
 
 	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,

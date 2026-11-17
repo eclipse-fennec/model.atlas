@@ -33,7 +33,6 @@ import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -47,14 +46,16 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(service = RegistryReader.class)
 public class RegistryReaderImpl implements RegistryReader {
 
-	private final ScopeServiceCollector scopeCollector;
-	private final ScopeLookup lookup;
+	private final ScopeLookup lookup = new ScopeLookup();
 	private final SearchIndex searchIndex = new SearchIndex();
 
-	@Activate
-	public RegistryReaderImpl(@Reference ScopeServiceCollector scopeCollector) {
-		this.scopeCollector = scopeCollector;
-		this.lookup = new ScopeLookup(scopeCollector);
+	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+	void bindScopeCollector(ScopeServiceCollector scopeCollector) {
+		lookup.bind(scopeCollector);
+	}
+
+	void unbindScopeCollector(ScopeServiceCollector scopeCollector) {
+		lookup.unbind(scopeCollector);
 	}
 
 	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
@@ -155,7 +156,7 @@ public class RegistryReaderImpl implements RegistryReader {
 		Set<String> chain = new LinkedHashSet<>();
 		String current = scopeName;
 		while (current != null && chain.add(current)) {
-			Scope scope = scopeCollector.getScopeByName(current);
+			Scope scope = lookup.collector().getScopeByName(current);
 			current = scope != null ? scope.getParentScope() : null;
 		}
 		return chain;
@@ -169,7 +170,7 @@ public class RegistryReaderImpl implements RegistryReader {
 	private List<ObjectMetadata> resolve(List<SearchHit> hits, String scopeName) {
 		List<ObjectMetadata> resolved = new ArrayList<>(hits.size());
 		for (SearchHit hit : hits) {
-			WritableScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(hit.scope());
+			WritableScopeService<?> scopeService = lookup.collector().getScopeServiceByScopeName(hit.scope());
 			if (scopeService == null) {
 				continue;
 			}
