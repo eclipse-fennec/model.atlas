@@ -20,7 +20,9 @@ on:
     branches:
       - main
       - snapshot
-  # New vulnerabilities are published without any change on our side.
+  # Weekly snapshot report: new vulnerabilities are published without any change on our side.
+  # Scheduled runs always build the default branch, which is snapshot here; the SBOM, the Trivy
+  # report and the bnd update reports end up in the run's summary and its "sbom" artifact.
   schedule:
     - cron: '17 5 * * 1'
   workflow_dispatch:
@@ -131,6 +133,8 @@ jobs:
             trivy/*.json
             bnd-update/*.md
           if-no-files-found: warn
+          # keeps a quarter of weekly reports to compare against
+          retention-days: 90
 
       - name: Fail on fixable HIGH/CRITICAL vulnerabilities
         run: |
