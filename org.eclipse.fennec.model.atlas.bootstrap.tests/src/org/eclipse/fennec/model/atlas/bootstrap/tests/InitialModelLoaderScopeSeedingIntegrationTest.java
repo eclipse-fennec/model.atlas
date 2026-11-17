@@ -196,9 +196,18 @@ public class InitialModelLoaderScopeSeedingIntegrationTest {
         assertEquals("1.0.0", seeded.getVersion(), "The version should be derived from the nsURI");
 
         // seeding writes through the RegistryWriter like a REST upload, so the package is
-        // searchable (issue #386; the loader used to skip the search index)
-        PackageSearchResult hits = readerAware.waitForService(5000).searchPackages(SCOPE_NAME,
-                new PackageSearch(null, null, NS_URI, null, null, null, null, null, null, 10, 0));
+        // searchable (issue #386; the loader used to skip the search index). The EPackage
+        // service awaited above is registered by the stage action while the package is being
+        // stored; the writer indexes it only once storing returns, so the hit is awaited too.
+        RegistryReader reader = readerAware.waitForService(5000);
+        assertNotNull(reader, "The registry reader should be available");
+        PackageSearch byNsUri = new PackageSearch(null, null, NS_URI, null, null, null, null, null, null, 10, 0);
+        PackageSearchResult hits = reader.searchPackages(SCOPE_NAME, byNsUri);
+        for (long deadline = System.currentTimeMillis() + 10000; hits.hits().isEmpty()
+                && System.currentTimeMillis() < deadline;) {
+            Thread.sleep(100);
+            hits = reader.searchPackages(SCOPE_NAME, byNsUri);
+        }
         assertEquals(1, hits.hits().size(), "The seeded package should be in the package search index");
         assertEquals(seeded.getObjectId(), hits.hits().get(0).getObjectId());
 
