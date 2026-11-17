@@ -13,11 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.workflow.registration;
 
-import java.util.Collection;
 import java.util.Hashtable;
-import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -32,7 +31,6 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -41,8 +39,6 @@ import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
@@ -50,10 +46,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.condition.Condition;
-import org.osgi.service.typedevent.TypedEventBus;
 
 /**
  * Service for dynamic registration and unregistration of EPackages in the OSGi
@@ -100,9 +93,6 @@ public class DynamicEPackageRegistrationService {
     private BundleContext bundleContext;
 
     @Reference
-    private TypedEventBus typedEventBus;
-    
-    @Reference
     FingerprintService fingerprintService;
 
     // Thread-safe storage for registered EPackages and their service registrations.
@@ -115,10 +105,6 @@ public class DynamicEPackageRegistrationService {
     // always addressed by (scope, stage, nsURI), so sibling stages holding identical
     // content (same fingerprint) are unaffected.
     private final Map<RegistrationKey, RegisteredEPackage> registeredEPackages = new ConcurrentHashMap<>();
-
-    // Track EPackages waiting for ResourceSet availability to send configuration
-    // events (keyed by nsURI; the southbound mapping it feeds is stage-independent)
-    private final Map<String, String> pendingConfigurationEvents = new ConcurrentHashMap<>();
 
     // Per (scope, stage): the registered packages' resources are anchored in one
     // internal ResourceSet so their cross-package eType proxies stay lazily
@@ -150,16 +136,14 @@ public class DynamicEPackageRegistrationService {
         final ServiceRegistration<?> ePackageRegistration;
         final ServiceRegistration<?> eFactoryRegistration;
         final ServiceRegistration<?> conditionRegistration;
-        final String modelName;
 
         RegisteredEPackage(ServiceRegistration<EPackageConfigurator> configuratorRegistration,
                 ServiceRegistration<?> ePackageRegistration, ServiceRegistration<?> eFactoryRegistration,
-                ServiceRegistration<?> conditionRegistration, String modelName) {
+                ServiceRegistration<?> conditionRegistration) {
             this.configuratorRegistration = configuratorRegistration;
             this.ePackageRegistration = ePackageRegistration;
             this.eFactoryRegistration = eFactoryRegistration;
             this.conditionRegistration = conditionRegistration;
-            this.modelName = modelName;
         }
 
         /**
@@ -442,7 +426,6 @@ public class DynamicEPackageRegistrationService {
                 RegisteredEPackage stale = registeredEPackages.remove(staleKey);
                 stale.unregisterAll();
                 locationFor(metadata.getScope(), metadata.getStage()).detach(nsURI);
-                // No REMOVE configuration event: the same model re-registers immediately below.
             }
 
             logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ", scope="
@@ -473,9 +456,6 @@ public class DynamicEPackageRegistrationService {
             DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension, version,
                     metadata.getScope(), metadata.getStage(), fp, dcatPublish);
 
-            // Track for pending configuration event when ResourceSet becomes available
-            String modelName = ePackage.getName();
-
             RegisteredEPackage registered = null;
 
             // Register all services
@@ -485,16 +465,8 @@ public class DynamicEPackageRegistrationService {
             ServiceRegistration<?> conditionReg = registerConditionService(configurator);
 
             // Store registration info
-            registered = new RegisteredEPackage(configuratorReg, ePackageReg, eFactoryReg, conditionReg, modelName);
+            registered = new RegisteredEPackage(configuratorReg, ePackageReg, eFactoryReg, conditionReg);
             registeredEPackages.put(key, registered);
-
-            if (modelName != null) {
-                pendingConfigurationEvents.put(nsURI, modelName);
-                logger.fine("Added pending configuration event for model: " + modelName + " (nsURI: " + nsURI + ")");
-
-                // Check if matching ResourceSet is already available
-                checkForExistingResourceSets(nsURI, modelName);
-            }
 
             logger.info("Successfully registered EPackage: " + nsURI);
             return true;
@@ -605,8 +577,6 @@ public class DynamicEPackageRegistrationService {
             try {
                 logger.info("Unregistering EPackage: " + key);
 
-                // Send REMOVE configuration event before unregistering
-                sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
                 registered.unregisterAll();
 
                 // Drop the package from the location's proxy-resolution ResourceSet:
@@ -619,11 +589,6 @@ public class DynamicEPackageRegistrationService {
                     if (location.isEmpty()) {
                         locations.remove(locationKey);
                     }
-                }
-
-                // Remove the pending event only if no other stage still holds this nsURI
-                if (registeredEPackages.keySet().stream().noneMatch(k -> k.nsURI().equals(namespaceURI))) {
-                    pendingConfigurationEvents.remove(namespaceURI);
                 }
 
                 logger.info("Successfully unregistered EPackage: " + key);
@@ -694,20 +659,6 @@ public class DynamicEPackageRegistrationService {
         return registeredEPackages.keySet().stream().map(RegistrationKey::nsURI).distinct().toArray(String[]::new);
     }
 
-    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL, updated = "modifiedResourceSet")
-    public void setResourceSet(ServiceReference<ResourceSet> resourceSet) {
-        checkResourceSetForConfigurationEvents(resourceSet);
-    }
-
-    public void modifiedResourceSet(ServiceReference<ResourceSet> resourceSet) {
-        checkResourceSetForConfigurationEvents(resourceSet);
-    }
-
-    public void unsetResourceSet(ServiceReference<ResourceSet> resourceSet) {
-        // No configuration events needed on ResourceSet removal
-        logger.fine("ResourceSet service removed: " + resourceSet);
-    }
-
     // Private helper methods for service registration
 
     /**
@@ -768,100 +719,6 @@ public class DynamicEPackageRegistrationService {
         return bundleContext.registerService(Condition.class, Condition.INSTANCE, properties);
     }
 
-    /**
-     * Checks if the ResourceSet service properties match any of our registered
-     * EPackages and sends ADD configuration events accordingly.
-     */
-    private void checkResourceSetForConfigurationEvents(ServiceReference<ResourceSet> resourceSetRef) {
-        if (typedEventBus == null) {
-            logger.fine("TypedEventBus not available - skipping configuration events");
-            return;
-        }
-
-        if (bundleContext == null) {
-            logger.fine("BundleContext not available - skipping configuration events");
-            return;
-        }
-
-        logger.fine(
-                "Checking ResourceSet for configuration events. Pending events: " + pendingConfigurationEvents.size());
-
-        // Check if we have any pending configuration events for registered EPackages
-        for (Map.Entry<String, String> entry : pendingConfigurationEvents.entrySet()) {
-            String nsURI = entry.getKey();
-            String expectedModelName = entry.getValue();
-
-            try {
-                // Create filter to match ResourceSet with the expected model name
-                String filterString = "(emf.name=" + expectedModelName + ")";
-                Filter filter = FrameworkUtil.createFilter(filterString);
-
-                // Test if the ResourceSet service reference matches our filter
-                if (filter.match(resourceSetRef)) {
-                    // Send ADD configuration event
-                    sendAddConfigurationEvent(nsURI, expectedModelName);
-                    // Remove from pending since event has been sent
-                    pendingConfigurationEvents.remove(nsURI);
-                    break;
-                }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Failed to create or test filter for model: " + expectedModelName, e);
-            }
-        }
-    }
-
-    /**
-     * Sends ADD configuration event for southbound mapping.
-     */
-    private void sendAddConfigurationEvent(String nsURI, String modelName) {
-        if (typedEventBus == null) {
-            logger.warning("Cannot send configuration event - TypedEventBus not available");
-            return;
-        }
-
-        try {
-            String topic = "configuration/ADD/SouthboundMappingService";
-            String configKey = "sthbnd.mapping.codec.typeMap." + modelName;
-            String configValue = nsURI + "#//" + modelName + "Sensor";
-
-            String[] eventData = new String[] { configKey, configValue };
-
-            logger.fine("Sending ADD configuration event: " + configKey + " = " + configValue);
-            typedEventBus.deliver(topic, eventData);
-
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to send ADD configuration event for " + modelName, e);
-        }
-    }
-
-    /**
-     * Sends REMOVE configuration event for southbound mapping.
-     */
-    private void sendRemoveConfigurationEvent(String nsURI, String modelName) {
-        if (typedEventBus == null) {
-            logger.warning("Cannot send configuration event - TypedEventBus not available");
-            return;
-        }
-
-        if (modelName == null) {
-            logger.warning("Cannot send REMOVE configuration event - model name is null for nsURI: " + nsURI);
-            return;
-        }
-
-        try {
-            String topic = "configuration/REMOVE/SouthboundMappingService";
-            String configKey = "sthbnd.mapping.codec.typeMap." + modelName;
-
-            String[] eventData = new String[] { configKey };
-
-            logger.fine("Sending REMOVE configuration event: " + configKey);
-            typedEventBus.deliver(topic, eventData);
-
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to send REMOVE configuration event for " + modelName, e);
-        }
-    }
-
     private static String extractFileExtension(ObjectMetadata metadata, EPackage ePackage) {
         if (metadata.getProperties() != null) {
             Object fileExt = metadata.getProperties().get("file.extension");
@@ -881,34 +738,5 @@ public class DynamicEPackageRegistrationService {
             }
         }
         return "1.0";
-    }
-
-    /**
-     * Checks for existing ResourceSet services that match the given model name and
-     * sends configuration events if found.
-     */
-    private void checkForExistingResourceSets(String nsURI, String modelName) {
-        if (bundleContext == null) {
-            logger.fine("BundleContext not available - cannot check for existing ResourceSets");
-            return;
-        }
-
-        try {
-            // Create filter to find ResourceSet services with matching model name
-            String filterString = "(emf.name=" + modelName + ")";
-
-            // Get all ResourceSet service references
-            Collection<ServiceReference<ResourceSet>> serviceRefs = bundleContext
-                    .getServiceReferences(ResourceSet.class, filterString);
-
-            if (serviceRefs != null && serviceRefs.size() > 0) {
-                // Send configuration event for the first matching ResourceSet
-                sendAddConfigurationEvent(nsURI, modelName);
-                // Remove from pending since event has been sent
-                pendingConfigurationEvents.remove(nsURI);
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to check for existing ResourceSets for model: " + modelName, e);
-        }
     }
 }
