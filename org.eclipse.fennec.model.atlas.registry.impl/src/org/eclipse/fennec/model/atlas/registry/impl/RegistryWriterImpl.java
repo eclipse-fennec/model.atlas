@@ -233,6 +233,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		ObjectMetadata existing = plan.existing();
 		if (existing != null) {
 			if (policy(write.onConflict()) == ConflictPolicy.SKIP) {
+				reindexStored(scopeService, registry, write.stage(), existing);
 				return WriteResult.of(WriteOutcome.SKIPPED, existing);
 			}
 			ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(registry, write.stage(),
@@ -846,6 +847,25 @@ public class RegistryWriterImpl implements RegistryWriter {
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, e, () -> "Could not check whether object " + objectId
 					+ " still lives in stage " + sourceStage + "; leaving its index entry in place");
+		}
+	}
+
+	/**
+	 * Indexes the package as it is stored. A skipped write uses this to bring the index back in
+	 * line: a write cut short after storing (e.g. a seeding interrupted by deactivation) left the
+	 * package unindexed, and the retry that completes the seeding skips it. A failure is logged
+	 * only; the index is a derived view.
+	 */
+	private void reindexStored(WritableScopeService<?> scopeService, String registry, String stage,
+			ObjectMetadata existing) {
+		String objectId = existing.getObjectId();
+		try {
+			Object content = scopeService.getContentFromStageForRegistry(registry, stage, objectId);
+			if (content instanceof EPackage ePackage) {
+				searchIndex.index(existing, ePackage);
+			}
+		} catch (RuntimeException e) {
+			LOGGER.log(Level.WARNING, e, () -> "Could not re-index skipped package " + objectId);
 		}
 	}
 
