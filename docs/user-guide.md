@@ -971,7 +971,7 @@ Model Atlas provides health check endpoints using [Apache Felix Health Checks](h
 
 | Endpoint | Description |
 |----------|-------------|
-| `/atlas/system/health` | All health checks |
+| `/atlas/system/health` | All checks tagged `atlas` - every Atlas check carries it |
 | `/atlas/system/health.json` | JSON format |
 | `/atlas/system/health.html` | HTML page |
 | `/atlas/system/health?tags=liveness` | Liveness checks only |

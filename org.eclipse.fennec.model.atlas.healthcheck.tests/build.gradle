@@ -5,3 +5,21 @@ def resolveTask = tasks.named("resolve.test") {
 tasks.named("testOSGi") {
 	bndrun = resolveTask.flatMap { it.outputBndrun }
 }
+
+// The configuration files HealthServletConfigurationIT checks live in the config projects
+// and reach this bundle through -includeresource (see bnd.bnd). bnd does not register
+// sources outside the project as task inputs, so editing one of them left jar and testOSGi
+// UP-TO-DATE and the test kept passing against the copy already in the bundle - a guard
+// that reports green exactly when someone changes what it guards (issue #312). Declaring
+// them here makes the bundle - and with it the test - rebuild when any of them changes.
+def healthCheckConfigs = files(
+	"../org.eclipse.fennec.model.atlas.runtime.config/configs/runtime.json",
+	"../org.eclipse.fennec.model.atlas.runtime.config.local/configs/workflow.json",
+	"../org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json",
+	"../org.eclipse.fennec.model.atlas.runtime.config.docker.git/configs/workflow.json",
+	"../org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json",
+	"../docker/dockercompose/configs/jena.json")
+
+tasks.named("jar") {
+	inputs.files(healthCheckConfigs).withPropertyName("healthCheckConfigs")
+}

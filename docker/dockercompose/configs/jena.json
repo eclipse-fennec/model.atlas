@@ -84,6 +84,16 @@
         "registry.target": "(registry=main)"
     },
     "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        // Must carry "atlas": the health servlet filters its default endpoint by that
+        // tag, and the Felix default ("systemalive") alone would drop this check out of
+        // /atlas/system/health - which would then report OK while the scope is missing.
+        "hc.tags": ["atlas", "systemalive"],
+                // Distinct from the Felix default ("Services Ready Check"), which every
+        // ServicesCheck would otherwise share with the one in the runtime.config bundle:
+        // two checks of the same name are indistinguishable in the endpoint output, and a
+        // "?tags=" query collapses them into one, so a scope that is down can be hidden by
+        // a scope that is up.
+        "hc.name": "Scope Ready Check: dimcity",
         "services.list": ["(scope.name=dimcity)"]
     },
     "ScopeService~dimcity": {
