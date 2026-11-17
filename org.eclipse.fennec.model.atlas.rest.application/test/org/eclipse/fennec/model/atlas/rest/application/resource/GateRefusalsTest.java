@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,8 +30,8 @@ import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
 import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.ErrorResponse;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
@@ -40,8 +41,8 @@ import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Unit tests for {@link GateRefusals} (issue #295): a refusal that names its object is
@@ -72,7 +73,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal with an address answers 409 with the source-stage metadata as body")
     void refusalWithAddressCarriesTheMetadata() {
-        when(reader.metadata(new ObjectAddress("s", "transformations", "draft", "Announce"))).thenReturn(Optional.of(metadata));
+        when(reader.metadata(announceInDraft())).thenReturn(Optional.of(metadata));
 
         Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 
@@ -84,7 +85,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal inside a failed promise is found, and the body takes the request's media type")
     void wrappedRefusalFollowsTheRequest() {
-        when(reader.metadata(new ObjectAddress("s", "transformations", "draft", "Announce"))).thenReturn(Optional.of(metadata));
+        when(reader.metadata(announceInDraft())).thenReturn(Optional.of(metadata));
         ContainerRequestContext requestContext = mock(ContainerRequestContext.class);
         when(requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE)).thenReturn("application/xmi");
 
@@ -136,5 +137,12 @@ class GateRefusalsTest {
         assertNull(GateRefusals.conflict(new IllegalStateException("boom"), reader, "s", null));
         assertNull(GateRefusals.conflict(new InvocationTargetException(new RuntimeException("boom")), reader, "s",
                 null));
+    }
+
+    /** The address the refusal names; EMF objects compare by identity, so match by field. */
+    private static ObjectAddress announceInDraft() {
+        return argThat(address -> address != null && "s".equals(address.getScope())
+                && "transformations".equals(address.getRegistry()) && "draft".equals(address.getStage())
+                && "Announce".equals(address.getObjectId()));
     }
 }

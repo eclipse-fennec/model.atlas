@@ -14,4 +14,11 @@ Bundle-Description: The single entry point through which external clients (the R
 	org.osgi.annotation.bundle;version=latest,\
 	org.eclipse.fennec.model.atlas.management;version=project
 
+src=${^src},src-gen
+
+# Request/result types and the service interfaces are generated from model/registry-api.ecore
+-generate:	model/registry-api.genmodel;		generate=fennecEMF;		genmodel=model/registry-api.genmodel;		output=src-gen
+
+-includeresource.model: model=model
+
 -testpath: junit-jupiter-api

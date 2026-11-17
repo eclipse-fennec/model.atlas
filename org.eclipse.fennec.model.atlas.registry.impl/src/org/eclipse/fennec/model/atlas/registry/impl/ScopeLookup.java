@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
-import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException.Reason;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
@@ -62,13 +62,13 @@ final class ScopeLookup {
 
 	/**
 	 * @return the scope service of the named scope
-	 * @throws RegistryAccessException {@link Reason#UNKNOWN_SCOPE} if there is none
+	 * @throws RegistryAccessException {@link RefusalReason#UNKNOWN_SCOPE} if there is none
 	 */
 	@SuppressWarnings("unchecked")
 	WritableScopeService<EObject> scope(String scopeName) {
 		WritableScopeService<?> scopeService = collector().getScopeServiceByScopeName(scopeName);
 		if (scopeService == null) {
-			throw new RegistryAccessException(Reason.UNKNOWN_SCOPE, "Scope [" + scopeName + "] not found.");
+			throw new RegistryAccessException(RefusalReason.UNKNOWN_SCOPE, "Scope [" + scopeName + "] not found.");
 		}
 		return (WritableScopeService<EObject>) scopeService;
 	}
@@ -77,12 +77,12 @@ final class ScopeLookup {
 	 * The name of the scope's schema registry, resolved by its registry type rather than assumed
 	 * to be {@code "schema"} (issue #179).
 	 *
-	 * @throws RegistryAccessException {@link Reason#NO_SCHEMA_REGISTRY} if the scope has none
+	 * @throws RegistryAccessException {@link RefusalReason#NO_SCHEMA_REGISTRY} if the scope has none
 	 */
 	static String schemaRegistry(WritableScopeService<?> scopeService) {
 		ScopeInfo scope = scopeService.getScopeInfo();
 		return ScopeRegistries.schemaRegistryName(scope)
-				.orElseThrow(() -> new RegistryAccessException(Reason.NO_SCHEMA_REGISTRY, String.format(
+				.orElseThrow(() -> new RegistryAccessException(RefusalReason.NO_SCHEMA_REGISTRY, String.format(
 						"Scope [%s] has no schema registry.", scope == null ? "?" : scope.getName())));
 	}
 

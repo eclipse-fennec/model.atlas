@@ -26,22 +26,22 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
-import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
-import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
-import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
-import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
-import org.eclipse.fennec.model.atlas.registry.api.PackageAddress;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
 import org.eclipse.fennec.model.atlas.registry.api.PackageWrite;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryApiFactory;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
 import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
 import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
+import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -242,7 +242,7 @@ public class SchemaPackagesResource {
 
         try {
             if (nsUri != null) {
-                ObjectMetadata metadata = registryReader.packageMetadata(new PackageAddress(scopeName, stageName, nsUri))
+                ObjectMetadata metadata = registryReader.packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri))
                         .orElse(null);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
@@ -320,12 +320,12 @@ public class SchemaPackagesResource {
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            WriteResult result = registryWriter.createPackage(new PackageWrite(scopeName, null, stageName, ePackage,
+            WriteResult result = registryWriter.createPackage(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage,
                     nsUri, name, version, dcat, overwrite ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
-            ObjectMetadata metadata = result.metadata();
+            ObjectMetadata metadata = result.getMetadata();
             Response.ResponseBuilder rb = Response
-                    .status(result.outcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
+                    .status(result.getOutcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
                     .location(packageLocation(scopeName, stageName, ePackage.getNsURI()))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
@@ -392,7 +392,7 @@ public class SchemaPackagesResource {
                                     roots.get(i).eClass().getName()))
                             .build();
                 }
-                writes.add(new PackageWrite(scopeName, null, stageName, ePackage, null, null, null, dcat, policy,
+                writes.add(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage, null, null, null, dcat, policy,
                         null, false));
             }
             return ResourceSupport.batch(registryWriter.writePackages(writes), requestContext);
@@ -438,7 +438,7 @@ public class SchemaPackagesResource {
             requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
             ObjectMetadata contentMetadata = registryReader
-                    .packageMetadata(new PackageAddress(scopeName, stageName, nsUri)).orElse(null);
+                    .packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri)).orElse(null);
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -446,7 +446,7 @@ public class SchemaPackagesResource {
             if (mismatch != null) {
                 return mismatch;
             }
-            EPackage ePackage = (EPackage) registryReader.content(new ObjectAddress(scopeName,
+            EPackage ePackage = (EPackage) registryReader.content(RegistryRequests.objectAddress(scopeName,
                     registryReader.schemaRegistry(scopeName), stageName, contentMetadata.getObjectId())).orElse(null);
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
@@ -559,15 +559,15 @@ public class SchemaPackagesResource {
             @RequestBody(description = "The new schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            WriteResult result = registryWriter.updatePackage(new PackageWrite(scopeName, null, stageName, ePackage,
+            WriteResult result = registryWriter.updatePackage(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage,
                     nsUri, null, version, null, null,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(result.metadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
+                    .entity(result.getMetadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
 
@@ -667,18 +667,18 @@ public class SchemaPackagesResource {
             }
 
             WriteResult result = registryWriter.updatePackageProperties(
-                    new PackageAddress(scopeName, stageName, nsUri),
+                    RegistryRequests.packageAddress(scopeName, stageName, nsUri),
                     Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.toString(dcat)),
                     // metadata state, not content: the precondition belongs over the metadata validator
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))
                         .build();
             }
-            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(result.metadata())
+            return Response.status(Response.Status.OK).entity(result.getMetadata())
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
 
         } catch (RegistryAccessException e) {
@@ -766,9 +766,9 @@ public class SchemaPackagesResource {
             @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
         try {
-            WriteResult result = registryWriter.deletePackage(new PackageAddress(scopeName, stageName, nsUri), force,
+            WriteResult result = registryWriter.deletePackage(RegistryRequests.packageAddress(scopeName, stageName, nsUri), force,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             return Response.status(Response.Status.OK).build();
@@ -817,12 +817,12 @@ public class SchemaPackagesResource {
                     transitionRequest.getObjectId(), transitionRequest.getTargetStage(), overwrite,
                     // a transition changes metadata, not content
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(result.metadata())
+            return Response.status(Response.Status.OK).entity(result.getMetadata())
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (RegistryAccessException e) {
             return ResourceSupport.refusal(e);
@@ -861,15 +861,26 @@ public class SchemaPackagesResource {
         @QueryParam("limit") @DefaultValue("50") int limit,
         @QueryParam("offset") @DefaultValue("0") int offset) {
 
-        PackageSearchResult result = registryReader.searchPackages(scopeName, new PackageSearch(stage, nsUri,
-                nsUriExact, name, prefix, classifier, featureName, featureType, featureNameTypePair, limit, offset));
-        if (result.hits().isEmpty()) {
+        PackageSearch search = RegistryApiFactory.eINSTANCE.createPackageSearch();
+        search.setStage(stage);
+        search.setNsUri(nsUri);
+        search.setNsUriExact(nsUriExact);
+        search.setName(name);
+        search.setPrefix(prefix);
+        search.setClassifier(classifier);
+        search.setFeatureName(featureName);
+        search.setFeatureType(featureType);
+        search.setFeatureNameTypePair(featureNameTypePair);
+        search.setLimit(limit);
+        search.setOffset(offset);
+        PackageSearchResult result = registryReader.searchPackages(scopeName, search);
+        if (result.getHits().isEmpty()) {
             return Response.noContent().build();
         }
         ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
-        container.getMetadata().addAll(result.hits());
+        container.getMetadata().addAll(result.getHits());
         return Response.ok(container)
-            .header("X-Total-Count", result.totalHits())
+            .header("X-Total-Count", result.getTotalHits())
             .header("X-Offset", offset)
             .header("X-Limit", limit)
             .build();

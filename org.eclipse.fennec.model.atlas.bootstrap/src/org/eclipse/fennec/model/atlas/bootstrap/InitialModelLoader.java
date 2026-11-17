@@ -14,8 +14,8 @@
 package org.eclipse.fennec.model.atlas.bootstrap;
 
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,8 +27,8 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -54,20 +54,18 @@ import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.emf.common.configurator.DynamicEPackageConfigurator;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EClassResolvingDynamicEFactory;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
-import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
-import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
-import org.eclipse.fennec.model.atlas.registry.api.PackageWrite;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
-import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException.Reason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
 import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
 import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -827,28 +825,28 @@ public class InitialModelLoader {
         try {
             for (EPackage ePackage : packageRoots) {
                 // lenient: a one-shot loader must not abort start-up over a junk Version annotation
-                WriteResult result = registryWriter.createPackage(new PackageWrite(scopeName, registry, stage,
+                WriteResult result = registryWriter.createPackage(RegistryRequests.packageWrite(scopeName, registry, stage,
                         ePackage, null, null, null, null, ConflictPolicy.SKIP, null, true));
-                if (result.outcome() == WriteOutcome.SKIPPED) {
+                if (result.getOutcome() == WriteOutcome.SKIPPED) {
                     LOG.log(Level.INFO, () -> "InitialModelLoader: '" + ePackage.getNsURI()
                             + "' is already present in scope '" + scopeName + "' stage '" + stage + "', skipping.");
                     skipped++;
                 } else {
-                    uploaded.add(result.metadata());
+                    uploaded.add(result.getMetadata());
                 }
             }
             for (int i = 0; i < instanceRoots.size(); i++) {
                 String objectId = instanceIds.get(i);
-                WriteResult result = registryWriter.createObject(new ObjectWrite(
-                        new ObjectAddress(scopeName, registry, stage, objectId), instanceRoots.get(i),
+                WriteResult result = registryWriter.createObject(RegistryRequests.objectWrite(
+                        RegistryRequests.objectAddress(scopeName, registry, stage, objectId), instanceRoots.get(i),
                         fileBaseName(instanceFiles.get(i)), null, ConflictPolicy.SKIP, null));
-                if (result.outcome() == WriteOutcome.SKIPPED) {
+                if (result.getOutcome() == WriteOutcome.SKIPPED) {
                     LOG.log(Level.INFO, () -> "InitialModelLoader: object '" + objectId + "' is already present in "
                             + "scope '" + scopeName + "' registry '" + registry + "' stage '" + stage
                             + "', skipping.");
                     skipped++;
                 } else {
-                    uploaded.add(result.metadata());
+                    uploaded.add(result.getMetadata());
                 }
             }
         } catch (Exception e) {
@@ -867,7 +865,7 @@ public class InitialModelLoader {
             for (int i = uploaded.size() - 1; i >= 0; i--) {
                 ObjectMetadata metadata = uploaded.get(i);
                 try {
-                    registryWriter.deleteObject(new ObjectAddress(scopeName, registry, stage, metadata.getObjectId()),
+                    registryWriter.deleteObject(RegistryRequests.objectAddress(scopeName, registry, stage, metadata.getObjectId()),
                             true, null);
                 } catch (Exception cleanupFailure) {
                     LOG.log(Level.WARNING, "InitialModelLoader: failed to delete '" + metadata.getObjectId()
@@ -896,7 +894,7 @@ public class InitialModelLoader {
     private static boolean isWaitingForTargets(Throwable t) {
         for (Throwable cause = t; cause != null; cause = cause.getCause()) {
             if (cause instanceof RegistryAccessException refusal) {
-                return refusal.reason() == Reason.UNKNOWN_SCOPE || refusal.reason() == Reason.UNKNOWN_REGISTRY;
+                return refusal.reason() == RefusalReason.UNKNOWN_SCOPE || refusal.reason() == RefusalReason.UNKNOWN_REGISTRY;
             }
         }
         return false;

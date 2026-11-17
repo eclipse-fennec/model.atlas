@@ -23,8 +23,8 @@ import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
 import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
 import org.eclipse.fennec.model.atlas.registry.api.Precondition;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
-import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException.Reason;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.BatchItem;
@@ -33,8 +33,8 @@ import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Request-handling helpers shared by the resources in this package.
@@ -70,7 +70,7 @@ final class ResourceSupport {
 	 * against the object it is about to change, using the same validator the response filter
 	 * emits as the ETag. Without an {@code If-Match} header, or when the object has no validator
 	 * yet, every state is acceptable; a mismatch makes the writer refuse with
-	 * {@link Reason#PRECONDITION_FAILED}, answered as {@code 412 Precondition Failed}.
+	 * {@link RefusalReason#PRECONDITION_FAILED}, answered as {@code 412 Precondition Failed}.
 	 *
 	 * @param headers the request headers
 	 * @param target  which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
@@ -103,7 +103,7 @@ final class ResourceSupport {
 	}
 
 	/** The status a refusal of the given reason is answered with. */
-	private static Status status(Reason reason) {
+	private static Status status(RefusalReason reason) {
 		return switch (reason) {
 		case INVALID, INCOMPATIBLE_TYPE, UNKNOWN_SCOPE, UNKNOWN_REGISTRY -> Status.BAD_REQUEST;
 		case NO_SCHEMA_REGISTRY -> Status.NOT_FOUND;
@@ -119,7 +119,7 @@ final class ResourceSupport {
 	 *
 	 * @param value the parameter, case-insensitive; {@code null} means {@link ConflictPolicy#FAIL}
 	 * @return the policy
-	 * @throws RegistryAccessException {@link Reason#INVALID} for an unknown value
+	 * @throws RegistryAccessException {@link RefusalReason#INVALID} for an unknown value
 	 */
 	static ConflictPolicy conflictPolicy(String value) {
 		if (value == null || value.isBlank()) {
@@ -128,7 +128,7 @@ final class ResourceSupport {
 		try {
 			return ConflictPolicy.valueOf(value.trim().toUpperCase(Locale.ROOT));
 		} catch (IllegalArgumentException e) {
-			throw new RegistryAccessException(Reason.INVALID, String.format(
+			throw new RegistryAccessException(RefusalReason.INVALID, String.format(
 					"Query parameter onConflict '%s' must be one of %s", value, Arrays.toString(ConflictPolicy.values())));
 		}
 	}
@@ -161,23 +161,23 @@ final class ResourceSupport {
 	 */
 	static Response batch(BatchResult result, ContainerRequestContext requestContext) {
 		BatchResponse response = RestFactory.eINSTANCE.createBatchResponse();
-		response.setApplied(result.applied());
-		for (BatchItemResult itemResult : result.items()) {
+		response.setApplied(result.isApplied());
+		for (BatchItemResult itemResult : result.getItems()) {
 			BatchItem item = RestFactory.eINSTANCE.createBatchItem();
-			item.setId(itemResult.id());
-			if (itemResult.outcome() != null) {
-				item.setOutcome(itemResult.outcome().name());
+			item.setId(itemResult.getId());
+			if (itemResult.isSetOutcome()) {
+				item.setOutcome(itemResult.getOutcome().name());
 			}
-			if (itemResult.refusal() != null) {
-				item.setRefusal(itemResult.refusal().name());
+			if (itemResult.isSetRefusal()) {
+				item.setRefusal(itemResult.getRefusal().name());
 			}
-			item.setMessage(itemResult.message());
-			if (itemResult.metadata() != null) {
-				item.setMetadata(EcoreUtil.copy(itemResult.metadata()));
+			item.setMessage(itemResult.getMessage());
+			if (itemResult.getMetadata() != null) {
+				item.setMetadata(EcoreUtil.copy(itemResult.getMetadata()));
 			}
 			response.getItems().add(item);
 		}
-		Status status = result.firstRefusal().map(refused -> status(refused.refusal())).orElse(Status.OK);
+		Status status = result.firstRefusal().map(refused -> status(refused.getRefusal())).orElse(Status.OK);
 		return Response.status(status).entity(response).header("Content-Type", resolvedMediaType(requestContext))
 				.build();
 	}

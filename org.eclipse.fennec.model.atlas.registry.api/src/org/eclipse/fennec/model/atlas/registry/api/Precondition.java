@@ -28,7 +28,7 @@ public interface Precondition {
 	/**
 	 * @param current the current metadata of the object the write addresses; never {@code null}
 	 * @return {@code true} if the write may proceed; {@code false} refuses it with
-	 *         {@link RegistryAccessException.Reason#PRECONDITION_FAILED}
+	 *         {@link RefusalReason#PRECONDITION_FAILED}
 	 */
 	boolean test(ObjectMetadata current);
 

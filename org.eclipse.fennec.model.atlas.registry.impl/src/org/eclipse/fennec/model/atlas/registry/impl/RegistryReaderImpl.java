@@ -20,15 +20,16 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchHit;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchResult;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.PackageAddress;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryApiFactory;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
@@ -95,8 +96,8 @@ public class RegistryReaderImpl implements RegistryReader {
 
 	@Override
 	public Optional<ObjectMetadata> metadata(ObjectAddress address) {
-		return Optional.ofNullable(lookup.scope(address.scope()).getMetadataFromStageForRegistry(address.registry(),
-				address.stage(), address.objectId()));
+		return Optional.ofNullable(lookup.scope(address.getScope()).getMetadataFromStageForRegistry(address.getRegistry(),
+				address.getStage(), address.getObjectId()));
 	}
 
 	@Override
@@ -106,8 +107,8 @@ public class RegistryReaderImpl implements RegistryReader {
 
 	@Override
 	public Optional<EObject> content(ObjectAddress address) {
-		return Optional.ofNullable(lookup.scope(address.scope()).getContentFromStageForRegistry(address.registry(),
-				address.stage(), address.objectId()));
+		return Optional.ofNullable(lookup.scope(address.getScope()).getContentFromStageForRegistry(address.getRegistry(),
+				address.getStage(), address.getObjectId()));
 	}
 
 	@Override
@@ -117,9 +118,9 @@ public class RegistryReaderImpl implements RegistryReader {
 
 	@Override
 	public Optional<ObjectMetadata> packageMetadata(PackageAddress address) {
-		WritableScopeService<EObject> scopeService = lookup.scope(address.scope());
+		WritableScopeService<EObject> scopeService = lookup.scope(address.getScope());
 		return Optional.ofNullable(ScopeLookup.findByNsUri(scopeService, ScopeLookup.schemaRegistry(scopeService),
-				address.stage(), address.nsUri()));
+				address.getStage(), address.getNsUri()));
 	}
 
 	@Override
@@ -133,22 +134,25 @@ public class RegistryReaderImpl implements RegistryReader {
 	public PackageSearchResult searchPackages(String scope, PackageSearch search) {
 		EPackageSearchQuery query = EPackageSearchQuery.create()
 				.scopes(scopeChain(scope))
-				.stage(search.stage())
-				.nsUri(search.nsUri())
-				.nsUriExact(search.nsUriExact())
-				.name(search.name())
-				.nsPrefix(search.prefix())
-				.classifier(search.classifier())
-				.featureName(search.featureName())
-				.featureType(search.featureType())
-				.featureNameTypePair(search.featureNameTypePair())
-				.limit(search.limit())
-				.offset(search.offset())
+				.stage(search.getStage())
+				.nsUri(search.getNsUri())
+				.nsUriExact(search.getNsUriExact())
+				.name(search.getName())
+				.nsPrefix(search.getPrefix())
+				.classifier(search.getClassifier())
+				.featureName(search.getFeatureName())
+				.featureType(search.getFeatureType())
+				.featureNameTypePair(search.getFeatureNameTypePair())
+				.limit(search.getLimit())
+				.offset(search.getOffset())
 				.build();
 		EPackageLuceneIndex index = searchIndex.get()
 				.orElseThrow(() -> new IllegalStateException("The package search index is not available"));
 		SearchResult result = index.search(query);
-		return new PackageSearchResult(resolve(result.hits(), scope), result.totalHits());
+		PackageSearchResult page = RegistryApiFactory.eINSTANCE.createPackageSearchResult();
+		page.getHits().addAll(resolve(result.hits(), scope));
+		page.setTotalHits(result.totalHits());
+		return page;
 	}
 
 	/** The scope and its ancestors, nearest first. */

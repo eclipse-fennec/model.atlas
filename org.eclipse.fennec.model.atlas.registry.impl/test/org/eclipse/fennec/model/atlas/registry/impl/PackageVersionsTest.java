@@ -21,11 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
-import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException.Reason;
 import org.osgi.framework.Version;
 
 
@@ -131,7 +131,7 @@ class PackageVersionsTest {
 			RegistryAccessException failure = assertThrows(RegistryAccessException.class,
 					() -> PackageVersions.resolve(ePackage, null, ePackage.getNsURI()));
 
-			assertEquals(Reason.INVALID, failure.reason());
+			assertEquals(RefusalReason.INVALID, failure.reason());
 			assertTrue(failure.getMessage().contains("not-a-version"),
 					"the message must quote what the package declared");
 		}
@@ -170,7 +170,7 @@ class PackageVersionsTest {
 			RegistryAccessException failure = assertThrows(RegistryAccessException.class,
 					() -> PackageVersions.resolve(ePackage, "not-a-version", ePackage.getNsURI()));
 
-			assertEquals(Reason.INVALID, failure.reason());
+			assertEquals(RefusalReason.INVALID, failure.reason());
 		}
 
 		@Test

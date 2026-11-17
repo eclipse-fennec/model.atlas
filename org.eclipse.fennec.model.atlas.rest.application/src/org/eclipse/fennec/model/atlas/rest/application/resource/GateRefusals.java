@@ -17,15 +17,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.rest.application.exception.StageGateRefusedExceptionMapper;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
 
 /**
  * The REST contract for a stage gate's refusal (issue #295): <b>409 Conflict</b> whose body is
@@ -107,7 +107,7 @@ final class GateRefusals {
         }
         try {
             return registryReader
-                    .metadata(new ObjectAddress(scope, refusal.registry(), refusal.stage(), refusal.objectId()))
+                    .metadata(RegistryRequests.objectAddress(scope, refusal.registry(), refusal.stage(), refusal.objectId()))
                     .orElse(null);
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, String.format(

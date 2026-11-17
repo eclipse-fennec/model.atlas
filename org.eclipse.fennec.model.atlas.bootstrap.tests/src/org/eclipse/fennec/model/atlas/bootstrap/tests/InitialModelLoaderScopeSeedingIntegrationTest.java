@@ -30,13 +30,14 @@ import java.util.List;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
-import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryApiFactory;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,9 +53,9 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.Scalar;
 import org.osgi.test.common.annotation.Property.Type;
+import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.config.WithConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
@@ -201,15 +202,17 @@ public class InitialModelLoaderScopeSeedingIntegrationTest {
         // stored; the writer indexes it only once storing returns, so the hit is awaited too.
         RegistryReader reader = readerAware.waitForService(5000);
         assertNotNull(reader, "The registry reader should be available");
-        PackageSearch byNsUri = new PackageSearch(null, null, NS_URI, null, null, null, null, null, null, 10, 0);
+        PackageSearch byNsUri = RegistryApiFactory.eINSTANCE.createPackageSearch();
+        byNsUri.setNsUriExact(NS_URI);
+        byNsUri.setLimit(10);
         PackageSearchResult hits = reader.searchPackages(SCOPE_NAME, byNsUri);
-        for (long deadline = System.currentTimeMillis() + 10000; hits.hits().isEmpty()
+        for (long deadline = System.currentTimeMillis() + 10000; hits.getHits().isEmpty()
                 && System.currentTimeMillis() < deadline;) {
             Thread.sleep(100);
             hits = reader.searchPackages(SCOPE_NAME, byNsUri);
         }
-        assertEquals(1, hits.hits().size(), "The seeded package should be in the package search index");
-        assertEquals(seeded.getObjectId(), hits.hits().get(0).getObjectId());
+        assertEquals(1, hits.getHits().size(), "The seeded package should be in the package search index");
+        assertEquals(seeded.getObjectId(), hits.getHits().get(0).getObjectId());
 
         // restart the loader with the same folder: the nsURI is already present in
         // the stage, so the seeding must skip it instead of uploading a duplicate

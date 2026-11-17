@@ -1,0 +1,666 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="api" nsURI="http://eclipse.org/fennec/model/atlas/registry/api/1.0.0"
+    nsPrefix="registryapi">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="RegistryApi"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2026 Data In Motion and others.&#10;All rights reserved.&#10;&#10;This program and the accompanying materials are made&#10;available under the terms of the Eclipse Public License 2.0&#10;which is available at https://www.eclipse.org/legal/epl-2.0/&#10;&#10;SPDX-License-Identifier: EPL-2.0&#10;&#10;Contributors:&#10;     Data In Motion - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="prefix" value="RegistryApi"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.registry"/>
+    <details key="rootExtendsInterface" value=""/>
+    <details key="oSGiCompatible" value="false"/>
+    <details key="suppressNotification" value="true"/>
+    <details key="suppressEMFTypes" value="false"/>
+    <details key="documentation" value="Client access to registry content (issue #386): the RegistryWriter/RegistryReader services and their request and result types."/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="RegistryWriter" abstract="true" interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Changes registry content on behalf of an external client (issue #386).&#10;&#10;Every operation applies the rules a client is held to, in the order the REST API has always applied them: the target is resolved, the content's type is checked (never derived content, always a root type of the registry), the existing object is looked up, its read-only state and the caller's Precondition are checked, and only then is the workflow asked to write. Package operations additionally keep the package search index in line with what was written.&#10;&#10;Operations are synchronous. Refusals raise RegistryAccessException; the stage machinery's own refusals (StagePolicyException, StageOccupiedException, StageGateRefusedException) and a malformed stage (IllegalArgumentException) propagate unwrapped. Anything else is a failure of the server, not of the request."/>
+    </eAnnotations>
+    <eOperations name="createObject" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Stores a new instance, or, depending on ObjectWrite#getOnConflict(), replaces or skips one already at the address.&#10;@param write the request&#10;@return CREATED, UPDATED (overwrite) or SKIPPED, with the stored metadata"/>
+      </eAnnotations>
+      <eParameters name="write" eType="#//ObjectWrite"/>
+    </eOperations>
+    <eOperations name="updateObject" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Replaces the content of an existing instance. Content equal to the stored content is not written again.&#10;@param write the request; onConflict is ignored&#10;@return UPDATED, UNCHANGED or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="write" eType="#//ObjectWrite"/>
+    </eOperations>
+    <eOperations name="deleteObject" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Deletes an instance from a stage.&#10;@param address the instance&#10;@param force delete although a stage gate refuses it; the gate's findings are then recorded on the dependents it named&#10;@param precondition checked against the object before the operation; may be null&#10;@return DELETED or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="address" eType="#//ObjectAddress"/>
+      <eParameters name="force" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+      <eParameters name="precondition" eType="#//Precondition"/>
+    </eOperations>
+    <eOperations name="transitionObject" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Moves an instance from the stage of address to targetStage.&#10;@param address the instance in its source stage&#10;@param targetStage the stage to move it to&#10;@param overwrite replace a different object holding the id in the target stage&#10;@param precondition checked against the object before the operation; may be null&#10;@return TRANSITIONED, ALREADY_IN_TARGET or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="address" eType="#//ObjectAddress"/>
+      <eParameters name="targetStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="overwrite" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+      <eParameters name="precondition" eType="#//Precondition"/>
+    </eOperations>
+    <eOperations name="createPackage" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Stores a new package in a scope's schema registry, or, depending on PackageWrite#getOnConflict(), replaces or skips one with the same nsURI in the stage.&#10;@param write the request&#10;@return CREATED, UPDATED (overwrite) or SKIPPED, with the stored metadata"/>
+      </eAnnotations>
+      <eParameters name="write" eType="#//PackageWrite"/>
+    </eOperations>
+    <eOperations name="updatePackage" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Replaces the content of an existing package. Content equal to the stored content is not written again.&#10;@param write the request; onConflict, name and dcat are ignored&#10;@return UPDATED, UNCHANGED or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="write" eType="#//PackageWrite"/>
+    </eOperations>
+    <eOperations name="updatePackageProperties" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Changes metadata properties of a package without re-uploading it. Which properties a client may edit is the front end's decision; this operation only refuses inherited and read-only packages.&#10;@param address the package&#10;@param properties the properties to set&#10;@param precondition checked against the object before the operation; may be null&#10;@return UPDATED or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="address" eType="#//PackageAddress"/>
+      <eParameters name="properties">
+        <eGenericType eClassifier="#//Map">
+          <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        </eGenericType>
+      </eParameters>
+      <eParameters name="precondition" eType="#//Precondition"/>
+    </eOperations>
+    <eOperations name="deletePackage" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Deletes a package from a stage.&#10;@param address the package&#10;@param force delete although a stage gate refuses it&#10;@param precondition checked against the object before the operation; may be null&#10;@return DELETED or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="address" eType="#//PackageAddress"/>
+      <eParameters name="force" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+      <eParameters name="precondition" eType="#//Precondition"/>
+    </eOperations>
+    <eOperations name="transitionPackage" eType="#//WriteResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Moves a package from one stage to another.&#10;@param scope the scope name&#10;@param stage the source stage&#10;@param idOrNsUri the package's object id, or, for clients that still send it, its nsURI&#10;@param targetStage the stage to move it to&#10;@param overwrite replace a different package holding the id in the target stage&#10;@param precondition checked against the object before the operation; may be null&#10;@return TRANSITIONED, ALREADY_IN_TARGET or NOT_FOUND"/>
+      </eAnnotations>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="idOrNsUri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="targetStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="overwrite" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+      <eParameters name="precondition" eType="#//Precondition"/>
+    </eOperations>
+    <eOperations name="writeObjects" eType="#//BatchResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Writes several instances as one unit: all of them, or none.&#10;&#10;Every item is first checked as createObject would check it; an item without an objectId, or whose address occurs twice in the batch, is refused as INVALID. If any item is refused, nothing is written and every refusal is reported. Otherwise the items are written in order. Content an OVERWRITE item would replace by equal content is left alone and reported UNCHANGED. Should a write still be refused, everything the batch wrote so far is undone (created instances are deleted, replaced ones get their previous content back) and the batch is reported as not applied. A failure that is not a refusal is rethrown once the batch has been undone.&#10;@param writes the instances, in the order they are written&#10;@return one result per item"/>
+      </eAnnotations>
+      <eParameters name="writes">
+        <eGenericType eClassifier="#//List">
+          <eTypeArguments eClassifier="#//ObjectWrite"/>
+        </eGenericType>
+      </eParameters>
+    </eOperations>
+    <eOperations name="writePackages" eType="#//BatchResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Writes several packages as one unit: all of them, or none. Packages are matched by nsURI; otherwise the rules of writeObjects apply, each item checked as createPackage would check it.&#10;@param writes the packages, in the order they are written&#10;@return one result per item, identified by nsURI"/>
+      </eAnnotations>
+      <eParameters name="writes">
+        <eGenericType eClassifier="#//List">
+          <eTypeArguments eClassifier="#//PackageWrite"/>
+        </eGenericType>
+      </eParameters>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RegistryReader" abstract="true" interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Reads registry content on behalf of an external client (issue #386).&#10;&#10;Lookups follow the scope hierarchy the way the workflow defines it: a stage listing or a lookup by id also sees what a parent scope's final stage holds, marked read-only. An unknown scope, or a scope without a schema registry for the package operations, is refused with RegistryAccessException; a malformed stage raises IllegalArgumentException. Absence of an object is not a failure: lookups answer an empty Optional, listings an empty list."/>
+    </eAnnotations>
+    <eOperations name="schemaRegistry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the name of the scope's schema registry; refused with NO_SCHEMA_REGISTRY if the scope has none&#10;@param scope the scope name"/>
+      </eAnnotations>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listAll">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of every object in every stage of the registry, including what parent scopes' final stages hold&#10;@param scope the scope name&#10;@param registry the registry name"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listFinal">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of every object in the registry's final stage, including parent scopes'&#10;@param scope the scope name&#10;@param registry the registry name"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="list">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of every object in the stage&#10;@param scope the scope name&#10;@param registry the registry name&#10;@param stage the stage name"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listByName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of the matching objects in the stage&#10;@param scope the scope name&#10;@param registry the registry name&#10;@param stage the stage name&#10;@param namePattern a case-insensitive name filter; wildcards are allowed, but not as the first character"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="namePattern" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="metadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return its metadata, hierarchy-aware&#10;@param address the object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="address" eType="#//ObjectAddress"/>
+    </eOperations>
+    <eOperations name="finalMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of the object in the final stage, hierarchy-aware&#10;@param scope the scope name&#10;@param registry the registry name&#10;@param objectId the object id"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="content">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return its content&#10;@param address the object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      </eGenericType>
+      <eParameters name="address" eType="#//ObjectAddress"/>
+    </eOperations>
+    <eOperations name="finalContent">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the content of the object in the final stage, hierarchy-aware&#10;@param scope the scope name&#10;@param registry the registry name&#10;@param objectId the object id"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="packageMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of the package with the address's nsURI in its stage of the scope's schema registry, hierarchy-aware&#10;@param address the package"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="address" eType="#//PackageAddress"/>
+    </eOperations>
+    <eOperations name="finalPackageMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the metadata of the package in the final stage of the scope's schema registry, hierarchy-aware&#10;@param scope the scope name&#10;@param nsUri the package's namespace URI"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="nsUri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="searchPackages" eType="#//PackageSearchResult">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Searches the packages visible from a scope: its own and its ancestors'. Hits from an ancestor scope are marked read-only.&#10;@param scope the scope name&#10;@param search the criteria&#10;@return one page of hits and the total number of hits"/>
+      </eAnnotations>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="search" eType="#//PackageSearch"/>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ObjectAddress">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Where an instance lives: one object id in one stage of one registry of one scope."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the scope name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the registry name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the stage name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="objectId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the object id"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PackageAddress">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Where a package lives: one nsURI in one stage of a scope's schema registry. Which registry that is follows from the scope, so it is not part of the address."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the scope name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the stage name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nsUri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the package's namespace URI"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ObjectWrite">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A request to store an instance."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="address" eType="#//ObjectAddress" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="where to store it"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="content" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject" resolveProxies="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the object; its type must be a root type of the registry. Referenced, not contained: the write does not take it out of its resource"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="a human-readable name, may be null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the version to record, may be null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="onConflict" eType="#//ConflictPolicy">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="what a create does when the address is taken; ignored by updates. Defaults to FAIL"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="precondition" eType="#//Precondition">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="checked against the existing object before it is replaced; may be null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PackageWrite">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A request to store a package. The package's identity is its nsURI."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the scope name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the registry to store it in, or null for the scope's schema registry. A registry named explicitly must accept the package's type"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the stage name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="content" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EPackage" resolveProxies="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the package. Referenced, not contained"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nsUri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the nsURI the caller expects the package to carry, or null to take it from the package; when given it must match"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="a human-readable name; null uses the package name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the version to record; null resolves it from the package's Version annotation, then from a version-shaped last nsURI segment"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dcat" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="whether the package may be published to a DCAT portal; null means false on create and leaves the stored flag untouched on overwrite"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="onConflict" eType="#//ConflictPolicy">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="what a create does when the nsURI is taken in the stage; ignored by updates. Defaults to FAIL"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="precondition" eType="#//Precondition">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="checked against the existing package before it is replaced; may be null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="lenientVersion" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="true to ignore (and log) a Version annotation that is not a valid version instead of refusing the package, for loaders that must not fail over a junk annotation. An explicit version is always checked"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PackageSearch">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Criteria for RegistryReader#searchPackages. Every criterion is optional (null does not filter); the given ones must all match."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="only packages in this stage"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nsUri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="nsURI contains"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="nsUriExact" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="nsURI equals"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="package name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="prefix" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="namespace prefix"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="classifier" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="name of a classifier the package contains"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="featureName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="name of a structural feature the package contains"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="featureType" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="type of a structural feature the package contains"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="featureNameTypePair" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="a structural feature by name and type, as name:type"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="limit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the page size"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="offset" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the number of hits to skip"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PackageSearchResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="One page of a package search."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="hits" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata" upperBound="-1" resolveProxies="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the metadata of the hits on this page that still resolve; a hit from an ancestor scope is marked read-only"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="totalHits" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the number of hits across all pages, as the search index counts them"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="WriteResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="The result of a RegistryWriter operation."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="outcome" eType="#//WriteOutcome">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="what the operation did"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="metadata" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata" resolveProxies="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the metadata of the object as it is now stored, or null for NOT_FOUND and DELETED"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BatchItemResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="What a batch did with one of its items. Exactly one of three cases holds: the item was written (outcome set), it was refused (refusal and message set), or it was not applied because another item of the batch was refused (neither outcome nor refusal set; whatever it had written was undone)."/>
+    </eAnnotations>
+    <eOperations name="isRefused" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return whether this item was refused"/>
+        <details key="body" value="return isSetRefusal();"/>
+      </eAnnotations>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the item's identifier: the objectId of an instance, the nsURI of a package; may be null for an instance that has none"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="outcome" eType="#//WriteOutcome" unsettable="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="what was written; unset if the item was not written"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="metadata" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata" resolveProxies="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the stored metadata of a written item, or null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="refusal" eType="#//RefusalReason" unsettable="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="why the item was refused; unset if it was not refused"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the refusal's message, or null"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BatchResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="The result of a batch write: all of its items were applied, or none."/>
+    </eAnnotations>
+    <eOperations name="firstRefusal">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="@return the first refused item, if the batch was not applied"/>
+        <details key="body" value="return getItems().stream().filter(BatchItemResult::isRefused).findFirst();"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eClassifier="#//BatchItemResult"/>
+      </eGenericType>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="applied" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="whether the batch was applied; false means at least one item was refused and nothing of the batch remains written"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="items" eType="#//BatchItemResult" upperBound="-1" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="one result per item, in the order of the batch"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="ConflictPolicy">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="What a create does when its target already holds an object under the same identity (the objectId of an instance, the nsURI of a package)."/>
+    </eAnnotations>
+    <eLiterals name="FAIL">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Refuse with RefusalReason#ALREADY_EXISTS."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="OVERWRITE" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Replace the existing object, subject to its read-only state and the precondition."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="SKIP" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Leave the existing object alone and report WriteOutcome#SKIPPED."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="WriteOutcome">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="What a write did. Refusals are not outcomes; they are raised as RegistryAccessException."/>
+    </eAnnotations>
+    <eLiterals name="CREATED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A new object was stored."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UPDATED" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="An existing object's content or metadata was replaced."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNCHANGED" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The content sent equals the stored content; nothing was written."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="SKIPPED" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The target already held the object and ConflictPolicy#SKIP left it alone."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DELETED" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object was deleted from the stage."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="TRANSITIONED" value="5">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object moved (or was copied) to the target stage."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ALREADY_IN_TARGET" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object was not in the source stage but already is in the target stage: a retried transition. The result carries the target stage's metadata."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="NOT_FOUND" value="7">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object the operation addressed does not exist; nothing was written."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="RefusalReason">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Why the RegistryWriter refused a request, in terms a front end can translate into its own protocol (the REST layer maps each to a status code)."/>
+    </eAnnotations>
+    <eLiterals name="INVALID">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The request itself is malformed: a missing or mismatching identity, an invalid version."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INCOMPATIBLE_TYPE" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The content's type is not one the target registry accepts."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DERIVED_CONTENT" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The content's type is derived content, which only the Atlas itself writes."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNKNOWN_SCOPE" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The addressed scope does not exist."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNKNOWN_REGISTRY" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The addressed registry does not exist or is not configured."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="NO_SCHEMA_REGISTRY" value="5">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The addressed scope has no schema registry."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ALREADY_EXISTS" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A create found its target taken and the conflict policy says to fail."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INHERITED" value="7">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object is inherited from another scope and must be changed there."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="READ_ONLY" value="8">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object is read-only where it was addressed."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="PRECONDITION_FAILED" value="9">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The caller's Precondition does not hold for the current object."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INTERRUPTED" value="10">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The calling thread was interrupted while the write was in flight."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="Precondition" instanceClassName="org.eclipse.fennec.model.atlas.registry.api.Precondition" serializable="false">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="An optimistic-concurrency check on the object a write is about to change; a Java functional interface (the REST layer expresses If-Match as one)."/>
+    </eAnnotations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="List" instanceClassName="java.util.List" serializable="false">
+    <eTypeParameters name="T"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="Optional" instanceClassName="java.util.Optional" serializable="false">
+    <eTypeParameters name="T"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="Map" instanceClassName="java.util.Map" serializable="false">
+    <eTypeParameters name="K"/>
+    <eTypeParameters name="V"/>
+  </eClassifiers>
+</ecore:EPackage>

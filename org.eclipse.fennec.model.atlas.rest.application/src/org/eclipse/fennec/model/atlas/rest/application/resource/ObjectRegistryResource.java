@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
 import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
 import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
@@ -55,13 +56,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -209,7 +210,7 @@ public class ObjectRegistryResource {
         try {
             if (objectId != null) {
                 ObjectMetadata metadata = registryReader
-                        .metadata(new ObjectAddress(scopeName, registryName, stageName, objectId)).orElse(null);
+                        .metadata(RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId)).orElse(null);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -284,13 +285,13 @@ public class ObjectRegistryResource {
             @RequestBody(description = "The storage object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject object) {
 
         try {
-            WriteResult result = registryWriter.createObject(new ObjectWrite(
-                    new ObjectAddress(scopeName, registryName, stageName, objectId), object, name, version,
+            WriteResult result = registryWriter.createObject(RegistryRequests.objectWrite(
+                    RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId), object, name, version,
                     override ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
-            ObjectMetadata metadata = result.metadata();
+            ObjectMetadata metadata = result.getMetadata();
             Response.ResponseBuilder rb = Response
-                    .status(result.outcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
+                    .status(result.getOutcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
                     .location(objectLocation(scopeName, registryName, stageName, objectId))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
@@ -349,7 +350,7 @@ public class ObjectRegistryResource {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The batch contains no objects").build();
             }
             List<ObjectWrite> writes = roots.stream()
-                    .map(root -> new ObjectWrite(new ObjectAddress(scopeName, registryName, stageName,
+                    .map(root -> RegistryRequests.objectWrite(RegistryRequests.objectAddress(scopeName, registryName, stageName,
                             ResourceSupport.batchObjectId(root)), root, null, null, policy, null))
                     .toList();
             return ResourceSupport.batch(registryWriter.writeObjects(writes), requestContext);
@@ -410,7 +411,7 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
 
         try {
-            ObjectAddress address = new ObjectAddress(scopeName, registryName, stageName, objectId);
+            ObjectAddress address = RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId);
             ObjectMetadata contentMetadata = registryReader.metadata(address).orElse(null);
             EObject eObject = registryReader.content(address).orElse(null);
             if (eObject == null) {
@@ -545,15 +546,15 @@ public class ObjectRegistryResource {
             @RequestBody(description = "The new object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
 
         try {
-            WriteResult result = registryWriter.updateObject(new ObjectWrite(
-                    new ObjectAddress(scopeName, registryName, stageName, objectId), eObject, null, version, null,
+            WriteResult result = registryWriter.updateObject(RegistryRequests.objectWrite(
+                    RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId), eObject, null, version, null,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT)));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(result.metadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
+                    .entity(result.getMetadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
 
@@ -600,9 +601,9 @@ public class ObjectRegistryResource {
 
         try {
             WriteResult result = registryWriter.deleteObject(
-                    new ObjectAddress(scopeName, registryName, stageName, objectId), force,
+                    RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId), force,
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 // Nothing to delete. 204 without a body: a 204 carries no entity, and the
                 // status alone is now unambiguous because a delete that happened is 200.
                 return Response.noContent().build();
@@ -659,16 +660,16 @@ public class ObjectRegistryResource {
 
         try {
             WriteResult result = registryWriter.transitionObject(
-                    new ObjectAddress(scopeName, registryName, stageName, transitionRequest.getObjectId()),
+                    RegistryRequests.objectAddress(scopeName, registryName, stageName, transitionRequest.getObjectId()),
                     transitionRequest.getTargetStage(), overwrite,
                     // a transition changes metadata, not content
                     ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
-            if (result.outcome() == WriteOutcome.NOT_FOUND) {
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            ObjectMetadataResponseFilter.attach(requestContext, result.metadata(),
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(result.metadata())
+            return Response.status(Response.Status.OK).entity(result.getMetadata())
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (RegistryAccessException e) {
             return ResourceSupport.refusal(e);
