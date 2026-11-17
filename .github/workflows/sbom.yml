@@ -1,0 +1,141 @@
+name: SBOM & Vulnerability Scan
+
+# Writes the SBOM of the Model Atlas runtime (`./gradlew sbom`: modelatlas.runtime_docker_file.bndrun,
+# the runtime of the published docker image) and scans it with Trivy.
+#
+# The SBOM describes the resolved OSGi application (-runbundles plus framework), not the build
+# tools; see cnf/sbom/plugin.bnd and the sbom tasks in build.gradle.
+#
+# bnd update then reports what to do about the findings: the fix of each vulnerable library
+# within the version policy (-update-policy, default micro), and all available updates.
+#
+# Gate: the job fails on HIGH or CRITICAL vulnerabilities for which a fixed version exists
+# (--ignore-unfixed). Everything else is reported (job summary, artifact) without failing.
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+      - snapshot
+  # New vulnerabilities are published without any change on our side.
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SBOMS: >-
+    org.eclipse.fennec.model.atlas.runtime/generated/sbom/modelatlas.runtime_docker_file.bndrun.cdx.json
+
+jobs:
+  sbom:
+    name: SBOM and Trivy scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build bundles and write SBOMs
+        run: ./gradlew --no-daemon assemble sbom
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.76.2
+          cache: true
+
+      - name: Scan SBOMs (full report)
+        run: |
+          mkdir -p trivy
+          {
+            echo "## Trivy scan of the Model Atlas SBOMs"
+            echo
+            echo "Gate: HIGH/CRITICAL with a fixed version. All findings below, all severities."
+          } >> "$GITHUB_STEP_SUMMARY"
+          for sbom in $SBOMS; do
+            name="$(basename "$sbom" .cdx.json)"
+            trivy sbom --quiet --format json --output "trivy/${name}.trivy.json" "$sbom"
+            {
+              echo
+              echo "### ${name}"
+              echo
+              echo '```'
+              trivy sbom --quiet --format table "$sbom"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      # bnd update (org.gecko.bnd.update, see build.gradle): what to do about the findings.
+      # For each SBOM, the fix of each vulnerable library within the version policy, and where
+      # the library sits (runbundle, framework, embedded); then all newer versions in the .mvn
+      # indexes, independent of vulnerabilities. Reports only - nothing is changed, nothing fails.
+      - name: Update reports (bnd update)
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p bnd-update
+          {
+            echo
+            echo "## bnd update: fixes and updates within the version policy"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for sbom in $SBOMS; do
+            name="$(basename "$sbom" .cdx.json)"
+            [ -f "trivy/${name}.trivy.json" ] || continue
+            ./gradlew --no-daemon -q bndVulnerabilities \
+              -PbndUpdateTrivy="trivy/${name}.trivy.json" -PbndUpdateSbom="$sbom"
+            cp build/bnd-update/vulnerabilities.md "bnd-update/${name}.vulnerabilities.md"
+            {
+              echo
+              echo "### ${name}"
+              echo
+              # the report's own headings one level down, under the SBOM's
+              sed 's/^## /#### /' "bnd-update/${name}.vulnerabilities.md"
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
+          ./gradlew --no-daemon -q bndUpdates
+          cp build/bnd-update/updates.md bnd-update/updates.md
+          {
+            echo
+            echo "### All updates in the .mvn indexes"
+            echo
+            sed 's/^## /#### /' bnd-update/updates.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload SBOMs and reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: |
+            */generated/sbom/*.cdx.json
+            trivy/*.json
+            bnd-update/*.md
+          if-no-files-found: warn
+
+      - name: Fail on fixable HIGH/CRITICAL vulnerabilities
+        run: |
+          status=0
+          for sbom in $SBOMS; do
+            trivy sbom --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$sbom" || status=1
+          done
+          exit "$status"
