@@ -15,7 +15,13 @@ package org.eclipse.fennec.model.atlas.registry.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +37,8 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
+import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
+import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
@@ -102,30 +110,15 @@ public class RegistryWriterImpl implements RegistryWriter {
 	public WriteResult createObject(ObjectWrite write) {
 		ObjectAddress address = write.address();
 		EObject object = write.content();
-		requireClientType(address.registry(), object);
+		ObjectMetadata existing = checkCreateObject(write);
 		WritableScopeService<EObject> scopeService = scope(address.scope());
-
-		ObjectMetadata existing = scopeService.getMetadataFromStageForRegistry(address.registry(), address.stage(),
-				address.objectId());
 		if (existing != null) {
-			switch (policy(write.onConflict())) {
-			case SKIP:
+			if (policy(write.onConflict()) == ConflictPolicy.SKIP) {
 				return WriteResult.of(WriteOutcome.SKIPPED, existing);
-			case FAIL:
-				throw new RegistryAccessException(Reason.ALREADY_EXISTS, String.format(
-						"Object %s already exists and override flag is false. Cannot update object.",
-						address.objectId()));
-			case OVERWRITE:
-			default:
-				if (existing.isIsReadOnly()) {
-					throw new RegistryAccessException(Reason.READ_ONLY,
-							String.format("Object %s is read-only. Cannot update it.", address.objectId()));
-				}
-				requirePrecondition(write.precondition(), existing);
-				ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(address.registry(),
-						address.stage(), object, address.objectId(), write.version()));
-				return WriteResult.of(WriteOutcome.UPDATED, metadata);
 			}
+			ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(address.registry(),
+					address.stage(), object, address.objectId(), write.version()));
+			return WriteResult.of(WriteOutcome.UPDATED, metadata);
 		}
 		ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
 		metadata.setObjectId(address.objectId());
@@ -219,39 +212,32 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 	@Override
 	public WriteResult createPackage(PackageWrite write) {
-		WritableScopeService<EObject> scopeService = scope(write.scope());
-		EPackage ePackage = write.content();
-		String nsUri = validateAndResolveNsUri(write.nsUri(), ePackage);
-		String version = PackageVersions.resolve(ePackage, write.version(), nsUri, write.lenientVersion());
-		String registry = packageRegistry(scopeService, write.registry(), ePackage);
+		return createPackage(write, checkCreatePackage(write));
+	}
 
-		ObjectMetadata existing = findByNsUri(scopeService, registry, write.stage(), nsUri);
+	private WriteResult createPackage(PackageWrite write, PackagePlan plan) {
+		WritableScopeService<EObject> scopeService = plan.scopeService();
+		EPackage ePackage = write.content();
+		String nsUri = plan.nsUri();
+		String version = plan.version();
+		String registry = plan.registry();
+
+		ObjectMetadata existing = plan.existing();
 		if (existing != null) {
-			switch (policy(write.onConflict())) {
-			case SKIP:
+			if (policy(write.onConflict()) == ConflictPolicy.SKIP) {
 				return WriteResult.of(WriteOutcome.SKIPPED, existing);
-			case FAIL:
-				throw new RegistryAccessException(Reason.ALREADY_EXISTS, String.format(
-						"Schema %s already exists and overwrite flag is false. Cannot update object.", nsUri));
-			case OVERWRITE:
-			default:
-				if (existing.isIsReadOnly()) {
-					throw new RegistryAccessException(Reason.READ_ONLY,
-							String.format("Schema %s is read-only. Cannot update it.", nsUri));
-				}
-				requirePrecondition(write.precondition(), existing);
-				ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(registry, write.stage(),
-						ePackage, existing.getObjectId(), version));
-				// An absent dcat leaves the stored flag alone: an overwrite that says nothing about
-				// publication must not unpublish the model. Only an explicit value moves it.
-				if (write.dcat() != null) {
-					metadata = await(scopeService.updatePropertiesInStageForRegistry(registry, write.stage(),
-							existing.getObjectId(), Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
-									Boolean.toString(write.dcat()))));
-				}
-				searchIndex.index(metadata, ePackage);
-				return WriteResult.of(WriteOutcome.UPDATED, metadata);
 			}
+			ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(registry, write.stage(),
+					ePackage, existing.getObjectId(), version));
+			// An absent dcat leaves the stored flag alone: an overwrite that says nothing about
+			// publication must not unpublish the model. Only an explicit value moves it.
+			if (write.dcat() != null) {
+				metadata = await(scopeService.updatePropertiesInStageForRegistry(registry, write.stage(),
+						existing.getObjectId(), Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
+								Boolean.toString(write.dcat()))));
+			}
+			searchIndex.index(metadata, ePackage);
+			return WriteResult.of(WriteOutcome.UPDATED, metadata);
 		}
 		// The objectId is a random UUID assigned once at upload and stable across stage
 		// transitions (it is the lifecycle audit trail); the nsURI is carried only by the nsUri
@@ -388,8 +374,294 @@ public class RegistryWriterImpl implements RegistryWriter {
 	}
 
 	// ======================
+	// Batches
+	// ======================
+
+	@Override
+	public BatchResult writeObjects(List<ObjectWrite> writes) {
+		return runBatch(writes.stream().<BatchItem> map(ObjectItem::new).toList());
+	}
+
+	@Override
+	public BatchResult writePackages(List<PackageWrite> writes) {
+		return runBatch(writes.stream().<BatchItem> map(PackageItem::new).toList());
+	}
+
+	/**
+	 * All items or none: every item is checked before the first one is written, and once writing
+	 * has started, a refusal undoes what the batch wrote so far, newest first.
+	 */
+	private BatchResult runBatch(List<BatchItem> items) {
+		List<BatchItemResult> results = new ArrayList<>(items.size());
+		Set<String> keys = new HashSet<>();
+		boolean refused = false;
+		for (BatchItem item : items) {
+			try {
+				item.check();
+				if (!keys.add(item.key())) {
+					throw new RegistryAccessException(Reason.INVALID,
+							String.format("%s occurs more than once in the batch", item.id()));
+				}
+				results.add(BatchItemResult.notApplied(item.id()));
+			} catch (RegistryAccessException e) {
+				refused = true;
+				results.add(BatchItemResult.refused(item.id(), e));
+			}
+		}
+		if (refused) {
+			return new BatchResult(false, results);
+		}
+
+		Deque<Runnable> undo = new ArrayDeque<>();
+		for (int i = 0; i < items.size(); i++) {
+			BatchItem item = items.get(i);
+			try {
+				results.set(i, BatchItemResult.written(item.id(), item.write(undo)));
+			} catch (RegistryAccessException e) {
+				undo(undo);
+				List<BatchItemResult> notApplied = new ArrayList<>(items.size());
+				for (BatchItem other : items) {
+					notApplied.add(BatchItemResult.notApplied(other.id()));
+				}
+				notApplied.set(i, BatchItemResult.refused(item.id(), e));
+				return new BatchResult(false, notApplied);
+			} catch (RuntimeException | Error e) {
+				undo(undo);
+				throw e;
+			}
+		}
+		return new BatchResult(true, results);
+	}
+
+	/** Runs the undo steps, newest first. A step that fails is logged; the others still run. */
+	private static void undo(Deque<Runnable> undo) {
+		while (!undo.isEmpty()) {
+			try {
+				undo.pop().run();
+			} catch (RuntimeException e) {
+				LOGGER.log(Level.WARNING, "Could not undo a write of a refused batch", e);
+			}
+		}
+	}
+
+	/** One item of a batch. */
+	private interface BatchItem {
+
+		/** The identifier reported for the item. */
+		String id();
+
+		/** What makes two items of a batch the same target. */
+		String key();
+
+		/** Applies the rules the single write applies, without writing anything. */
+		void check();
+
+		/** Writes the item and registers how to undo that write. */
+		WriteResult write(Deque<Runnable> undo);
+	}
+
+	private final class ObjectItem implements BatchItem {
+
+		private final ObjectWrite write;
+
+		ObjectItem(ObjectWrite write) {
+			this.write = write;
+		}
+
+		@Override
+		public String id() {
+			return write.address().objectId();
+		}
+
+		@Override
+		public String key() {
+			return write.address().toString();
+		}
+
+		@Override
+		public void check() {
+			if (id() == null || id().isBlank()) {
+				throw new RegistryAccessException(Reason.INVALID, String.format("Object of type %s has no object id",
+						EcoreUtil.getURI(write.content().eClass())));
+			}
+			checkCreateObject(write);
+		}
+
+		@Override
+		public WriteResult write(Deque<Runnable> undo) {
+			ObjectAddress address = write.address();
+			WritableScopeService<EObject> scopeService = scope(address.scope());
+			ObjectMetadata existing = scopeService.getMetadataFromStageForRegistry(address.registry(),
+					address.stage(), address.objectId());
+			boolean overwrite = existing != null && policy(write.onConflict()) == ConflictPolicy.OVERWRITE;
+			if (overwrite && unchanged(write.content(), existing)) {
+				return WriteResult.of(WriteOutcome.UNCHANGED, existing);
+			}
+			Runnable restore = overwrite ? restoreObject(scopeService, address, existing) : null;
+			WriteResult result = createObject(write);
+			if (result.outcome() == WriteOutcome.CREATED) {
+				undo.push(() -> deleteObject(address, true, null));
+			} else if (result.outcome() == WriteOutcome.UPDATED) {
+				undo.push(restore);
+			}
+			return result;
+		}
+	}
+
+	private final class PackageItem implements BatchItem {
+
+		private final PackageWrite write;
+
+		PackageItem(PackageWrite write) {
+			this.write = write;
+		}
+
+		@Override
+		public String id() {
+			return write.nsUri() != null ? write.nsUri() : write.content().getNsURI();
+		}
+
+		@Override
+		public String key() {
+			return String.join("|", write.scope(), String.valueOf(write.registry()), write.stage(), id());
+		}
+
+		@Override
+		public void check() {
+			checkCreatePackage(write);
+		}
+
+		@Override
+		public WriteResult write(Deque<Runnable> undo) {
+			PackagePlan plan = checkCreatePackage(write);
+			ObjectMetadata existing = plan.existing();
+			boolean overwrite = existing != null && policy(write.onConflict()) == ConflictPolicy.OVERWRITE;
+			if (overwrite && unchanged(write.content(), existing)) {
+				return WriteResult.of(WriteOutcome.UNCHANGED, existing);
+			}
+			Runnable restore = overwrite ? restorePackage(plan, write) : null;
+			WriteResult result = createPackage(write, plan);
+			if (result.outcome() == WriteOutcome.CREATED) {
+				ObjectAddress address = new ObjectAddress(write.scope(), plan.registry(), write.stage(),
+						result.metadata().getObjectId());
+				undo.push(() -> deleteObject(address, true, null));
+			} else if (result.outcome() == WriteOutcome.UPDATED) {
+				undo.push(restore);
+			}
+			return result;
+		}
+	}
+
+	/** Puts the content an instance has now back, should the batch replacing it be undone. */
+	private static Runnable restoreObject(WritableScopeService<EObject> scopeService, ObjectAddress address,
+			ObjectMetadata existing) {
+		EObject current = scopeService.getContentFromStageForRegistry(address.registry(), address.stage(),
+				address.objectId());
+		if (current == null) {
+			return () -> LOGGER.log(Level.WARNING, "Cannot restore object {0}: its previous content was not readable",
+					address.objectId());
+		}
+		EObject snapshot = EcoreUtil.copy(current);
+		String version = existing.getVersion();
+		return () -> await(scopeService.updateInStageForRegistry(address.registry(), address.stage(), snapshot,
+				address.objectId(), version));
+	}
+
+	/**
+	 * Puts the content, version and publication flag a package has now back, should the batch
+	 * replacing it be undone.
+	 */
+	private Runnable restorePackage(PackagePlan plan, PackageWrite write) {
+		ObjectMetadata existing = plan.existing();
+		String objectId = existing.getObjectId();
+		Object current = plan.scopeService().getContentFromStageForRegistry(plan.registry(), write.stage(), objectId);
+		if (!(current instanceof EPackage currentPackage)) {
+			return () -> LOGGER.log(Level.WARNING, "Cannot restore package {0}: its previous content was not readable",
+					plan.nsUri());
+		}
+		EPackage snapshot = EcoreUtil.copy(currentPackage);
+		String version = existing.getVersion();
+		String dcat = existing.getProperties().get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
+		return () -> {
+			ObjectMetadata metadata = await(plan.scopeService().updateInStageForRegistry(plan.registry(),
+					write.stage(), snapshot, objectId, version));
+			if (write.dcat() != null) {
+				metadata = await(plan.scopeService().updatePropertiesInStageForRegistry(plan.registry(),
+						write.stage(), objectId, Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
+								dcat == null ? Boolean.FALSE.toString() : dcat)));
+			}
+			searchIndex.index(metadata, snapshot);
+		};
+	}
+
+	// ======================
 	// Rules
 	// ======================
+
+	/**
+	 * The rules {@link #createObject(ObjectWrite)} applies before it writes.
+	 *
+	 * @return the object already at the address, or {@code null}
+	 */
+	private ObjectMetadata checkCreateObject(ObjectWrite write) {
+		ObjectAddress address = write.address();
+		requireClientType(address.registry(), write.content());
+		WritableScopeService<EObject> scopeService = scope(address.scope());
+
+		ObjectMetadata existing = scopeService.getMetadataFromStageForRegistry(address.registry(), address.stage(),
+				address.objectId());
+		if (existing != null) {
+			switch (policy(write.onConflict())) {
+			case SKIP:
+				break;
+			case FAIL:
+				throw new RegistryAccessException(Reason.ALREADY_EXISTS, String.format(
+						"Object %s already exists and override flag is false. Cannot update object.",
+						address.objectId()));
+			case OVERWRITE:
+			default:
+				if (existing.isIsReadOnly()) {
+					throw new RegistryAccessException(Reason.READ_ONLY,
+							String.format("Object %s is read-only. Cannot update it.", address.objectId()));
+				}
+				requirePrecondition(write.precondition(), existing);
+			}
+		}
+		return existing;
+	}
+
+	/** Where and how {@link #createPackage(PackageWrite)} writes a package. */
+	private record PackagePlan(WritableScopeService<EObject> scopeService, String nsUri, String version,
+			String registry, ObjectMetadata existing) {
+	}
+
+	/** The rules {@link #createPackage(PackageWrite)} applies before it writes. */
+	private PackagePlan checkCreatePackage(PackageWrite write) {
+		WritableScopeService<EObject> scopeService = scope(write.scope());
+		EPackage ePackage = write.content();
+		String nsUri = validateAndResolveNsUri(write.nsUri(), ePackage);
+		String version = PackageVersions.resolve(ePackage, write.version(), nsUri, write.lenientVersion());
+		String registry = packageRegistry(scopeService, write.registry(), ePackage);
+
+		ObjectMetadata existing = findByNsUri(scopeService, registry, write.stage(), nsUri);
+		if (existing != null) {
+			switch (policy(write.onConflict())) {
+			case SKIP:
+				break;
+			case FAIL:
+				throw new RegistryAccessException(Reason.ALREADY_EXISTS, String.format(
+						"Schema %s already exists and overwrite flag is false. Cannot update object.", nsUri));
+			case OVERWRITE:
+			default:
+				if (existing.isIsReadOnly()) {
+					throw new RegistryAccessException(Reason.READ_ONLY,
+							String.format("Schema %s is read-only. Cannot update it.", nsUri));
+				}
+				requirePrecondition(write.precondition(), existing);
+			}
+		}
+		return new PackagePlan(scopeService, nsUri, version, registry, existing);
+	}
 
 	/**
 	 * The type gate a client is held to: derived content is written by the Atlas only, and

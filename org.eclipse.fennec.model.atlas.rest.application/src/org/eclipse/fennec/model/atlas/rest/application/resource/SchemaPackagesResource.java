@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,9 +22,11 @@ import java.util.Set;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
@@ -334,6 +337,70 @@ public class SchemaPackagesResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
+            throw e;
+        } catch (Exception e) {
+            throw EndpointFailures.propagate(e);
+        }
+    }
+
+    /**
+     * Write several schema packages at once: every root of the uploaded resource must be an
+     * EPackage and becomes one package of the scope's schema registry, matched by its nsURI. All
+     * packages are written, or none.
+     *
+     * @param scopeName  the scope name
+     * @param stageName  the stage name
+     * @param onConflict what to do with a package whose nsURI is already taken
+     * @param dcat       the publication flag for every package of the batch
+     * @param resource   the packages, one per root
+     * @return one result per root, identified by nsURI
+     */
+    @POST
+    @Path("/stages/{stageName}/batch")
+    @Consumes
+    @Produces
+    @Operation(summary = "Write several schema packages at once", description = "Every root of the uploaded resource (XMI or JSON) must be an EPackage and becomes one package of the scope's schema registry, matched by its nsURI. "
+            + "Each version is taken from the package's own Version annotation, otherwise from the last segment of the nsURI when that segment looks like a version. "
+            + "All packages are written, or none: every package is checked first, and should a write still be refused, what the batch wrote is undone. "
+            + "The body lists one result per root, in document order. Instances whose types live in these packages go in a separate batch afterwards.", responses = {
+                    @ApiResponse(responseCode = "200", description = "All packages written", content = @Content(schema = @Schema(implementation = BatchResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Empty resource, a root that is not an EPackage, a missing or duplicate nsURI, an invalid version, an unknown onConflict value or scope; nothing written"),
+                    @ApiResponse(responseCode = "403", description = "A package is read-only; nothing written"),
+                    @ApiResponse(responseCode = "404", description = "The scope has no schema registry"),
+                    @ApiResponse(responseCode = "409", description = "A package already exists and onConflict is FAIL; nothing written"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported media type"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    public Response writePackages(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "What to do with a package whose nsURI is already taken: FAIL (default) refuses the batch, OVERWRITE replaces the package, SKIP leaves it alone") @QueryParam("onConflict") String onConflict,
+            @Parameter(description = "Assert that the packages may be published to a DCAT portal, as on the single upload", required = false) @QueryParam("dcat") Boolean dcat,
+            @RequestBody(description = "A resource with one EPackage per root", required = true) Resource resource) {
+
+        try {
+            ConflictPolicy policy = ResourceSupport.conflictPolicy(onConflict);
+            List<EObject> roots = resource == null ? List.of() : List.copyOf(resource.getContents());
+            if (roots.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The batch contains no packages").build();
+            }
+            List<PackageWrite> writes = new ArrayList<>(roots.size());
+            for (int i = 0; i < roots.size(); i++) {
+                if (!(roots.get(i) instanceof EPackage ePackage)) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(String.format("Root %d is a %s, not an EPackage", i,
+                                    roots.get(i).eClass().getName()))
+                            .build();
+                }
+                writes.add(new PackageWrite(scopeName, null, stageName, ePackage, null, null, null, dcat, policy,
+                        null, false));
+            }
+            return ResourceSupport.batch(registryWriter.writePackages(writes), requestContext);
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (WebApplicationException e) {
             throw e;
         } catch (Exception e) {
             throw EndpointFailures.propagate(e);

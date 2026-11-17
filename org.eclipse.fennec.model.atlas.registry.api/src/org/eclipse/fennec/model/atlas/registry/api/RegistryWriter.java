@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api;
 
+import java.util.List;
 import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -140,4 +141,34 @@ public interface RegistryWriter {
 	 */
 	WriteResult transitionPackage(String scope, String stage, String idOrNsUri, String targetStage,
 			boolean overwrite, Precondition precondition);
+
+	/**
+	 * Writes several instances as one unit: all of them, or none.
+	 *
+	 * <p>
+	 * Every item is first checked as {@link #createObject(ObjectWrite)} would check it; an item
+	 * without an objectId, or whose address occurs twice in the batch, is refused as
+	 * {@link RegistryAccessException.Reason#INVALID}. If any item is refused, nothing is written
+	 * and every refusal is reported. Otherwise the items are written in order. Content an
+	 * {@link ConflictPolicy#OVERWRITE} item would replace by equal content is left alone and
+	 * reported {@link WriteOutcome#UNCHANGED}. Should a write still be refused, everything the
+	 * batch wrote so far is undone — created instances are deleted, replaced ones get their
+	 * previous content back — and the batch is reported as not applied. A failure that is not a
+	 * refusal is rethrown once the batch has been undone.
+	 * </p>
+	 *
+	 * @param writes the instances, in the order they are written
+	 * @return one result per item
+	 */
+	BatchResult writeObjects(List<ObjectWrite> writes);
+
+	/**
+	 * Writes several packages as one unit: all of them, or none. Packages are matched by nsURI;
+	 * otherwise the rules of {@link #writeObjects(List)} apply, each item checked as
+	 * {@link #createPackage(PackageWrite)} would check it.
+	 *
+	 * @param writes the packages, in the order they are written
+	 * @return one result per item, identified by nsURI
+	 */
+	BatchResult writePackages(List<PackageWrite> writes);
 }

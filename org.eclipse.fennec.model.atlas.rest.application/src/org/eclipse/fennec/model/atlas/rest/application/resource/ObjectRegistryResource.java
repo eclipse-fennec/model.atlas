@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.fennec.codec.constants.CodecOptions;
 import org.eclipse.fennec.codec.rest.annotations.EMFResourceOptions;
 import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
@@ -36,6 +37,7 @@ import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailableExceptionMapper;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Component;
@@ -298,6 +300,62 @@ public class ObjectRegistryResource {
             return ResourceSupport.refusal(e);
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
+            throw e;
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            throw EndpointFailures.propagate(e);
+        }
+    }
+
+    /**
+     * Write several storage objects at once: every root object of the uploaded resource becomes
+     * one object, stored under its EMF ID attribute or, without one, the id the resource gives it
+     * ({@code xmi:id}). All objects are written, or none.
+     *
+     * @param scopeName    the scope name
+     * @param registryName the registry name
+     * @param stageName    the stage name
+     * @param onConflict   what to do with an object whose id is already taken
+     * @param resource     the objects, one per root
+     * @return one result per root
+     */
+    @POST
+    @Path("/stages/{stageName}/batch")
+    @Consumes
+    @Produces
+    @Operation(summary = "Write several objects at once", description = "Every root object of the uploaded resource (XMI or JSON) becomes one object of the registry, "
+            + "stored under its EMF ID attribute or, without one, the id the resource gives it (xmi:id). Names and versions are left empty. "
+            + "All objects are written, or none: every object is checked first, and should a write still be refused, what the batch wrote is undone. "
+            + "The body lists one result per root, in document order.", responses = {
+                    @ApiResponse(responseCode = "200", description = "All objects written", content = @Content(schema = @Schema(implementation = BatchResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Empty resource, an object without id, an id used twice, an incompatible type, an unknown onConflict value, scope or registry; nothing written"),
+                    @ApiResponse(responseCode = "403", description = "An object is read-only or derived content; nothing written"),
+                    @ApiResponse(responseCode = "409", description = "An object already exists and onConflict is FAIL; nothing written"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported media type"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    public Response writeObjects(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
+            @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "What to do with an object whose id is already taken: FAIL (default) refuses the batch, OVERWRITE replaces the object, SKIP leaves it alone") @QueryParam("onConflict") String onConflict,
+            @RequestBody(description = "A resource with one root per object", required = true) Resource resource) {
+
+        try {
+            ConflictPolicy policy = ResourceSupport.conflictPolicy(onConflict);
+            List<EObject> roots = resource == null ? List.of() : List.copyOf(resource.getContents());
+            if (roots.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The batch contains no objects").build();
+            }
+            List<ObjectWrite> writes = roots.stream()
+                    .map(root -> new ObjectWrite(new ObjectAddress(scopeName, registryName, stageName,
+                            ResourceSupport.batchObjectId(root)), root, null, null, policy, null))
+                    .toList();
+            return ResourceSupport.batch(registryWriter.writeObjects(writes), requestContext);
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
+        } catch (WebApplicationException e) {
             throw e;
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
