@@ -80,9 +80,9 @@
 
 -runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json
 -runbundles: \
-	com.fasterxml.jackson.core.jackson-annotations;version='[2.22.0,2.22.1)';startlevel=1000,\
+	com.fasterxml.jackson.core.jackson-annotations;version='[2.23.0,2.23.1)';startlevel=1000,\
 	com.github.miachm.sods;version='[1.10.0,1.10.1)';startlevel=1001,\
-	com.google.guava;version='[33.6.0,33.6.1)';startlevel=1002,\
+	com.google.guava;version='[33.7.2,33.7.3)';startlevel=1002,\
 	com.google.guava.failureaccess;version='[1.0.3,1.0.4)';startlevel=1003,\
 	com.googlecode.libphonenumber;version='[9.0.26,9.0.27)';startlevel=1004,\
 	io.github.classgraph.classgraph;version='[4.8.200,4.8.201)';startlevel=1005,\
@@ -240,6 +240,6 @@
 	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1157,\
 	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1158,\
 	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1159,\
-	tools.jackson.core.jackson-core;version='[3.2.3,3.2.4)';startlevel=1160,\
-	tools.jackson.core.jackson-databind;version='[3.2.3,3.2.4)';startlevel=1161,\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.3,3.2.4)';startlevel=1162
+	tools.jackson.core.jackson-core;version='[3.3.0,3.3.1)';startlevel=1160,\
+	tools.jackson.core.jackson-databind;version='[3.3.0,3.3.1)';startlevel=1161,\
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.3.0,3.3.1)';startlevel=1162
