@@ -54,6 +54,15 @@ public interface RegistryApiFactory extends EFactory {
 	PackageAddress createPackageAddress();
 
 	/**
+	 * Returns a new object of class '<em>Precondition</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Precondition</em>'.
+	 * @generated
+	 */
+	Precondition createPrecondition();
+
+	/**
 	 * Returns a new object of class '<em>Object Write</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -63,6 +72,15 @@ public interface RegistryApiFactory extends EFactory {
 	ObjectWrite createObjectWrite();
 
 	/**
+	 * Returns a new object of class '<em>Object Batch</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Object Batch</em>'.
+	 * @generated
+	 */
+	ObjectBatch createObjectBatch();
+
+	/**
 	 * Returns a new object of class '<em>Package Write</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -70,6 +88,24 @@ public interface RegistryApiFactory extends EFactory {
 	 * @generated
 	 */
 	PackageWrite createPackageWrite();
+
+	/**
+	 * Returns a new object of class '<em>Package Batch</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Package Batch</em>'.
+	 * @generated
+	 */
+	PackageBatch createPackageBatch();
+
+	/**
+	 * Returns a new object of class '<em>Package Properties Update</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Package Properties Update</em>'.
+	 * @generated
+	 */
+	PackagePropertiesUpdate createPackagePropertiesUpdate();
 
 	/**
 	 * Returns a new object of class '<em>Package Search</em>'.

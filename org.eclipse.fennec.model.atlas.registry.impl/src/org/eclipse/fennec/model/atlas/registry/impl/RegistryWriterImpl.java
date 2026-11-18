@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
@@ -40,9 +41,12 @@ import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService
 import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
 import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectBatch;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.PackageAddress;
+import org.eclipse.fennec.model.atlas.registry.api.PackageBatch;
+import org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate;
 import org.eclipse.fennec.model.atlas.registry.api.PackageWrite;
 import org.eclipse.fennec.model.atlas.registry.api.Precondition;
 import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
@@ -118,6 +122,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 	@Override
 	public WriteResult createObject(ObjectWrite write) {
+		resolveObjectId(write);
 		ObjectAddress address = write.getAddress();
 		EObject object = write.getContent();
 		ObjectMetadata existing = checkCreateObject(write);
@@ -146,6 +151,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 	@Override
 	public WriteResult updateObject(ObjectWrite write) {
+		resolveObjectId(write);
 		ObjectAddress address = write.getAddress();
 		EObject object = write.getContent();
 		requireClientType(address.getRegistry(), object);
@@ -295,7 +301,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		}
 
 		EcoreUtil.resolveAll(ePackage);
-		if (ePackage.eResource() != null) {
+		if (ePackage.eContainer() == null && ePackage.eResource() != null) {
 			ePackage.eResource().setURI(URI.createURI(ePackage.getNsURI()));
 		}
 		ObjectMetadata metadata = await(scopeService.updateInStageForRegistry(registry, write.getStage(), ePackage,
@@ -305,8 +311,10 @@ public class RegistryWriterImpl implements RegistryWriter {
 	}
 
 	@Override
-	public WriteResult updatePackageProperties(PackageAddress address, Map<String, String> properties,
-			Precondition precondition) {
+	public WriteResult updatePackageProperties(PackagePropertiesUpdate update) {
+		PackageAddress address = update.getAddress();
+		Map<String, String> properties = update.getProperties().map();
+		Precondition precondition = update.getPrecondition();
 		WritableScopeService<EObject> scopeService = scope(address.getScope());
 		requireNsUri(address.getNsUri());
 		String registry = schemaRegistry(scopeService);
@@ -389,13 +397,13 @@ public class RegistryWriterImpl implements RegistryWriter {
 	// ======================
 
 	@Override
-	public BatchResult writeObjects(List<ObjectWrite> writes) {
-		return runBatch(writes.stream().<BatchItem> map(ObjectItem::new).toList());
+	public BatchResult writeObjects(ObjectBatch batch) {
+		return runBatch(batch.getWrites().stream().<BatchItem> map(ObjectItem::new).toList());
 	}
 
 	@Override
-	public BatchResult writePackages(List<PackageWrite> writes) {
-		return runBatch(writes.stream().<BatchItem> map(PackageItem::new).toList());
+	public BatchResult writePackages(PackageBatch batch) {
+		return runBatch(batch.getWrites().stream().<BatchItem> map(PackageItem::new).toList());
 	}
 
 	/**
@@ -408,6 +416,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 		boolean refused = false;
 		for (BatchItem item : items) {
 			try {
+				item.identify();
 				item.check();
 				if (!keys.add(item.key())) {
 					throw new RegistryAccessException(RefusalReason.INVALID,
@@ -464,6 +473,10 @@ public class RegistryWriterImpl implements RegistryWriter {
 		/** What makes two items of a batch the same target. */
 		String key();
 
+		/** Settles the item's identifier; refuses an item that has none. */
+		default void identify() {
+		}
+
 		/** Applies the rules the single write applies, without writing anything. */
 		void check();
 
@@ -480,6 +493,11 @@ public class RegistryWriterImpl implements RegistryWriter {
 		}
 
 		@Override
+		public void identify() {
+			resolveObjectId(write);
+		}
+
+		@Override
 		public String id() {
 			return write.getAddress().getObjectId();
 		}
@@ -492,10 +510,6 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 		@Override
 		public void check() {
-			if (id() == null || id().isBlank()) {
-				throw new RegistryAccessException(RefusalReason.INVALID, String.format("Object of type %s has no object id",
-						EcoreUtil.getURI(write.getContent().eClass())));
-			}
 			checkCreateObject(write);
 		}
 
@@ -698,8 +712,37 @@ public class RegistryWriterImpl implements RegistryWriter {
 		}
 	}
 
+	/**
+	 * Settles the id an instance is stored under: the id the address gives, else the value of the
+	 * content's ID attribute. An id given for content with an ID attribute must equal its value.
+	 * Content without an ID attribute needs an explicit id; an {@code xmi:id} is never used.
+	 */
+	private static void resolveObjectId(ObjectWrite write) {
+		ObjectAddress address = write.getAddress();
+		EObject content = write.getContent();
+		if (address == null || content == null) {
+			throw new RegistryAccessException(RefusalReason.INVALID, "A write needs an address and content");
+		}
+		String given = address.getObjectId();
+		EAttribute idAttribute = content.eClass().getEIDAttribute();
+		String fromContent = idAttribute == null ? null : EcoreUtil.getID(content);
+		if (given == null || given.isBlank()) {
+			if (fromContent == null || fromContent.isBlank()) {
+				throw new RegistryAccessException(RefusalReason.INVALID, String.format(
+						idAttribute == null ? "Object of type %s has no ID attribute; the write must name its object id"
+								: "Object of type %s has no value in its ID attribute and the write names no object id",
+						EcoreUtil.getURI(content.eClass())));
+			}
+			address.setObjectId(fromContent);
+		} else if (fromContent != null && !fromContent.isBlank() && !fromContent.equals(given)) {
+			throw new RegistryAccessException(RefusalReason.INVALID, String.format(
+					"Object id %s does not match the value %s of the object's ID attribute %s", given, fromContent,
+					idAttribute.getName()));
+		}
+	}
+
 	private static void requirePrecondition(Precondition precondition, ObjectMetadata existing) {
-		if (!Precondition.orNone(precondition).test(existing)) {
+		if (precondition != null && !precondition.isSatisfiedBy(existing)) {
 			throw new RegistryAccessException(RefusalReason.PRECONDITION_FAILED,
 					"Resource has been modified. ETag mismatch.");
 		}
@@ -890,7 +933,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 	private static WriteResult result(WriteOutcome outcome, ObjectMetadata metadata) {
 		WriteResult result = API.createWriteResult();
 		result.setOutcome(outcome);
-		result.setMetadata(metadata);
+		result.setMetadata(metadata == null ? null : EcoreUtil.copy(metadata));
 		return result;
 	}
 
@@ -903,7 +946,7 @@ public class RegistryWriterImpl implements RegistryWriter {
 	private static BatchItemResult written(String id, WriteResult result) {
 		BatchItemResult item = notApplied(id);
 		item.setOutcome(result.getOutcome());
-		item.setMetadata(result.getMetadata());
+		item.setMetadata(result.getMetadata() == null ? null : EcoreUtil.copy(result.getMetadata()));
 		return item;
 	}
 

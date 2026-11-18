@@ -70,8 +70,12 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 		switch (eClass.getClassifierID()) {
 			case RegistryApiPackage.OBJECT_ADDRESS: return (EObject)createObjectAddress();
 			case RegistryApiPackage.PACKAGE_ADDRESS: return (EObject)createPackageAddress();
+			case RegistryApiPackage.PRECONDITION: return (EObject)createPrecondition();
 			case RegistryApiPackage.OBJECT_WRITE: return (EObject)createObjectWrite();
+			case RegistryApiPackage.OBJECT_BATCH: return (EObject)createObjectBatch();
 			case RegistryApiPackage.PACKAGE_WRITE: return (EObject)createPackageWrite();
+			case RegistryApiPackage.PACKAGE_BATCH: return (EObject)createPackageBatch();
+			case RegistryApiPackage.PACKAGE_PROPERTIES_UPDATE: return (EObject)createPackagePropertiesUpdate();
 			case RegistryApiPackage.PACKAGE_SEARCH: return (EObject)createPackageSearch();
 			case RegistryApiPackage.PACKAGE_SEARCH_RESULT: return (EObject)createPackageSearchResult();
 			case RegistryApiPackage.WRITE_RESULT: return (EObject)createWriteResult();
@@ -96,6 +100,8 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 				return createWriteOutcomeFromString(eDataType, initialValue);
 			case RegistryApiPackage.REFUSAL_REASON:
 				return createRefusalReasonFromString(eDataType, initialValue);
+			case RegistryApiPackage.PRECONDITION_TARGET:
+				return createPreconditionTargetFromString(eDataType, initialValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -115,6 +121,8 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 				return convertWriteOutcomeToString(eDataType, instanceValue);
 			case RegistryApiPackage.REFUSAL_REASON:
 				return convertRefusalReasonToString(eDataType, instanceValue);
+			case RegistryApiPackage.PRECONDITION_TARGET:
+				return convertPreconditionTargetToString(eDataType, instanceValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -148,6 +156,17 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 	 * @generated
 	 */
 	@Override
+	public Precondition createPrecondition() {
+		PreconditionImpl precondition = new PreconditionImpl();
+		return precondition;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public ObjectWrite createObjectWrite() {
 		ObjectWriteImpl objectWrite = new ObjectWriteImpl();
 		return objectWrite;
@@ -159,9 +178,42 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 	 * @generated
 	 */
 	@Override
+	public ObjectBatch createObjectBatch() {
+		ObjectBatchImpl objectBatch = new ObjectBatchImpl();
+		return objectBatch;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public PackageWrite createPackageWrite() {
 		PackageWriteImpl packageWrite = new PackageWriteImpl();
 		return packageWrite;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public PackageBatch createPackageBatch() {
+		PackageBatchImpl packageBatch = new PackageBatchImpl();
+		return packageBatch;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public PackagePropertiesUpdate createPackagePropertiesUpdate() {
+		PackagePropertiesUpdateImpl packagePropertiesUpdate = new PackagePropertiesUpdateImpl();
+		return packagePropertiesUpdate;
 	}
 
 	/**
@@ -276,6 +328,26 @@ public class RegistryApiFactoryImpl extends EFactoryImpl implements RegistryApiF
 	 * @generated
 	 */
 	public String convertRefusalReasonToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public PreconditionTarget createPreconditionTargetFromString(EDataType eDataType, String initialValue) {
+		PreconditionTarget result = PreconditionTarget.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertPreconditionTargetToString(EDataType eDataType, Object instanceValue) {
 		return instanceValue == null ? null : instanceValue.toString();
 	}
 

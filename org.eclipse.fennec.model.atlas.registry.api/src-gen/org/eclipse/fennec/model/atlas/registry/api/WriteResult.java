@@ -69,25 +69,25 @@ public interface WriteResult {
 	void setOutcome(WriteOutcome value);
 
 	/**
-	 * Returns the value of the '<em><b>Metadata</b></em>' reference.
+	 * Returns the value of the '<em><b>Metadata</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * the metadata of the object as it is now stored, or null for NOT_FOUND and DELETED
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Metadata</em>' reference.
+	 * @return the value of the '<em>Metadata</em>' containment reference.
 	 * @see #setMetadata(ObjectMetadata)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getWriteResult_Metadata()
-	 * @model resolveProxies="false"
+	 * @model containment="true"
 	 * @generated
 	 */
 	ObjectMetadata getMetadata();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.WriteResult#getMetadata <em>Metadata</em>}' reference.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.WriteResult#getMetadata <em>Metadata</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Metadata</em>' reference.
+	 * @param value the new value of the '<em>Metadata</em>' containment reference.
 	 * @see #getMetadata()
 	 * @generated
 	 */

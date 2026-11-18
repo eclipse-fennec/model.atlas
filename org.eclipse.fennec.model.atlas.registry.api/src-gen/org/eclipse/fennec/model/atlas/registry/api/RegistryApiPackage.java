@@ -16,7 +16,6 @@ package org.eclipse.fennec.model.atlas.registry.api;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EReference;
@@ -45,7 +44,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = RegistryApiPackage.eNS_URI, fingerprint = "fp1:0d484ef614f1692024bea98806251abf687d73affbed79d84026b2f1528fb729", genModel = "/model/registry-api.genmodel", genModelSourceLocations = {"model/registry-api.genmodel","org.eclipse.fennec.model.atlas.registry.api/model/registry-api.genmodel"}, ecore = "/model/registry-api.ecore", ecoreSourceLocations = "/model/registry-api.ecore")
+@EPackage(uri = RegistryApiPackage.eNS_URI, fingerprint = "fp1:adc99e0c3edbd0ec275dcedfb78f220964819eb7c83db61ab964558487c0ad13", genModel = "/model/registry-api.genmodel", genModelSourceLocations = {"model/registry-api.genmodel","org.eclipse.fennec.model.atlas.registry.api/model/registry-api.genmodel"}, ecore = "/model/registry-api.ecore", ecoreSourceLocations = "/model/registry-api.ecore")
 public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -159,7 +158,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEADDRESS_MAP_PRECONDITION = 6;
+	int REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEPROPERTIESUPDATE = 6;
 
 	/**
 	 * The operation id for the '<em>Delete Package</em>' operation.
@@ -186,7 +185,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_WRITER___WRITE_OBJECTS__LIST = 9;
+	int REGISTRY_WRITER___WRITE_OBJECTS__OBJECTBATCH = 9;
 
 	/**
 	 * The operation id for the '<em>Write Packages</em>' operation.
@@ -195,7 +194,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_WRITER___WRITE_PACKAGES__LIST = 10;
+	int REGISTRY_WRITER___WRITE_PACKAGES__PACKAGEBATCH = 10;
 
 	/**
 	 * The number of operations of the '<em>Registry Writer</em>' class.
@@ -462,6 +461,61 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int PACKAGE_ADDRESS_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PreconditionImpl <em>Precondition</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PreconditionImpl
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPrecondition()
+	 * @generated
+	 */
+	int PRECONDITION = 4;
+
+	/**
+	 * The feature id for the '<em><b>Expected</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PRECONDITION__EXPECTED = 0;
+
+	/**
+	 * The feature id for the '<em><b>Target</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PRECONDITION__TARGET = 1;
+
+	/**
+	 * The number of structural features of the '<em>Precondition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PRECONDITION_FEATURE_COUNT = 2;
+
+	/**
+	 * The operation id for the '<em>Is Satisfied By</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PRECONDITION___IS_SATISFIED_BY__OBJECTMETADATA = 0;
+
+	/**
+	 * The number of operations of the '<em>Precondition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PRECONDITION_OPERATION_COUNT = 1;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.ObjectWriteImpl <em>Object Write</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -469,7 +523,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getObjectWrite()
 	 * @generated
 	 */
-	int OBJECT_WRITE = 4;
+	int OBJECT_WRITE = 5;
 
 	/**
 	 * The feature id for the '<em><b>Address</b></em>' containment reference.
@@ -481,7 +535,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_WRITE__ADDRESS = 0;
 
 	/**
-	 * The feature id for the '<em><b>Content</b></em>' reference.
+	 * The feature id for the '<em><b>Content</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -517,7 +571,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_WRITE__ON_CONFLICT = 4;
 
 	/**
-	 * The feature id for the '<em><b>Precondition</b></em>' attribute.
+	 * The feature id for the '<em><b>Precondition</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -544,6 +598,43 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_WRITE_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.ObjectBatchImpl <em>Object Batch</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.ObjectBatchImpl
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getObjectBatch()
+	 * @generated
+	 */
+	int OBJECT_BATCH = 6;
+
+	/**
+	 * The feature id for the '<em><b>Writes</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_BATCH__WRITES = 0;
+
+	/**
+	 * The number of structural features of the '<em>Object Batch</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_BATCH_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Object Batch</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_BATCH_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageWriteImpl <em>Package Write</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -551,7 +642,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackageWrite()
 	 * @generated
 	 */
-	int PACKAGE_WRITE = 5;
+	int PACKAGE_WRITE = 7;
 
 	/**
 	 * The feature id for the '<em><b>Scope</b></em>' attribute.
@@ -581,7 +672,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int PACKAGE_WRITE__STAGE = 2;
 
 	/**
-	 * The feature id for the '<em><b>Content</b></em>' reference.
+	 * The feature id for the '<em><b>Content</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -635,7 +726,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int PACKAGE_WRITE__ON_CONFLICT = 8;
 
 	/**
-	 * The feature id for the '<em><b>Precondition</b></em>' attribute.
+	 * The feature id for the '<em><b>Precondition</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -671,6 +762,98 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int PACKAGE_WRITE_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageBatchImpl <em>Package Batch</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PackageBatchImpl
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackageBatch()
+	 * @generated
+	 */
+	int PACKAGE_BATCH = 8;
+
+	/**
+	 * The feature id for the '<em><b>Writes</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_BATCH__WRITES = 0;
+
+	/**
+	 * The number of structural features of the '<em>Package Batch</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_BATCH_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Package Batch</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_BATCH_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackagePropertiesUpdateImpl <em>Package Properties Update</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PackagePropertiesUpdateImpl
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackagePropertiesUpdate()
+	 * @generated
+	 */
+	int PACKAGE_PROPERTIES_UPDATE = 9;
+
+	/**
+	 * The feature id for the '<em><b>Address</b></em>' containment reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_PROPERTIES_UPDATE__ADDRESS = 0;
+
+	/**
+	 * The feature id for the '<em><b>Properties</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_PROPERTIES_UPDATE__PROPERTIES = 1;
+
+	/**
+	 * The feature id for the '<em><b>Precondition</b></em>' containment reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_PROPERTIES_UPDATE__PRECONDITION = 2;
+
+	/**
+	 * The number of structural features of the '<em>Package Properties Update</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_PROPERTIES_UPDATE_FEATURE_COUNT = 3;
+
+	/**
+	 * The number of operations of the '<em>Package Properties Update</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PACKAGE_PROPERTIES_UPDATE_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageSearchImpl <em>Package Search</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -678,7 +861,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackageSearch()
 	 * @generated
 	 */
-	int PACKAGE_SEARCH = 6;
+	int PACKAGE_SEARCH = 10;
 
 	/**
 	 * The feature id for the '<em><b>Stage</b></em>' attribute.
@@ -805,10 +988,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackageSearchResult()
 	 * @generated
 	 */
-	int PACKAGE_SEARCH_RESULT = 7;
+	int PACKAGE_SEARCH_RESULT = 11;
 
 	/**
-	 * The feature id for the '<em><b>Hits</b></em>' reference list.
+	 * The feature id for the '<em><b>Hits</b></em>' containment reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -851,7 +1034,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getWriteResult()
 	 * @generated
 	 */
-	int WRITE_RESULT = 8;
+	int WRITE_RESULT = 12;
 
 	/**
 	 * The feature id for the '<em><b>Outcome</b></em>' attribute.
@@ -863,7 +1046,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int WRITE_RESULT__OUTCOME = 0;
 
 	/**
-	 * The feature id for the '<em><b>Metadata</b></em>' reference.
+	 * The feature id for the '<em><b>Metadata</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -897,7 +1080,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getBatchItemResult()
 	 * @generated
 	 */
-	int BATCH_ITEM_RESULT = 9;
+	int BATCH_ITEM_RESULT = 13;
 
 	/**
 	 * The feature id for the '<em><b>Id</b></em>' attribute.
@@ -918,7 +1101,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int BATCH_ITEM_RESULT__OUTCOME = 1;
 
 	/**
-	 * The feature id for the '<em><b>Metadata</b></em>' reference.
+	 * The feature id for the '<em><b>Metadata</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -979,7 +1162,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getBatchResult()
 	 * @generated
 	 */
-	int BATCH_RESULT = 10;
+	int BATCH_RESULT = 14;
 
 	/**
 	 * The feature id for the '<em><b>Applied</b></em>' attribute.
@@ -1034,7 +1217,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getConflictPolicy()
 	 * @generated
 	 */
-	int CONFLICT_POLICY = 11;
+	int CONFLICT_POLICY = 15;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.WriteOutcome <em>Write Outcome</em>}' enum.
@@ -1044,7 +1227,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getWriteOutcome()
 	 * @generated
 	 */
-	int WRITE_OUTCOME = 12;
+	int WRITE_OUTCOME = 16;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.RefusalReason <em>Refusal Reason</em>}' enum.
@@ -1054,47 +1237,17 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getRefusalReason()
 	 * @generated
 	 */
-	int REFUSAL_REASON = 13;
+	int REFUSAL_REASON = 17;
 
 	/**
-	 * The meta object id for the '<em>Precondition</em>' data type.
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget <em>Precondition Target</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition
-	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPrecondition()
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget
+	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPreconditionTarget()
 	 * @generated
 	 */
-	int PRECONDITION = 14;
-
-	/**
-	 * The meta object id for the '<em>List</em>' data type.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see java.util.List
-	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getList()
-	 * @generated
-	 */
-	int LIST = 15;
-
-	/**
-	 * The meta object id for the '<em>Optional</em>' data type.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see java.util.Optional
-	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getOptional()
-	 * @generated
-	 */
-	int OPTIONAL = 16;
-
-	/**
-	 * The meta object id for the '<em>Map</em>' data type.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see java.util.Map
-	 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getMap()
-	 * @generated
-	 */
-	int MAP = 17;
+	int PRECONDITION_TARGET = 18;
 
 
 	/**
@@ -1168,14 +1321,14 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryWriter__UpdatePackage__PackageWrite();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#updatePackageProperties(org.eclipse.fennec.model.atlas.registry.api.PackageAddress, java.util.Map, org.eclipse.fennec.model.atlas.registry.api.Precondition) <em>Update Package Properties</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#updatePackageProperties(org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate) <em>Update Package Properties</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Update Package Properties</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#updatePackageProperties(org.eclipse.fennec.model.atlas.registry.api.PackageAddress, java.util.Map, org.eclipse.fennec.model.atlas.registry.api.Precondition)
+	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#updatePackageProperties(org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate)
 	 * @generated
 	 */
-	EOperation getRegistryWriter__UpdatePackageProperties__PackageAddress_Map_Precondition();
+	EOperation getRegistryWriter__UpdatePackageProperties__PackagePropertiesUpdate();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#deletePackage(org.eclipse.fennec.model.atlas.registry.api.PackageAddress, boolean, org.eclipse.fennec.model.atlas.registry.api.Precondition) <em>Delete Package</em>}' operation.
@@ -1198,24 +1351,24 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryWriter__TransitionPackage__String_String_String_String_boolean_Precondition();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writeObjects(java.util.List) <em>Write Objects</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writeObjects(org.eclipse.fennec.model.atlas.registry.api.ObjectBatch) <em>Write Objects</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Write Objects</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writeObjects(java.util.List)
+	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writeObjects(org.eclipse.fennec.model.atlas.registry.api.ObjectBatch)
 	 * @generated
 	 */
-	EOperation getRegistryWriter__WriteObjects__List();
+	EOperation getRegistryWriter__WriteObjects__ObjectBatch();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writePackages(java.util.List) <em>Write Packages</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writePackages(org.eclipse.fennec.model.atlas.registry.api.PackageBatch) <em>Write Packages</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Write Packages</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writePackages(java.util.List)
+	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryWriter#writePackages(org.eclipse.fennec.model.atlas.registry.api.PackageBatch)
 	 * @generated
 	 */
-	EOperation getRegistryWriter__WritePackages__List();
+	EOperation getRegistryWriter__WritePackages__PackageBatch();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryReader <em>Registry Reader</em>}'.
@@ -1445,6 +1598,48 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getPackageAddress_NsUri();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition <em>Precondition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Precondition</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition
+	 * @generated
+	 */
+	EClass getPrecondition();
+
+	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition#getExpected <em>Expected</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Expected</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition#getExpected()
+	 * @see #getPrecondition()
+	 * @generated
+	 */
+	EAttribute getPrecondition_Expected();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition#getTarget <em>Target</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Target</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition#getTarget()
+	 * @see #getPrecondition()
+	 * @generated
+	 */
+	EAttribute getPrecondition_Target();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition#isSatisfiedBy(org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Is Satisfied By</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Is Satisfied By</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition#isSatisfiedBy(org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @generated
+	 */
+	EOperation getPrecondition__IsSatisfiedBy__ObjectMetadata();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite <em>Object Write</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1466,10 +1661,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getObjectWrite_Address();
 
 	/**
-	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getContent <em>Content</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getContent <em>Content</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>Content</em>'.
+	 * @return the meta object for the containment reference '<em>Content</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getContent()
 	 * @see #getObjectWrite()
 	 * @generated
@@ -1510,15 +1705,36 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectWrite_OnConflict();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getPrecondition <em>Precondition</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getPrecondition <em>Precondition</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Precondition</em>'.
+	 * @return the meta object for the containment reference '<em>Precondition</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getPrecondition()
 	 * @see #getObjectWrite()
 	 * @generated
 	 */
-	EAttribute getObjectWrite_Precondition();
+	EReference getObjectWrite_Precondition();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectBatch <em>Object Batch</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Object Batch</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.ObjectBatch
+	 * @generated
+	 */
+	EClass getObjectBatch();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectBatch#getWrites <em>Writes</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Writes</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.ObjectBatch#getWrites()
+	 * @see #getObjectBatch()
+	 * @generated
+	 */
+	EReference getObjectBatch_Writes();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite <em>Package Write</em>}'.
@@ -1564,10 +1780,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getPackageWrite_Stage();
 
 	/**
-	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getContent <em>Content</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getContent <em>Content</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>Content</em>'.
+	 * @return the meta object for the containment reference '<em>Content</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getContent()
 	 * @see #getPackageWrite()
 	 * @generated
@@ -1630,15 +1846,15 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getPackageWrite_OnConflict();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getPrecondition <em>Precondition</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getPrecondition <em>Precondition</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Precondition</em>'.
+	 * @return the meta object for the containment reference '<em>Precondition</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getPrecondition()
 	 * @see #getPackageWrite()
 	 * @generated
 	 */
-	EAttribute getPackageWrite_Precondition();
+	EReference getPackageWrite_Precondition();
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#isLenientVersion <em>Lenient Version</em>}'.
@@ -1650,6 +1866,70 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getPackageWrite_LenientVersion();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.PackageBatch <em>Package Batch</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Package Batch</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageBatch
+	 * @generated
+	 */
+	EClass getPackageBatch();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.registry.api.PackageBatch#getWrites <em>Writes</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Writes</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageBatch#getWrites()
+	 * @see #getPackageBatch()
+	 * @generated
+	 */
+	EReference getPackageBatch_Writes();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate <em>Package Properties Update</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Package Properties Update</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate
+	 * @generated
+	 */
+	EClass getPackagePropertiesUpdate();
+
+	/**
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getAddress <em>Address</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference '<em>Address</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getAddress()
+	 * @see #getPackagePropertiesUpdate()
+	 * @generated
+	 */
+	EReference getPackagePropertiesUpdate_Address();
+
+	/**
+	 * Returns the meta object for the map '{@link org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getProperties <em>Properties</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the map '<em>Properties</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getProperties()
+	 * @see #getPackagePropertiesUpdate()
+	 * @generated
+	 */
+	EReference getPackagePropertiesUpdate_Properties();
+
+	/**
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getPrecondition <em>Precondition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference '<em>Precondition</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate#getPrecondition()
+	 * @see #getPackagePropertiesUpdate()
+	 * @generated
+	 */
+	EReference getPackagePropertiesUpdate_Precondition();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.registry.api.PackageSearch <em>Package Search</em>}'.
@@ -1793,10 +2073,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EClass getPackageSearchResult();
 
 	/**
-	 * Returns the meta object for the reference list '{@link org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult#getHits <em>Hits</em>}'.
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult#getHits <em>Hits</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference list '<em>Hits</em>'.
+	 * @return the meta object for the containment reference list '<em>Hits</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult#getHits()
 	 * @see #getPackageSearchResult()
 	 * @generated
@@ -1836,10 +2116,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getWriteResult_Outcome();
 
 	/**
-	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.registry.api.WriteResult#getMetadata <em>Metadata</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.WriteResult#getMetadata <em>Metadata</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>Metadata</em>'.
+	 * @return the meta object for the containment reference '<em>Metadata</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.WriteResult#getMetadata()
 	 * @see #getWriteResult()
 	 * @generated
@@ -1879,10 +2159,10 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getBatchItemResult_Outcome();
 
 	/**
-	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.registry.api.BatchItemResult#getMetadata <em>Metadata</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.registry.api.BatchItemResult#getMetadata <em>Metadata</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>Metadata</em>'.
+	 * @return the meta object for the containment reference '<em>Metadata</em>'.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.BatchItemResult#getMetadata()
 	 * @see #getBatchItemResult()
 	 * @generated
@@ -1994,51 +2274,14 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EEnum getRefusalReason();
 
 	/**
-	 * Returns the meta object for data type '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition <em>Precondition</em>}'.
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget <em>Precondition Target</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-     * <!-- begin-model-doc -->
-     * An optimistic-concurrency check on the object a write is about to change; a Java functional interface (the REST layer expresses If-Match as one).
-     * <!-- end-model-doc -->
-	 * @return the meta object for data type '<em>Precondition</em>'.
-	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition
-	 * @model instanceClass="org.eclipse.fennec.model.atlas.registry.api.Precondition" serializeable="false"
+	 * @return the meta object for enum '<em>Precondition Target</em>'.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget
 	 * @generated
 	 */
-	EDataType getPrecondition();
-
-	/**
-	 * Returns the meta object for data type '{@link java.util.List <em>List</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for data type '<em>List</em>'.
-	 * @see java.util.List
-	 * @model instanceClass="java.util.List" serializeable="false" typeParameters="T"
-	 * @generated
-	 */
-	EDataType getList();
-
-	/**
-	 * Returns the meta object for data type '{@link java.util.Optional <em>Optional</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for data type '<em>Optional</em>'.
-	 * @see java.util.Optional
-	 * @model instanceClass="java.util.Optional" serializeable="false" typeParameters="T"
-	 * @generated
-	 */
-	EDataType getOptional();
-
-	/**
-	 * Returns the meta object for data type '{@link java.util.Map <em>Map</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for data type '<em>Map</em>'.
-	 * @see java.util.Map
-	 * @model instanceClass="java.util.Map" serializeable="false" typeParameters="K V"
-	 * @generated
-	 */
-	EDataType getMap();
+	EEnum getPreconditionTarget();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -2127,7 +2370,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEADDRESS_MAP_PRECONDITION = eINSTANCE.getRegistryWriter__UpdatePackageProperties__PackageAddress_Map_Precondition();
+		EOperation REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEPROPERTIESUPDATE = eINSTANCE.getRegistryWriter__UpdatePackageProperties__PackagePropertiesUpdate();
 
 		/**
 		 * The meta object literal for the '<em><b>Delete Package</b></em>' operation.
@@ -2151,7 +2394,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation REGISTRY_WRITER___WRITE_OBJECTS__LIST = eINSTANCE.getRegistryWriter__WriteObjects__List();
+		EOperation REGISTRY_WRITER___WRITE_OBJECTS__OBJECTBATCH = eINSTANCE.getRegistryWriter__WriteObjects__ObjectBatch();
 
 		/**
 		 * The meta object literal for the '<em><b>Write Packages</b></em>' operation.
@@ -2159,7 +2402,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation REGISTRY_WRITER___WRITE_PACKAGES__LIST = eINSTANCE.getRegistryWriter__WritePackages__List();
+		EOperation REGISTRY_WRITER___WRITE_PACKAGES__PACKAGEBATCH = eINSTANCE.getRegistryWriter__WritePackages__PackageBatch();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.RegistryReader <em>Registry Reader</em>}' class.
@@ -2344,6 +2587,40 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute PACKAGE_ADDRESS__NS_URI = eINSTANCE.getPackageAddress_NsUri();
 
 		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PreconditionImpl <em>Precondition</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PreconditionImpl
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPrecondition()
+		 * @generated
+		 */
+		EClass PRECONDITION = eINSTANCE.getPrecondition();
+
+		/**
+		 * The meta object literal for the '<em><b>Expected</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute PRECONDITION__EXPECTED = eINSTANCE.getPrecondition_Expected();
+
+		/**
+		 * The meta object literal for the '<em><b>Target</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute PRECONDITION__TARGET = eINSTANCE.getPrecondition_Target();
+
+		/**
+		 * The meta object literal for the '<em><b>Is Satisfied By</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation PRECONDITION___IS_SATISFIED_BY__OBJECTMETADATA = eINSTANCE.getPrecondition__IsSatisfiedBy__ObjectMetadata();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.ObjectWriteImpl <em>Object Write</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -2362,7 +2639,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EReference OBJECT_WRITE__ADDRESS = eINSTANCE.getObjectWrite_Address();
 
 		/**
-		 * The meta object literal for the '<em><b>Content</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>Content</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
@@ -2394,12 +2671,30 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_WRITE__ON_CONFLICT = eINSTANCE.getObjectWrite_OnConflict();
 
 		/**
-		 * The meta object literal for the '<em><b>Precondition</b></em>' attribute feature.
+		 * The meta object literal for the '<em><b>Precondition</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EAttribute OBJECT_WRITE__PRECONDITION = eINSTANCE.getObjectWrite_Precondition();
+		EReference OBJECT_WRITE__PRECONDITION = eINSTANCE.getObjectWrite_Precondition();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.ObjectBatchImpl <em>Object Batch</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.ObjectBatchImpl
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getObjectBatch()
+		 * @generated
+		 */
+		EClass OBJECT_BATCH = eINSTANCE.getObjectBatch();
+
+		/**
+		 * The meta object literal for the '<em><b>Writes</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OBJECT_BATCH__WRITES = eINSTANCE.getObjectBatch_Writes();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageWriteImpl <em>Package Write</em>}' class.
@@ -2436,7 +2731,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute PACKAGE_WRITE__STAGE = eINSTANCE.getPackageWrite_Stage();
 
 		/**
-		 * The meta object literal for the '<em><b>Content</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>Content</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
@@ -2484,12 +2779,12 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute PACKAGE_WRITE__ON_CONFLICT = eINSTANCE.getPackageWrite_OnConflict();
 
 		/**
-		 * The meta object literal for the '<em><b>Precondition</b></em>' attribute feature.
+		 * The meta object literal for the '<em><b>Precondition</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EAttribute PACKAGE_WRITE__PRECONDITION = eINSTANCE.getPackageWrite_Precondition();
+		EReference PACKAGE_WRITE__PRECONDITION = eINSTANCE.getPackageWrite_Precondition();
 
 		/**
 		 * The meta object literal for the '<em><b>Lenient Version</b></em>' attribute feature.
@@ -2498,6 +2793,58 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute PACKAGE_WRITE__LENIENT_VERSION = eINSTANCE.getPackageWrite_LenientVersion();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageBatchImpl <em>Package Batch</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PackageBatchImpl
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackageBatch()
+		 * @generated
+		 */
+		EClass PACKAGE_BATCH = eINSTANCE.getPackageBatch();
+
+		/**
+		 * The meta object literal for the '<em><b>Writes</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference PACKAGE_BATCH__WRITES = eINSTANCE.getPackageBatch_Writes();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackagePropertiesUpdateImpl <em>Package Properties Update</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.PackagePropertiesUpdateImpl
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPackagePropertiesUpdate()
+		 * @generated
+		 */
+		EClass PACKAGE_PROPERTIES_UPDATE = eINSTANCE.getPackagePropertiesUpdate();
+
+		/**
+		 * The meta object literal for the '<em><b>Address</b></em>' containment reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference PACKAGE_PROPERTIES_UPDATE__ADDRESS = eINSTANCE.getPackagePropertiesUpdate_Address();
+
+		/**
+		 * The meta object literal for the '<em><b>Properties</b></em>' map feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference PACKAGE_PROPERTIES_UPDATE__PROPERTIES = eINSTANCE.getPackagePropertiesUpdate_Properties();
+
+		/**
+		 * The meta object literal for the '<em><b>Precondition</b></em>' containment reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference PACKAGE_PROPERTIES_UPDATE__PRECONDITION = eINSTANCE.getPackagePropertiesUpdate_Precondition();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.impl.PackageSearchImpl <em>Package Search</em>}' class.
@@ -2608,7 +2955,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EClass PACKAGE_SEARCH_RESULT = eINSTANCE.getPackageSearchResult();
 
 		/**
-		 * The meta object literal for the '<em><b>Hits</b></em>' reference list feature.
+		 * The meta object literal for the '<em><b>Hits</b></em>' containment reference list feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
@@ -2642,7 +2989,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute WRITE_RESULT__OUTCOME = eINSTANCE.getWriteResult_Outcome();
 
 		/**
-		 * The meta object literal for the '<em><b>Metadata</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>Metadata</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
@@ -2676,7 +3023,7 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute BATCH_ITEM_RESULT__OUTCOME = eINSTANCE.getBatchItemResult_Outcome();
 
 		/**
-		 * The meta object literal for the '<em><b>Metadata</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>Metadata</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
@@ -2772,44 +3119,14 @@ public interface RegistryApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EEnum REFUSAL_REASON = eINSTANCE.getRefusalReason();
 
 		/**
-		 * The meta object literal for the '<em>Precondition</em>' data type.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget <em>Precondition Target</em>}' enum.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition
-		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPrecondition()
+		 * @see org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget
+		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getPreconditionTarget()
 		 * @generated
 		 */
-		EDataType PRECONDITION = eINSTANCE.getPrecondition();
-
-		/**
-		 * The meta object literal for the '<em>List</em>' data type.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see java.util.List
-		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getList()
-		 * @generated
-		 */
-		EDataType LIST = eINSTANCE.getList();
-
-		/**
-		 * The meta object literal for the '<em>Optional</em>' data type.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see java.util.Optional
-		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getOptional()
-		 * @generated
-		 */
-		EDataType OPTIONAL = eINSTANCE.getOptional();
-
-		/**
-		 * The meta object literal for the '<em>Map</em>' data type.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see java.util.Map
-		 * @see org.eclipse.fennec.model.atlas.registry.api.impl.RegistryApiPackageImpl#getMap()
-		 * @generated
-		 */
-		EDataType MAP = eINSTANCE.getMap();
+		EEnum PRECONDITION_TARGET = eINSTANCE.getPreconditionTarget();
 
 	}
 

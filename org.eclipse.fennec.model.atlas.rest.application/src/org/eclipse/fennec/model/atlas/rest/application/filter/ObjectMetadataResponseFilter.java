@@ -13,18 +13,16 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.filter;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HexFormat;
 import java.util.List;
 
-import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget;
+import org.eclipse.fennec.model.atlas.registry.api.Validators;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsExtension;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
@@ -230,106 +228,56 @@ public class ObjectMetadataResponseFilter implements ContainerResponseFilter {
 
     /**
      * The <em>unfolded</em> ETag base validator for the given target — the representation-independent
-     * token a write should use for an optimistic-concurrency ({@code If-Match}) check. This is the same
-     * value the emitted ETag is derived from, before the media-type fold is applied, so the precondition
-     * path and the GET/cache path cannot drift.
-     *
-     * <ul>
-     *   <li>{@link CacheTarget#CONTENT}: {@link ObjectMetadata#getContentHash()}.</li>
-     *   <li>{@link CacheTarget#METADATA}: {@link #metadataValidator(ObjectMetadata)}.</li>
-     * </ul>
+     * token a write uses for an optimistic-concurrency ({@code If-Match}) check. It is
+     * {@link Validators#validator(ObjectMetadata, PreconditionTarget)}, the value the registry writer
+     * checks a precondition against, so the precondition path and the GET/cache path cannot drift.
      *
      * @return the base validator, or {@code null} when none can be derived (or {@code metadata} is null)
      */
     public static String baseValidator(ObjectMetadata metadata, CacheTarget target) {
-        if (metadata == null) {
-            return null;
-        }
-        return target == CacheTarget.METADATA ? metadataValidator(metadata) : metadata.getContentHash();
+        return Validators.validator(metadata,
+                target == CacheTarget.METADATA ? PreconditionTarget.METADATA : PreconditionTarget.CONTENT);
     }
 
     /**
      * Evaluates an {@code If-Match} header value against a base validator for an optimistic-concurrency
-     * check. The header may be {@code *} (matches any existing representation), a single tag, or a
-     * comma-separated list; weak ({@code W/}) prefixes and quotes are stripped. A tag matches when it
-     * equals the {@code base} <em>or</em> is a representation-folded form of it ({@code base + "." + …}),
-     * so a client may echo back the (folded) ETag it received from any representation and still satisfy
-     * the precondition. A {@code null} header (no precondition) or {@code null} base (nothing to validate
-     * against) is treated as satisfied.
+     * check; see {@link #ifMatchValidators(String)} for how the header is read. A {@code null} header or
+     * {@code *} (no precondition) or a {@code null} base (nothing to validate against) is satisfied.
      *
      * @param headerValue the raw {@code If-Match} header value, or {@code null}
      * @param base        the base validator from {@link #baseValidator(ObjectMetadata, CacheTarget)}
      * @return {@code true} if the write may proceed; {@code false} → caller should answer {@code 412}
      */
     public static boolean ifMatchSatisfied(String headerValue, String base) {
-        if (headerValue == null || base == null) {
-            return true;
+        List<String> validators = ifMatchValidators(headerValue);
+        return validators == null || base == null || validators.contains(base);
+    }
+
+    /**
+     * The base validators an {@code If-Match} header names. The header may be {@code *} (matches any
+     * existing representation), a single tag, or a comma-separated list; weak ({@code W/}) prefixes
+     * and quotes are stripped, and so is the representation suffix an emitted ETag carries
+     * ({@code base + "." + …}), so a client may echo back the ETag it received from any
+     * representation. Base validators are hex digests and contain no dot.
+     *
+     * @param headerValue the raw {@code If-Match} header value, or {@code null}
+     * @return the base validators, or {@code null} when the header sets no precondition (absent or {@code *})
+     */
+    public static List<String> ifMatchValidators(String headerValue) {
+        if (headerValue == null || "*".equals(headerValue.trim())) {
+            return null;
         }
-        String header = headerValue.trim();
-        if ("*".equals(header)) {
-            return true;
-        }
-        for (String token : header.split(",")) {
+        List<String> validators = new ArrayList<>();
+        for (String token : headerValue.trim().split(",")) {
             String tag = token.trim();
             if (tag.startsWith("W/")) {
                 tag = tag.substring(2).trim();
             }
             tag = tag.replace("\"", "");
-            if (tag.equals(base) || tag.startsWith(base + ".")) {
-                return true;
-            }
+            int fold = tag.indexOf('.');
+            validators.add(fold < 0 ? tag : tag.substring(0, fold));
         }
-        return false;
-    }
-
-    /**
-     * The diagnostics' share of the metadata validator (issue #292). A diagnostics write
-     * deliberately leaves {@code lastChangeTime} alone, so without this a client holding a
-     * metadata ETag would be told {@code 304 Not Modified} while the object's findings had
-     * changed under it. Folds in, per diagnostic and depth first, what a client would show:
-     * id, severity, status, version and message. Empty when the object has no diagnostics,
-     * so objects without any keep the validator they had before.
-     */
-    private static String diagnosticsValidator(ObjectMetadata metadata) {
-        StringBuilder raw = new StringBuilder();
-        appendDiagnostics(raw, metadata.getDiagnostics());
-        return raw.toString();
-    }
-
-    private static void appendDiagnostics(StringBuilder raw, List<Diagnostic> diagnostics) {
-        for (Diagnostic diagnostic : diagnostics) {
-            raw.append(diagnostic.getId()).append(',').append(diagnostic.getSeverity()).append(',')
-                    .append(diagnostic.getStatus()).append(',').append(diagnostic.getVersion()).append(',')
-                    .append(diagnostic.getMessage()).append(';');
-            appendDiagnostics(raw, diagnostic.getChildren());
-        }
-    }
-
-    /**
-     * The metadata validator: a strong (SHA-256) hash over
-     * {@code (contentHash, version, status, lastChangeTime)}. This is independent of the content hash
-     * alone, so a metadata-only change (e.g. a stage transition that doesn't touch the bytes) changes
-     * the metadata ETag while leaving the content ETag untouched. Returns {@code null} only when none
-     * of the inputs is set.
-     */
-    private static String metadataValidator(ObjectMetadata metadata) {
-        String contentHash = metadata.getContentHash();
-        String version = metadata.getVersion();
-        Object status = metadata.getStatus();
-        Object lastChange = metadata.getLastChangeTime();
-        String diagnostics = diagnosticsValidator(metadata);
-        if (contentHash == null && version == null && status == null && lastChange == null
-                && diagnostics.isEmpty()) {
-            return null;
-        }
-        String raw = contentHash + "|" + version + "|" + status + "|" + lastChange + "|" + diagnostics;
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            // SHA-256 is a required JCE algorithm; if it is somehow absent, fall back to the raw form.
-            return raw;
-        }
+        return validators;
     }
 
     /**

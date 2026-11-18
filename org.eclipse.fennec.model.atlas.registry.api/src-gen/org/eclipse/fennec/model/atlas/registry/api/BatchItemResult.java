@@ -124,25 +124,25 @@ public interface BatchItemResult {
 	boolean isSetOutcome();
 
 	/**
-	 * Returns the value of the '<em><b>Metadata</b></em>' reference.
+	 * Returns the value of the '<em><b>Metadata</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * the stored metadata of a written item, or null
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Metadata</em>' reference.
+	 * @return the value of the '<em>Metadata</em>' containment reference.
 	 * @see #setMetadata(ObjectMetadata)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getBatchItemResult_Metadata()
-	 * @model resolveProxies="false"
+	 * @model containment="true"
 	 * @generated
 	 */
 	ObjectMetadata getMetadata();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.BatchItemResult#getMetadata <em>Metadata</em>}' reference.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.BatchItemResult#getMetadata <em>Metadata</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Metadata</em>' reference.
+	 * @param value the new value of the '<em>Metadata</em>' containment reference.
 	 * @see #getMetadata()
 	 * @generated
 	 */

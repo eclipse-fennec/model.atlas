@@ -13,8 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api;
 
-import java.util.List;
-import java.util.Optional;
+import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EObject;
 
@@ -30,7 +29,9 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- begin-model-doc -->
  * Reads registry content on behalf of an external client (issue #386).
  * 
- * Lookups follow the scope hierarchy the way the workflow defines it: a stage listing or a lookup by id also sees what a parent scope's final stage holds, marked read-only. An unknown scope, or a scope without a schema registry for the package operations, is refused with RegistryAccessException; a malformed stage raises IllegalArgumentException. Absence of an object is not a failure: lookups answer an empty Optional, listings an empty list.
+ * Lookups follow the scope hierarchy the way the workflow defines it: a stage listing or a lookup by id also sees what a parent scope's final stage holds, marked read-only. An unknown scope, or a scope without a schema registry for the package operations, is refused with RegistryAccessException; a malformed stage raises IllegalArgumentException. Absence of an object is not a failure: lookups answer null, listings an empty list.
+ * 
+ * Every result is self-contained: content is returned as the root of its own containment tree, metadata as objects no other result shares.
  * <!-- end-model-doc -->
  *
  *
@@ -60,10 +61,10 @@ public interface RegistryReader {
 	 * @param scope the scope name
 	 * @param registry the registry name
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @model
 	 * @generated
 	 */
-	List<ObjectMetadata> listAll(String scope, String registry);
+	EList<ObjectMetadata> listAll(String scope, String registry);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -73,10 +74,10 @@ public interface RegistryReader {
 	 * @param scope the scope name
 	 * @param registry the registry name
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @model
 	 * @generated
 	 */
-	List<ObjectMetadata> listFinal(String scope, String registry);
+	EList<ObjectMetadata> listFinal(String scope, String registry);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -87,10 +88,10 @@ public interface RegistryReader {
 	 * @param registry the registry name
 	 * @param stage the stage name
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @model
 	 * @generated
 	 */
-	List<ObjectMetadata> list(String scope, String registry, String stage);
+	EList<ObjectMetadata> list(String scope, String registry, String stage);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -102,87 +103,87 @@ public interface RegistryReader {
 	 * @param stage the stage name
 	 * @param namePattern a case-insensitive name filter; wildcards are allowed, but not as the first character
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @model
 	 * @generated
 	 */
-	List<ObjectMetadata> listByName(String scope, String registry, String stage, String namePattern);
+	EList<ObjectMetadata> listByName(String scope, String registry, String stage, String namePattern);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return its metadata, hierarchy-aware
+	 * @return its metadata, hierarchy-aware, or null
 	 * @param address the object
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<ObjectMetadata> metadata(ObjectAddress address);
+	ObjectMetadata metadata(ObjectAddress address);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return the metadata of the object in the final stage, hierarchy-aware
+	 * @return the metadata of the object in the final stage, hierarchy-aware, or null
 	 * @param scope the scope name
 	 * @param registry the registry name
 	 * @param objectId the object id
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<ObjectMetadata> finalMetadata(String scope, String registry, String objectId);
+	ObjectMetadata finalMetadata(String scope, String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return its content
+	 * @return its content, or null
 	 * @param address the object
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.emf.ecore.EObject&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<EObject> content(ObjectAddress address);
+	EObject content(ObjectAddress address);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return the content of the object in the final stage, hierarchy-aware
+	 * @return the content of the object in the final stage, hierarchy-aware, or null
 	 * @param scope the scope name
 	 * @param registry the registry name
 	 * @param objectId the object id
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.emf.ecore.EObject&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<EObject> finalContent(String scope, String registry, String objectId);
+	EObject finalContent(String scope, String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return the metadata of the package with the address's nsURI in its stage of the scope's schema registry, hierarchy-aware
+	 * @return the metadata of the package with the address's nsURI in its stage of the scope's schema registry, hierarchy-aware, or null
 	 * @param address the package
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<ObjectMetadata> packageMetadata(PackageAddress address);
+	ObjectMetadata packageMetadata(PackageAddress address);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return the metadata of the package in the final stage of the scope's schema registry, hierarchy-aware
+	 * @return the metadata of the package in the final stage of the scope's schema registry, hierarchy-aware, or null
 	 * @param scope the scope name
 	 * @param nsUri the package's namespace URI
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<ObjectMetadata> finalPackageMetadata(String scope, String nsUri);
+	ObjectMetadata finalPackageMetadata(String scope, String nsUri);
 
 	/**
 	 * <!-- begin-user-doc -->

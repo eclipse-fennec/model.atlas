@@ -39,6 +39,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getUploadTime <em>Upload Time</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getSourceChannel <em>Source Channel</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getContentHash <em>Content Hash</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getMetadataHash <em>Metadata Hash</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectType <em>Object Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getReviewUser <em>Review User</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getReviewTime <em>Review Time</em>}</li>
@@ -169,6 +170,31 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setContentHash(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Metadata Hash</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * SHA-256 hash of the metadata state a client can observe: content hash, version, status, last change time and diagnostics. Recomputed whenever the metadata is stored; a client compares it to notice a change and sends it back to make a write conditional on the state it has seen.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Metadata Hash</em>' attribute.
+	 * @see #setMetadataHash(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_MetadataHash()
+	 * @model
+	 * @generated
+	 */
+	String getMetadataHash();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getMetadataHash <em>Metadata Hash</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Metadata Hash</em>' attribute.
+	 * @see #getMetadataHash()
+	 * @generated
+	 */
+	void setMetadataHash(String value);
 
 	/**
 	 * Returns the value of the '<em><b>Object Type</b></em>' attribute.

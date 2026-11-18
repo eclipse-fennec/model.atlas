@@ -819,14 +819,15 @@ public class InitialModelLoader {
         // Upload through the RegistryWriter (issue #386): the same rules as a REST upload -
         // type gate incl. derived content, package identity and version, search index. A
         // package or object already present in the stage is skipped, which keeps the seeding
-        // idempotent across restarts.
+        // idempotent across restarts. A write request contains its content, so it gets a copy:
+        // the loaded packages stay registered and the instances stay in their resources.
         List<ObjectMetadata> uploaded = new ArrayList<>();
         int skipped = 0;
         try {
             for (EPackage ePackage : packageRoots) {
                 // lenient: a one-shot loader must not abort start-up over a junk Version annotation
                 WriteResult result = registryWriter.createPackage(RegistryRequests.packageWrite(scopeName, registry, stage,
-                        ePackage, null, null, null, null, ConflictPolicy.SKIP, null, true));
+                        EcoreUtil.copy(ePackage), null, null, null, null, ConflictPolicy.SKIP, null, true));
                 if (result.getOutcome() == WriteOutcome.SKIPPED) {
                     LOG.log(Level.INFO, () -> "InitialModelLoader: '" + ePackage.getNsURI()
                             + "' is already present in scope '" + scopeName + "' stage '" + stage + "', skipping.");
@@ -838,7 +839,7 @@ public class InitialModelLoader {
             for (int i = 0; i < instanceRoots.size(); i++) {
                 String objectId = instanceIds.get(i);
                 WriteResult result = registryWriter.createObject(RegistryRequests.objectWrite(
-                        RegistryRequests.objectAddress(scopeName, registry, stage, objectId), instanceRoots.get(i),
+                        RegistryRequests.objectAddress(scopeName, registry, stage, objectId), EcoreUtil.copy(instanceRoots.get(i)),
                         fileBaseName(instanceFiles.get(i)), null, ConflictPolicy.SKIP, null));
                 if (result.getOutcome() == WriteOutcome.SKIPPED) {
                     LOG.log(Level.INFO, () -> "InitialModelLoader: object '" + objectId + "' is already present in "

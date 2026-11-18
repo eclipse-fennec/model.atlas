@@ -5,7 +5,7 @@
     modelName="RegistryApi" rootExtendsInterface="" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
     suppressEMFTypes="false" importerID="org.eclipse.emf.importer.ecore" suppressNotification="true"
     complianceLevel="17.0" copyrightFields="false" usedGenPackages="../../org.eclipse.fennec.model.atlas.management/model/management.genmodel#//management"
-    operationReflection="true" importOrganizing="true">
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
   <foreignModel>registry-api.ecore</foreignModel>
   <genPackages prefix="RegistryApi" basePackage="org.eclipse.fennec.model.atlas.registry"
       resource="XMI" disposableProviderFactory="true" ecorePackage="registry-api.ecore#/">
@@ -37,17 +37,10 @@
       <genEnumLiterals ecoreEnumLiteral="registry-api.ecore#//RefusalReason/PRECONDITION_FAILED"/>
       <genEnumLiterals ecoreEnumLiteral="registry-api.ecore#//RefusalReason/INTERRUPTED"/>
     </genEnums>
-    <genDataTypes ecoreDataType="registry-api.ecore#//Precondition"/>
-    <genDataTypes ecoreDataType="registry-api.ecore#//List">
-      <genTypeParameters ecoreTypeParameter="registry-api.ecore#//List/T"/>
-    </genDataTypes>
-    <genDataTypes ecoreDataType="registry-api.ecore#//Optional">
-      <genTypeParameters ecoreTypeParameter="registry-api.ecore#//Optional/T"/>
-    </genDataTypes>
-    <genDataTypes ecoreDataType="registry-api.ecore#//Map">
-      <genTypeParameters ecoreTypeParameter="registry-api.ecore#//Map/K"/>
-      <genTypeParameters ecoreTypeParameter="registry-api.ecore#//Map/V"/>
-    </genDataTypes>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="registry-api.ecore#//PreconditionTarget">
+      <genEnumLiterals ecoreEnumLiteral="registry-api.ecore#//PreconditionTarget/CONTENT"/>
+      <genEnumLiterals ecoreEnumLiteral="registry-api.ecore#//PreconditionTarget/METADATA"/>
+    </genEnums>
     <genClasses image="false" ecoreClass="registry-api.ecore#//RegistryWriter">
       <genOperations ecoreOperation="registry-api.ecore#//RegistryWriter/createObject">
         <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/createObject/write"/>
@@ -73,9 +66,7 @@
         <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/updatePackage/write"/>
       </genOperations>
       <genOperations ecoreOperation="registry-api.ecore#//RegistryWriter/updatePackageProperties">
-        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/updatePackageProperties/address"/>
-        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/updatePackageProperties/properties"/>
-        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/updatePackageProperties/precondition"/>
+        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/updatePackageProperties/update"/>
       </genOperations>
       <genOperations ecoreOperation="registry-api.ecore#//RegistryWriter/deletePackage">
         <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/deletePackage/address"/>
@@ -91,10 +82,10 @@
         <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/transitionPackage/precondition"/>
       </genOperations>
       <genOperations ecoreOperation="registry-api.ecore#//RegistryWriter/writeObjects">
-        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/writeObjects/writes"/>
+        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/writeObjects/batch"/>
       </genOperations>
       <genOperations ecoreOperation="registry-api.ecore#//RegistryWriter/writePackages">
-        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/writePackages/writes"/>
+        <genParameters ecoreParameter="registry-api.ecore#//RegistryWriter/writePackages/batch"/>
       </genOperations>
     </genClasses>
     <genClasses image="false" ecoreClass="registry-api.ecore#//RegistryReader">
@@ -159,26 +150,44 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageAddress/stage"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageAddress/nsUri"/>
     </genClasses>
+    <genClasses ecoreClass="registry-api.ecore#//Precondition">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//Precondition/expected"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//Precondition/target"/>
+      <genOperations ecoreOperation="registry-api.ecore#//Precondition/isSatisfiedBy">
+        <genParameters ecoreParameter="registry-api.ecore#//Precondition/isSatisfiedBy/current"/>
+      </genOperations>
+    </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//ObjectWrite">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//ObjectWrite/address"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference registry-api.ecore#//ObjectWrite/content"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//ObjectWrite/content"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//ObjectWrite/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//ObjectWrite/version"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//ObjectWrite/onConflict"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//ObjectWrite/precondition"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//ObjectWrite/precondition"/>
+    </genClasses>
+    <genClasses ecoreClass="registry-api.ecore#//ObjectBatch">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//ObjectBatch/writes"/>
     </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//PackageWrite">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/scope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/registry"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/stage"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageWrite/content"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageWrite/content"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/nsUri"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/version"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/dcat"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/onConflict"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/precondition"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageWrite/precondition"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageWrite/lenientVersion"/>
+    </genClasses>
+    <genClasses ecoreClass="registry-api.ecore#//PackageBatch">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageBatch/writes"/>
+    </genClasses>
+    <genClasses ecoreClass="registry-api.ecore#//PackagePropertiesUpdate">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackagePropertiesUpdate/address"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackagePropertiesUpdate/properties"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackagePropertiesUpdate/precondition"/>
     </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//PackageSearch">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageSearch/stage"/>
@@ -194,17 +203,17 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageSearch/offset"/>
     </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//PackageSearchResult">
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageSearchResult/hits"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//PackageSearchResult/hits"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//PackageSearchResult/totalHits"/>
     </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//WriteResult">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//WriteResult/outcome"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference registry-api.ecore#//WriteResult/metadata"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//WriteResult/metadata"/>
     </genClasses>
     <genClasses ecoreClass="registry-api.ecore#//BatchItemResult">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//BatchItemResult/id"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//BatchItemResult/outcome"/>
-      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference registry-api.ecore#//BatchItemResult/metadata"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference registry-api.ecore#//BatchItemResult/metadata"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//BatchItemResult/refusal"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute registry-api.ecore#//BatchItemResult/message"/>
       <genOperations ecoreOperation="registry-api.ecore#//BatchItemResult/isRefused"/>

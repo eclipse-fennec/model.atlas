@@ -23,7 +23,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-user-doc -->
  *
  * <!-- begin-model-doc -->
- * A request to store an instance.
+ * A request to store an instance. It contains everything the write needs, so it can be sent to a remote writer as it is.
  * <!-- end-model-doc -->
  *
  * <p>
@@ -70,25 +70,25 @@ public interface ObjectWrite {
 	void setAddress(ObjectAddress value);
 
 	/**
-	 * Returns the value of the '<em><b>Content</b></em>' reference.
+	 * Returns the value of the '<em><b>Content</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * the object; its type must be a root type of the registry. Referenced, not contained: the write does not take it out of its resource
+	 * the object; its type must be a root type of the registry. Contained: setting it takes the object out of its resource, so a caller that keeps working with the object passes a copy
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Content</em>' reference.
+	 * @return the value of the '<em>Content</em>' containment reference.
 	 * @see #setContent(EObject)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getObjectWrite_Content()
-	 * @model resolveProxies="false"
+	 * @model containment="true"
 	 * @generated
 	 */
 	EObject getContent();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getContent <em>Content</em>}' reference.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getContent <em>Content</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Content</em>' reference.
+	 * @param value the new value of the '<em>Content</em>' containment reference.
 	 * @see #getContent()
 	 * @generated
 	 */
@@ -173,25 +173,25 @@ public interface ObjectWrite {
 	void setOnConflict(ConflictPolicy value);
 
 	/**
-	 * Returns the value of the '<em><b>Precondition</b></em>' attribute.
+	 * Returns the value of the '<em><b>Precondition</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * checked against the existing object before it is replaced; may be null
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Precondition</em>' attribute.
+	 * @return the value of the '<em>Precondition</em>' containment reference.
 	 * @see #setPrecondition(Precondition)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getObjectWrite_Precondition()
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model containment="true"
 	 * @generated
 	 */
 	Precondition getPrecondition();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getPrecondition <em>Precondition</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite#getPrecondition <em>Precondition</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Precondition</em>' attribute.
+	 * @param value the new value of the '<em>Precondition</em>' containment reference.
 	 * @see #getPrecondition()
 	 * @generated
 	 */

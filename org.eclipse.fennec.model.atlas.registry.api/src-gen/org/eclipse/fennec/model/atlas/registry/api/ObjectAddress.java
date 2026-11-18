@@ -120,7 +120,7 @@ public interface ObjectAddress {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * the object id
+	 * the object id. A write may leave it null when the content's class has an ID attribute: the id is then taken from that attribute, and an id given as well must equal it. Content without an ID attribute needs an explicit id
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Object Id</em>' attribute.
 	 * @see #setObjectId(String)

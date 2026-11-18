@@ -13,8 +13,11 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api.impl;
 
+import org.eclipse.emf.common.notify.NotificationChain;
+
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
@@ -108,7 +111,7 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 	protected String stage = STAGE_EDEFAULT;
 
 	/**
-	 * The cached value of the '{@link #getContent() <em>Content</em>}' reference.
+	 * The cached value of the '{@link #getContent() <em>Content</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getContent()
@@ -218,24 +221,14 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 	protected ConflictPolicy onConflict = ON_CONFLICT_EDEFAULT;
 
 	/**
-	 * The default value of the '{@link #getPrecondition() <em>Precondition</em>}' attribute.
+	 * The cached value of the '{@link #getPrecondition() <em>Precondition</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getPrecondition()
 	 * @generated
 	 * @ordered
 	 */
-	protected static final Precondition PRECONDITION_EDEFAULT = null;
-
-	/**
-	 * The cached value of the '{@link #getPrecondition() <em>Precondition</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getPrecondition()
-	 * @generated
-	 * @ordered
-	 */
-	protected Precondition precondition = PRECONDITION_EDEFAULT;
+	protected Precondition precondition;
 
 	/**
 	 * The default value of the '{@link #isLenientVersion() <em>Lenient Version</em>}' attribute.
@@ -351,9 +344,28 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetContent(EPackage newContent, NotificationChain msgs) {
+		EPackage oldContent = content;
+		content = newContent;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setContent(EPackage newContent) {
-		content = newContent;
+		if (newContent != content) {
+			NotificationChain msgs = null;
+			if (content != null)
+				msgs = ((InternalEObject)content).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.PACKAGE_WRITE__CONTENT, null, msgs);
+			if (newContent != null)
+				msgs = ((InternalEObject)newContent).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.PACKAGE_WRITE__CONTENT, null, msgs);
+			msgs = basicSetContent(newContent, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
 	}
 
 	/**
@@ -471,9 +483,28 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetPrecondition(Precondition newPrecondition, NotificationChain msgs) {
+		Precondition oldPrecondition = precondition;
+		precondition = newPrecondition;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setPrecondition(Precondition newPrecondition) {
-		precondition = newPrecondition;
+		if (newPrecondition != precondition) {
+			NotificationChain msgs = null;
+			if (precondition != null)
+				msgs = ((InternalEObject)precondition).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.PACKAGE_WRITE__PRECONDITION, null, msgs);
+			if (newPrecondition != null)
+				msgs = ((InternalEObject)newPrecondition).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.PACKAGE_WRITE__PRECONDITION, null, msgs);
+			msgs = basicSetPrecondition(newPrecondition, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
 	}
 
 	/**
@@ -494,6 +525,22 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 	@Override
 	public void setLenientVersion(boolean newLenientVersion) {
 		lenientVersion = newLenientVersion;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case RegistryApiPackage.PACKAGE_WRITE__CONTENT:
+				return basicSetContent(null, msgs);
+			case RegistryApiPackage.PACKAGE_WRITE__PRECONDITION:
+				return basicSetPrecondition(null, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
 
 	/**
@@ -611,7 +658,7 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 				setOnConflict(ON_CONFLICT_EDEFAULT);
 				return;
 			case RegistryApiPackage.PACKAGE_WRITE__PRECONDITION:
-				setPrecondition(PRECONDITION_EDEFAULT);
+				setPrecondition((Precondition)null);
 				return;
 			case RegistryApiPackage.PACKAGE_WRITE__LENIENT_VERSION:
 				setLenientVersion(LENIENT_VERSION_EDEFAULT);
@@ -647,7 +694,7 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 			case RegistryApiPackage.PACKAGE_WRITE__ON_CONFLICT:
 				return onConflict != ON_CONFLICT_EDEFAULT;
 			case RegistryApiPackage.PACKAGE_WRITE__PRECONDITION:
-				return PRECONDITION_EDEFAULT == null ? precondition != null : !PRECONDITION_EDEFAULT.equals(precondition);
+				return precondition != null;
 			case RegistryApiPackage.PACKAGE_WRITE__LENIENT_VERSION:
 				return lenientVersion != LENIENT_VERSION_EDEFAULT;
 		}
@@ -680,8 +727,6 @@ public class PackageWriteImpl extends MinimalEObjectImpl.Container implements Pa
 		result.append(dcat);
 		result.append(", onConflict: ");
 		result.append(onConflict);
-		result.append(", precondition: ");
-		result.append(precondition);
 		result.append(", lenientVersion: ");
 		result.append(lenientVersion);
 		result.append(')');

@@ -16,10 +16,12 @@ package org.eclipse.fennec.model.atlas.registry.impl;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.emf.common.util.BasicEList;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchHit;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchResult;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
@@ -75,58 +77,58 @@ public class RegistryReaderImpl implements RegistryReader {
 	}
 
 	@Override
-	public List<ObjectMetadata> listAll(String scope, String registry) {
-		return lookup.scope(scope).listAllForRegistry(registry);
+	public EList<ObjectMetadata> listAll(String scope, String registry) {
+		return copies(lookup.scope(scope).listAllForRegistry(registry));
 	}
 
 	@Override
-	public List<ObjectMetadata> listFinal(String scope, String registry) {
-		return lookup.scope(scope).listInFinalStageForRegistry(registry);
+	public EList<ObjectMetadata> listFinal(String scope, String registry) {
+		return copies(lookup.scope(scope).listInFinalStageForRegistry(registry));
 	}
 
 	@Override
-	public List<ObjectMetadata> list(String scope, String registry, String stage) {
-		return lookup.scope(scope).listInStageForRegistry(registry, stage);
+	public EList<ObjectMetadata> list(String scope, String registry, String stage) {
+		return copies(lookup.scope(scope).listInStageForRegistry(registry, stage));
 	}
 
 	@Override
-	public List<ObjectMetadata> listByName(String scope, String registry, String stage, String namePattern) {
-		return lookup.scope(scope).listInStageForRegistryByName(registry, stage, namePattern);
+	public EList<ObjectMetadata> listByName(String scope, String registry, String stage, String namePattern) {
+		return copies(lookup.scope(scope).listInStageForRegistryByName(registry, stage, namePattern));
 	}
 
 	@Override
-	public Optional<ObjectMetadata> metadata(ObjectAddress address) {
-		return Optional.ofNullable(lookup.scope(address.getScope()).getMetadataFromStageForRegistry(address.getRegistry(),
+	public ObjectMetadata metadata(ObjectAddress address) {
+		return copy(lookup.scope(address.getScope()).getMetadataFromStageForRegistry(address.getRegistry(),
 				address.getStage(), address.getObjectId()));
 	}
 
 	@Override
-	public Optional<ObjectMetadata> finalMetadata(String scope, String registry, String objectId) {
-		return Optional.ofNullable(lookup.scope(scope).getMetadataFromFinalStageForRegistry(registry, objectId));
+	public ObjectMetadata finalMetadata(String scope, String registry, String objectId) {
+		return copy(lookup.scope(scope).getMetadataFromFinalStageForRegistry(registry, objectId));
 	}
 
 	@Override
-	public Optional<EObject> content(ObjectAddress address) {
-		return Optional.ofNullable(lookup.scope(address.getScope()).getContentFromStageForRegistry(address.getRegistry(),
-				address.getStage(), address.getObjectId()));
+	public EObject content(ObjectAddress address) {
+		return lookup.scope(address.getScope()).getContentFromStageForRegistry(address.getRegistry(),
+				address.getStage(), address.getObjectId());
 	}
 
 	@Override
-	public Optional<EObject> finalContent(String scope, String registry, String objectId) {
-		return lookup.scope(scope).get(registry, objectId);
+	public EObject finalContent(String scope, String registry, String objectId) {
+		return lookup.scope(scope).get(registry, objectId).orElse(null);
 	}
 
 	@Override
-	public Optional<ObjectMetadata> packageMetadata(PackageAddress address) {
+	public ObjectMetadata packageMetadata(PackageAddress address) {
 		WritableScopeService<EObject> scopeService = lookup.scope(address.getScope());
-		return Optional.ofNullable(ScopeLookup.findByNsUri(scopeService, ScopeLookup.schemaRegistry(scopeService),
+		return copy(ScopeLookup.findByNsUri(scopeService, ScopeLookup.schemaRegistry(scopeService),
 				address.getStage(), address.getNsUri()));
 	}
 
 	@Override
-	public Optional<ObjectMetadata> finalPackageMetadata(String scope, String nsUri) {
+	public ObjectMetadata finalPackageMetadata(String scope, String nsUri) {
 		WritableScopeService<EObject> scopeService = lookup.scope(scope);
-		return Optional.ofNullable(ScopeLookup.findByNsUriInFinalStage(scopeService,
+		return copy(ScopeLookup.findByNsUriInFinalStage(scopeService,
 				ScopeLookup.schemaRegistry(scopeService), nsUri));
 	}
 
@@ -178,8 +180,8 @@ public class RegistryReaderImpl implements RegistryReader {
 			if (scopeService == null) {
 				continue;
 			}
-			ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(hit.registry(), hit.stage(),
-					hit.objectId());
+			ObjectMetadata metadata = copy(scopeService.getMetadataFromStageForRegistry(hit.registry(), hit.stage(),
+					hit.objectId()));
 			if (metadata != null) {
 				if (!scopeName.equals(metadata.getScope())) {
 					metadata.setIsReadOnly(true);
@@ -188,5 +190,17 @@ public class RegistryReaderImpl implements RegistryReader {
 			}
 		}
 		return resolved;
+	}
+
+	/**
+	 * A result's own copy: what the scope service answers may be the instance it caches, which a
+	 * caller must neither change nor take into a result's containment.
+	 */
+	private static ObjectMetadata copy(ObjectMetadata metadata) {
+		return metadata == null ? null : EcoreUtil.copy(metadata);
+	}
+
+	private static EList<ObjectMetadata> copies(List<ObjectMetadata> metadata) {
+		return new BasicEList<>(EcoreUtil.copyAll(metadata));
 	}
 }

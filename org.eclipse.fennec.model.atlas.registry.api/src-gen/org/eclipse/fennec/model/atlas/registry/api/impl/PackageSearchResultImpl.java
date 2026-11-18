@@ -15,13 +15,17 @@ package org.eclipse.fennec.model.atlas.registry.api.impl;
 
 import java.util.Collection;
 
+import org.eclipse.emf.common.notify.NotificationChain;
+
 import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
 import org.eclipse.emf.ecore.util.BasicInternalEList;
+import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
@@ -44,7 +48,7 @@ import org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage;
  */
 public class PackageSearchResultImpl extends MinimalEObjectImpl.Container implements PackageSearchResult {
 	/**
-	 * The cached value of the '{@link #getHits() <em>Hits</em>}' reference list.
+	 * The cached value of the '{@link #getHits() <em>Hits</em>}' containment reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getHits()
@@ -123,6 +127,20 @@ public class PackageSearchResultImpl extends MinimalEObjectImpl.Container implem
 	@Override
 	public void setTotalHits(long newTotalHits) {
 		totalHits = newTotalHits;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case RegistryApiPackage.PACKAGE_SEARCH_RESULT__HITS:
+				return ((InternalEList<?>)getHits()).basicRemove(otherEnd, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
 
 	/**

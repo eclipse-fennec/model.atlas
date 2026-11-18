@@ -16,7 +16,6 @@ package org.eclipse.fennec.model.atlas.registry.api.impl;
 import java.lang.reflect.InvocationTargetException;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import org.eclipse.emf.common.notify.NotificationChain;
 
@@ -137,8 +136,8 @@ public class BatchResultImpl extends MinimalEObjectImpl.Container implements Bat
 	 * @generated
 	 */
 	@Override
-	public Optional<BatchItemResult> firstRefusal() {
-		return getItems().stream().filter(BatchItemResult::isRefused).findFirst();
+	public BatchItemResult firstRefusal() {
+		return getItems().stream().filter(BatchItemResult::isRefused).findFirst().orElse(null);
 	}
 
 	/**

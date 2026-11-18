@@ -95,12 +95,28 @@ public class RegistryApiAdapterFactory extends AdapterFactoryImpl {
 				return createPackageAddressAdapter();
 			}
 			@Override
+			public Adapter casePrecondition(Precondition object) {
+				return createPreconditionAdapter();
+			}
+			@Override
 			public Adapter caseObjectWrite(ObjectWrite object) {
 				return createObjectWriteAdapter();
 			}
 			@Override
+			public Adapter caseObjectBatch(ObjectBatch object) {
+				return createObjectBatchAdapter();
+			}
+			@Override
 			public Adapter casePackageWrite(PackageWrite object) {
 				return createPackageWriteAdapter();
+			}
+			@Override
+			public Adapter casePackageBatch(PackageBatch object) {
+				return createPackageBatchAdapter();
+			}
+			@Override
+			public Adapter casePackagePropertiesUpdate(PackagePropertiesUpdate object) {
+				return createPackagePropertiesUpdateAdapter();
 			}
 			@Override
 			public Adapter casePackageSearch(PackageSearch object) {
@@ -199,6 +215,20 @@ public class RegistryApiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.Precondition <em>Precondition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.Precondition
+	 * @generated
+	 */
+	public Adapter createPreconditionAdapter() {
+		return null;
+	}
+
+	/**
 	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectWrite <em>Object Write</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
@@ -213,6 +243,20 @@ public class RegistryApiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.ObjectBatch <em>Object Batch</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.ObjectBatch
+	 * @generated
+	 */
+	public Adapter createObjectBatchAdapter() {
+		return null;
+	}
+
+	/**
 	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite <em>Package Write</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
@@ -223,6 +267,34 @@ public class RegistryApiAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createPackageWriteAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.PackageBatch <em>Package Batch</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackageBatch
+	 * @generated
+	 */
+	public Adapter createPackageBatchAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate <em>Package Properties Update</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate
+	 * @generated
+	 */
+	public Adapter createPackagePropertiesUpdateAdapter() {
 		return null;
 	}
 

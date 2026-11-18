@@ -15,9 +15,12 @@ package org.eclipse.fennec.model.atlas.registry.api.impl;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.emf.common.notify.NotificationChain;
+
 import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
@@ -96,7 +99,7 @@ public class BatchItemResultImpl extends MinimalEObjectImpl.Container implements
 	protected boolean outcomeESet;
 
 	/**
-	 * The cached value of the '{@link #getMetadata() <em>Metadata</em>}' reference.
+	 * The cached value of the '{@link #getMetadata() <em>Metadata</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getMetadata()
@@ -250,9 +253,28 @@ public class BatchItemResultImpl extends MinimalEObjectImpl.Container implements
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetMetadata(ObjectMetadata newMetadata, NotificationChain msgs) {
+		ObjectMetadata oldMetadata = metadata;
+		metadata = newMetadata;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setMetadata(ObjectMetadata newMetadata) {
-		metadata = newMetadata;
+		if (newMetadata != metadata) {
+			NotificationChain msgs = null;
+			if (metadata != null)
+				msgs = ((InternalEObject)metadata).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.BATCH_ITEM_RESULT__METADATA, null, msgs);
+			if (newMetadata != null)
+				msgs = ((InternalEObject)newMetadata).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.BATCH_ITEM_RESULT__METADATA, null, msgs);
+			msgs = basicSetMetadata(newMetadata, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
 	}
 
 	/**
@@ -325,6 +347,20 @@ public class BatchItemResultImpl extends MinimalEObjectImpl.Container implements
 	@Override
 	public boolean isRefused() {
 		return isSetRefusal();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case RegistryApiPackage.BATCH_ITEM_RESULT__METADATA:
+				return basicSetMetadata(null, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
 
 	/**

@@ -57,7 +57,7 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 	protected ObjectAddress address;
 
 	/**
-	 * The cached value of the '{@link #getContent() <em>Content</em>}' reference.
+	 * The cached value of the '{@link #getContent() <em>Content</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getContent()
@@ -127,24 +127,14 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 	protected ConflictPolicy onConflict = ON_CONFLICT_EDEFAULT;
 
 	/**
-	 * The default value of the '{@link #getPrecondition() <em>Precondition</em>}' attribute.
+	 * The cached value of the '{@link #getPrecondition() <em>Precondition</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getPrecondition()
 	 * @generated
 	 * @ordered
 	 */
-	protected static final Precondition PRECONDITION_EDEFAULT = null;
-
-	/**
-	 * The cached value of the '{@link #getPrecondition() <em>Precondition</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getPrecondition()
-	 * @generated
-	 * @ordered
-	 */
-	protected Precondition precondition = PRECONDITION_EDEFAULT;
+	protected Precondition precondition;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -219,9 +209,28 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetContent(EObject newContent, NotificationChain msgs) {
+		EObject oldContent = content;
+		content = newContent;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setContent(EObject newContent) {
-		content = newContent;
+		if (newContent != content) {
+			NotificationChain msgs = null;
+			if (content != null)
+				msgs = ((InternalEObject)content).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.OBJECT_WRITE__CONTENT, null, msgs);
+			if (newContent != null)
+				msgs = ((InternalEObject)newContent).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.OBJECT_WRITE__CONTENT, null, msgs);
+			msgs = basicSetContent(newContent, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
 	}
 
 	/**
@@ -299,9 +308,28 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetPrecondition(Precondition newPrecondition, NotificationChain msgs) {
+		Precondition oldPrecondition = precondition;
+		precondition = newPrecondition;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setPrecondition(Precondition newPrecondition) {
-		precondition = newPrecondition;
+		if (newPrecondition != precondition) {
+			NotificationChain msgs = null;
+			if (precondition != null)
+				msgs = ((InternalEObject)precondition).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.OBJECT_WRITE__PRECONDITION, null, msgs);
+			if (newPrecondition != null)
+				msgs = ((InternalEObject)newPrecondition).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.OBJECT_WRITE__PRECONDITION, null, msgs);
+			msgs = basicSetPrecondition(newPrecondition, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
 	}
 
 	/**
@@ -314,6 +342,10 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 		switch (featureID) {
 			case RegistryApiPackage.OBJECT_WRITE__ADDRESS:
 				return basicSetAddress(null, msgs);
+			case RegistryApiPackage.OBJECT_WRITE__CONTENT:
+				return basicSetContent(null, msgs);
+			case RegistryApiPackage.OBJECT_WRITE__PRECONDITION:
+				return basicSetPrecondition(null, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -396,7 +428,7 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 				setOnConflict(ON_CONFLICT_EDEFAULT);
 				return;
 			case RegistryApiPackage.OBJECT_WRITE__PRECONDITION:
-				setPrecondition(PRECONDITION_EDEFAULT);
+				setPrecondition((Precondition)null);
 				return;
 		}
 		super.eUnset(featureID);
@@ -421,7 +453,7 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 			case RegistryApiPackage.OBJECT_WRITE__ON_CONFLICT:
 				return onConflict != ON_CONFLICT_EDEFAULT;
 			case RegistryApiPackage.OBJECT_WRITE__PRECONDITION:
-				return PRECONDITION_EDEFAULT == null ? precondition != null : !PRECONDITION_EDEFAULT.equals(precondition);
+				return precondition != null;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -442,8 +474,6 @@ public class ObjectWriteImpl extends MinimalEObjectImpl.Container implements Obj
 		result.append(version);
 		result.append(", onConflict: ");
 		result.append(onConflict);
-		result.append(", precondition: ");
-		result.append(precondition);
 		result.append(')');
 		return result.toString();
 	}

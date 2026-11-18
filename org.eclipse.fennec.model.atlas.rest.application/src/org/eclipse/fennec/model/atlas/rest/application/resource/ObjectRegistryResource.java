@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectBatch;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
@@ -210,7 +211,7 @@ public class ObjectRegistryResource {
         try {
             if (objectId != null) {
                 ObjectMetadata metadata = registryReader
-                        .metadata(RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId)).orElse(null);
+                        .metadata(RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId));
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -310,27 +311,30 @@ public class ObjectRegistryResource {
     }
 
     /**
-     * Write several storage objects at once: every root object of the uploaded resource becomes
-     * one object, stored under its EMF ID attribute or, without one, the id the resource gives it
-     * ({@code xmi:id}). All objects are written, or none.
+     * Write several storage objects at once. The body is an {@link ObjectBatch} document: one
+     * {@link ObjectWrite} per object, which contains the object and names its id (an object whose
+     * class has an ID attribute may leave the id out). Scope, registry and stage come from the
+     * path. All objects are written, or none.
      *
      * @param scopeName    the scope name
      * @param registryName the registry name
      * @param stageName    the stage name
-     * @param onConflict   what to do with an object whose id is already taken
-     * @param resource     the objects, one per root
-     * @return one result per root
+     * @param onConflict   what to do with an object whose id is already taken; overrides the
+     *                     policy of every write when given
+     * @param resource     the {@link ObjectBatch} document
+     * @return one result per write
      */
     @POST
     @Path("/stages/{stageName}/batch")
     @Consumes
     @Produces
-    @Operation(summary = "Write several objects at once", description = "Every root object of the uploaded resource (XMI or JSON) becomes one object of the registry, "
-            + "stored under its EMF ID attribute or, without one, the id the resource gives it (xmi:id). Names and versions are left empty. "
+    @Operation(summary = "Write several objects at once", description = "The body is an ObjectBatch document (XMI or JSON, model http://eclipse.org/fennec/model/atlas/registry/api/1.0.0): "
+            + "one ObjectWrite per object, with the object as its contained content and its id in address/objectId. An object whose class has an ID attribute may leave "
+            + "the id out; an id given as well must equal the attribute's value. Scope, registry and stage are taken from the path; an address naming others is refused. "
             + "All objects are written, or none: every object is checked first, and should a write still be refused, what the batch wrote is undone. "
-            + "The body lists one result per root, in document order.", responses = {
+            + "The response lists one result per write, in document order.", responses = {
                     @ApiResponse(responseCode = "200", description = "All objects written", content = @Content(schema = @Schema(implementation = BatchResponse.class))),
-                    @ApiResponse(responseCode = "400", description = "Empty resource, an object without id, an id used twice, an incompatible type, an unknown onConflict value, scope or registry; nothing written"),
+                    @ApiResponse(responseCode = "400", description = "A body that is not one ObjectBatch, an empty batch, an address outside the path, an object without id, an id used twice, an incompatible type, an unknown onConflict value, scope or registry; nothing written"),
                     @ApiResponse(responseCode = "403", description = "An object is read-only or derived content; nothing written"),
                     @ApiResponse(responseCode = "409", description = "An object already exists and onConflict is FAIL; nothing written"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
@@ -340,20 +344,29 @@ public class ObjectRegistryResource {
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "What to do with an object whose id is already taken: FAIL (default) refuses the batch, OVERWRITE replaces the object, SKIP leaves it alone") @QueryParam("onConflict") String onConflict,
-            @RequestBody(description = "A resource with one root per object", required = true) Resource resource) {
+            @Parameter(description = "What to do with an object whose id is already taken: FAIL refuses the batch, OVERWRITE replaces the object, SKIP leaves it alone. When given, it applies to every write; otherwise each write's onConflict applies (default FAIL)") @QueryParam("onConflict") String onConflict,
+            @RequestBody(description = "An ObjectBatch document", required = true) Resource resource) {
 
         try {
-            ConflictPolicy policy = ResourceSupport.conflictPolicy(onConflict);
-            List<EObject> roots = resource == null ? List.of() : List.copyOf(resource.getContents());
-            if (roots.isEmpty()) {
+            ConflictPolicy policy = onConflict == null ? null : ResourceSupport.conflictPolicy(onConflict);
+            List<EObject> roots = resource == null ? List.of() : resource.getContents();
+            if (roots.size() != 1 || !(roots.get(0) instanceof ObjectBatch batch)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("The body must be one ObjectBatch document").build();
+            }
+            if (batch.getWrites().isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("The batch contains no objects").build();
             }
-            List<ObjectWrite> writes = roots.stream()
-                    .map(root -> RegistryRequests.objectWrite(RegistryRequests.objectAddress(scopeName, registryName, stageName,
-                            ResourceSupport.batchObjectId(root)), root, null, null, policy, null))
-                    .toList();
-            return ResourceSupport.batch(registryWriter.writeObjects(writes), requestContext);
+            for (ObjectWrite write : batch.getWrites()) {
+                String outside = ResourceSupport.placeInPath(write, scopeName, registryName, stageName);
+                if (outside != null) {
+                    return Response.status(Response.Status.BAD_REQUEST).entity(outside).build();
+                }
+                if (policy != null) {
+                    write.setOnConflict(policy);
+                }
+            }
+            return ResourceSupport.batch(registryWriter.writeObjects(batch), requestContext);
         } catch (RegistryAccessException e) {
             return ResourceSupport.refusal(e);
         } catch (WebApplicationException e) {
@@ -412,8 +425,8 @@ public class ObjectRegistryResource {
 
         try {
             ObjectAddress address = RegistryRequests.objectAddress(scopeName, registryName, stageName, objectId);
-            ObjectMetadata contentMetadata = registryReader.metadata(address).orElse(null);
-            EObject eObject = registryReader.content(address).orElse(null);
+            ObjectMetadata contentMetadata = registryReader.metadata(address);
+            EObject eObject = registryReader.content(address);
             if (eObject == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -485,13 +498,12 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
 
         try {
-            ObjectMetadata contentMetadata = registryReader.finalMetadata(scopeName, registryName, objectId)
-                    .orElse(null);
-            Optional<EObject> optionalContent = registryReader.finalContent(scopeName, registryName, objectId);
-            if (optionalContent.isEmpty()) {
+            ObjectMetadata contentMetadata = registryReader.finalMetadata(scopeName, registryName, objectId);
+            EObject content = registryReader.finalContent(scopeName, registryName, objectId);
+            if (content == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(optionalContent.get())
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(content)
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);

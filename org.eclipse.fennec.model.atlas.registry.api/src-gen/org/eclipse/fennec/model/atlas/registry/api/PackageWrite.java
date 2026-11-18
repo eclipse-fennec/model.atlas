@@ -23,7 +23,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-user-doc -->
  *
  * <!-- begin-model-doc -->
- * A request to store a package. The package's identity is its nsURI.
+ * A request to store a package. The package's identity is its nsURI. It contains everything the write needs, so it can be sent to a remote writer as it is.
  * <!-- end-model-doc -->
  *
  * <p>
@@ -125,25 +125,25 @@ public interface PackageWrite {
 	void setStage(String value);
 
 	/**
-	 * Returns the value of the '<em><b>Content</b></em>' reference.
+	 * Returns the value of the '<em><b>Content</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * the package. Referenced, not contained
+	 * the package. Contained: setting it takes the package out of its resource, so a caller that keeps working with the package passes a copy
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Content</em>' reference.
+	 * @return the value of the '<em>Content</em>' containment reference.
 	 * @see #setContent(EPackage)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getPackageWrite_Content()
-	 * @model resolveProxies="false"
+	 * @model containment="true"
 	 * @generated
 	 */
 	EPackage getContent();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getContent <em>Content</em>}' reference.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getContent <em>Content</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Content</em>' reference.
+	 * @param value the new value of the '<em>Content</em>' containment reference.
 	 * @see #getContent()
 	 * @generated
 	 */
@@ -278,25 +278,25 @@ public interface PackageWrite {
 	void setOnConflict(ConflictPolicy value);
 
 	/**
-	 * Returns the value of the '<em><b>Precondition</b></em>' attribute.
+	 * Returns the value of the '<em><b>Precondition</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * checked against the existing package before it is replaced; may be null
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Precondition</em>' attribute.
+	 * @return the value of the '<em>Precondition</em>' containment reference.
 	 * @see #setPrecondition(Precondition)
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getPackageWrite_Precondition()
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model containment="true"
 	 * @generated
 	 */
 	Precondition getPrecondition();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getPrecondition <em>Precondition</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.registry.api.PackageWrite#getPrecondition <em>Precondition</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Precondition</em>' attribute.
+	 * @param value the new value of the '<em>Precondition</em>' containment reference.
 	 * @see #getPrecondition()
 	 * @generated
 	 */

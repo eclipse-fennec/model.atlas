@@ -13,8 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api;
 
-import java.util.Optional;
-
 import org.eclipse.emf.common.util.EList;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -86,11 +84,11 @@ public interface BatchResult {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * @return the first refused item, if the batch was not applied
+	 * @return the first refused item, or null if no item was refused
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.registry.api.Optional&lt;org.eclipse.fennec.model.atlas.registry.api.BatchItemResult&gt;"
+	 * @model
 	 * @generated
 	 */
-	Optional<BatchItemResult> firstRefusal();
+	BatchItemResult firstRefusal();
 
 } // BatchResult

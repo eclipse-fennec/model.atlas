@@ -184,7 +184,7 @@ public class SchemaPackagesResource {
             if (nsUri != null) {
                 // Stage-free final-stage metadata for one package (hierarchy-aware), mirroring the
                 // stage-explicit listing's nsUri branch — used by the client's resolve() (P5-7).
-                ObjectMetadata metadata = registryReader.finalPackageMetadata(scopeName, nsUri).orElse(null);
+                ObjectMetadata metadata = registryReader.finalPackageMetadata(scopeName, nsUri);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -242,8 +242,7 @@ public class SchemaPackagesResource {
 
         try {
             if (nsUri != null) {
-                ObjectMetadata metadata = registryReader.packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri))
-                        .orElse(null);
+                ObjectMetadata metadata = registryReader.packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri));
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -395,7 +394,7 @@ public class SchemaPackagesResource {
                 writes.add(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage, null, null, null, dcat, policy,
                         null, false));
             }
-            return ResourceSupport.batch(registryWriter.writePackages(writes), requestContext);
+            return ResourceSupport.batch(registryWriter.writePackages(RegistryRequests.packageBatch(writes)), requestContext);
         } catch (RegistryAccessException e) {
             return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
@@ -438,7 +437,7 @@ public class SchemaPackagesResource {
             requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
             ObjectMetadata contentMetadata = registryReader
-                    .packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri)).orElse(null);
+                    .packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri));
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -447,7 +446,7 @@ public class SchemaPackagesResource {
                 return mismatch;
             }
             EPackage ePackage = (EPackage) registryReader.content(RegistryRequests.objectAddress(scopeName,
-                    registryReader.schemaRegistry(scopeName), stageName, contentMetadata.getObjectId())).orElse(null);
+                    registryReader.schemaRegistry(scopeName), stageName, contentMetadata.getObjectId()));
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -496,7 +495,7 @@ public class SchemaPackagesResource {
         try {
             requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
-            ObjectMetadata contentMetadata = registryReader.finalPackageMetadata(scopeName, nsUri).orElse(null);
+            ObjectMetadata contentMetadata = registryReader.finalPackageMetadata(scopeName, nsUri);
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -504,12 +503,12 @@ public class SchemaPackagesResource {
             if (mismatch != null) {
                 return mismatch;
             }
-            Optional<EObject> ePackageContent = registryReader.finalContent(scopeName,
+            EObject ePackageContent = registryReader.finalContent(scopeName,
                     registryReader.schemaRegistry(scopeName), contentMetadata.getObjectId());
-            if (ePackageContent.isEmpty()) {
+            if (ePackageContent == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent.get())
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent)
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
@@ -666,11 +665,11 @@ public class SchemaPackagesResource {
                         .entity("Nothing to change: pass at least one editable field, e.g. ?dcat=true").build();
             }
 
-            WriteResult result = registryWriter.updatePackageProperties(
+            WriteResult result = registryWriter.updatePackageProperties(RegistryRequests.propertiesUpdate(
                     RegistryRequests.packageAddress(scopeName, stageName, nsUri),
                     Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.toString(dcat)),
                     // metadata state, not content: the precondition belongs over the metadata validator
-                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA)));
             if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))

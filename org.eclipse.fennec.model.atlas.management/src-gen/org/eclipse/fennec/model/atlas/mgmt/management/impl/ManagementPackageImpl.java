@@ -294,7 +294,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ObjectType() {
+	public EAttribute getObjectMetadata_MetadataHash() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(4);
 	}
 
@@ -304,7 +304,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ReviewUser() {
+	public EAttribute getObjectMetadata_ObjectType() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(5);
 	}
 
@@ -314,7 +314,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ReviewTime() {
+	public EAttribute getObjectMetadata_ReviewUser() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(6);
 	}
 
@@ -324,7 +324,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ReviewReason() {
+	public EAttribute getObjectMetadata_ReviewTime() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(7);
 	}
 
@@ -334,7 +334,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_GenerationTriggerFingerprint() {
+	public EAttribute getObjectMetadata_ReviewReason() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(8);
 	}
 
@@ -344,7 +344,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ComplianceCheckTime() {
+	public EAttribute getObjectMetadata_GenerationTriggerFingerprint() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(9);
 	}
 
@@ -354,7 +354,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_ComplianceStatus() {
+	public EAttribute getObjectMetadata_ComplianceCheckTime() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(10);
 	}
 
@@ -364,7 +364,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_GovernanceDocumentationId() {
+	public EAttribute getObjectMetadata_ComplianceStatus() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(11);
 	}
 
@@ -374,8 +374,18 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectMetadata_GovernanceDocumentationId() {
+		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getObjectMetadata_Properties() {
-		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(12);
+		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(13);
 	}
 
 	/**
@@ -385,16 +395,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 */
 	@Override
 	public EAttribute getObjectMetadata_LastChangeUser() {
-		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(13);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EAttribute getObjectMetadata_LastChangeTime() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(14);
 	}
 
@@ -404,7 +404,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Status() {
+	public EAttribute getObjectMetadata_LastChangeTime() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(15);
 	}
 
@@ -414,7 +414,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Version() {
+	public EAttribute getObjectMetadata_Status() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(16);
 	}
 
@@ -424,8 +424,18 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectMetadata_Version() {
+		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(17);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getObjectMetadata_ObjectRef() {
-		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(17);
+		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(18);
 	}
 
 	/**
@@ -435,16 +445,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 */
 	@Override
 	public EAttribute getObjectMetadata_ObjectId() {
-		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(18);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EAttribute getObjectMetadata_ObjectName() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(19);
 	}
 
@@ -454,7 +454,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Stage() {
+	public EAttribute getObjectMetadata_ObjectName() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(20);
 	}
 
@@ -464,7 +464,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_LastChangeReason() {
+	public EAttribute getObjectMetadata_Stage() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(21);
 	}
 
@@ -474,7 +474,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Scope() {
+	public EAttribute getObjectMetadata_LastChangeReason() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(22);
 	}
 
@@ -484,7 +484,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_IsReadOnly() {
+	public EAttribute getObjectMetadata_Scope() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(23);
 	}
 
@@ -494,7 +494,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Registry() {
+	public EAttribute getObjectMetadata_IsReadOnly() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(24);
 	}
 
@@ -504,7 +504,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Fingerprint() {
+	public EAttribute getObjectMetadata_Registry() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(25);
 	}
 
@@ -514,8 +514,18 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectMetadata_Fingerprint() {
+		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(26);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getObjectMetadata_Diagnostics() {
-		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(26);
+		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(27);
 	}
 
 	/**
@@ -1162,6 +1172,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__UPLOAD_TIME);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__SOURCE_CHANNEL);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__CONTENT_HASH);
+		createEAttribute(objectMetadataEClass, OBJECT_METADATA__METADATA_HASH);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__OBJECT_TYPE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__REVIEW_USER);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__REVIEW_TIME);
@@ -1296,6 +1307,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectMetadata_UploadTime(), this.getInstant(), "uploadTime", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_SourceChannel(), ecorePackage.getEString(), "sourceChannel", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ContentHash(), ecorePackage.getEString(), "contentHash", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectMetadata_MetadataHash(), ecorePackage.getEString(), "metadataHash", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ObjectType(), ecorePackage.getEString(), "objectType", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ReviewUser(), ecorePackage.getEString(), "reviewUser", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ReviewTime(), this.getInstant(), "reviewTime", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1481,6 +1493,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "SHA-256 hash of XMI content"
+		   });
+		addAnnotation
+		  (getObjectMetadata_MetadataHash(),
+		   source,
+		   new String[] {
+			   "documentation", "SHA-256 hash of the metadata state a client can observe: content hash, version, status, last change time and diagnostics. Recomputed whenever the metadata is stored; a client compares it to notice a change and sends it back to make a write conditional on the state it has seen."
 		   });
 		addAnnotation
 		  (getObjectMetadata_ObjectType(),

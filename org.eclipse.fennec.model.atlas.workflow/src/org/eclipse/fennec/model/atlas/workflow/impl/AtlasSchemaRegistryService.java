@@ -37,6 +37,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
+import org.eclipse.fennec.model.atlas.mgmt.storage.MetadataHash;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -483,7 +484,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		metadata.setVersion(versionOf(ePackage, shipping));
 		metadata.setContentHash(AbstractEObjectStorageService.computeContentHash(ePackage));
 		metadata.setFingerprint(FingerprintHelper.fingerprint(ePackage));
-		return metadata;
+		return MetadataHash.update(metadata);
 	}
 
 	/**

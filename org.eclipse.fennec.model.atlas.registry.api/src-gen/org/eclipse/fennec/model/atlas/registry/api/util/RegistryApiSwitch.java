@@ -101,15 +101,39 @@ public class RegistryApiSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case RegistryApiPackage.PRECONDITION: {
+				Precondition precondition = (Precondition)theEObject;
+				T result = casePrecondition(precondition);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			case RegistryApiPackage.OBJECT_WRITE: {
 				ObjectWrite objectWrite = (ObjectWrite)theEObject;
 				T result = caseObjectWrite(objectWrite);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case RegistryApiPackage.OBJECT_BATCH: {
+				ObjectBatch objectBatch = (ObjectBatch)theEObject;
+				T result = caseObjectBatch(objectBatch);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			case RegistryApiPackage.PACKAGE_WRITE: {
 				PackageWrite packageWrite = (PackageWrite)theEObject;
 				T result = casePackageWrite(packageWrite);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case RegistryApiPackage.PACKAGE_BATCH: {
+				PackageBatch packageBatch = (PackageBatch)theEObject;
+				T result = casePackageBatch(packageBatch);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case RegistryApiPackage.PACKAGE_PROPERTIES_UPDATE: {
+				PackagePropertiesUpdate packagePropertiesUpdate = (PackagePropertiesUpdate)theEObject;
+				T result = casePackagePropertiesUpdate(packagePropertiesUpdate);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -208,6 +232,21 @@ public class RegistryApiSwitch<T> extends Switch<T> {
 	}
 
 	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Precondition</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Precondition</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T casePrecondition(Precondition object) {
+		return null;
+	}
+
+	/**
 	 * Returns the result of interpreting the object as an instance of '<em>Object Write</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
@@ -223,6 +262,21 @@ public class RegistryApiSwitch<T> extends Switch<T> {
 	}
 
 	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Object Batch</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Object Batch</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseObjectBatch(ObjectBatch object) {
+		return null;
+	}
+
+	/**
 	 * Returns the result of interpreting the object as an instance of '<em>Package Write</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
@@ -234,6 +288,36 @@ public class RegistryApiSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T casePackageWrite(PackageWrite object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Package Batch</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Package Batch</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T casePackageBatch(PackageBatch object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Package Properties Update</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Package Properties Update</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T casePackagePropertiesUpdate(PackagePropertiesUpdate object) {
 		return null;
 	}
 

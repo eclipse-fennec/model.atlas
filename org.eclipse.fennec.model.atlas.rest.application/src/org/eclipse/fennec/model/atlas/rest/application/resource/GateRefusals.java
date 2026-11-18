@@ -107,8 +107,7 @@ final class GateRefusals {
         }
         try {
             return registryReader
-                    .metadata(RegistryRequests.objectAddress(scope, refusal.registry(), refusal.stage(), refusal.objectId()))
-                    .orElse(null);
+                    .metadata(RegistryRequests.objectAddress(scope, refusal.registry(), refusal.stage(), refusal.objectId()));
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, String.format(
                     "A stage gate refused %s in (%s, %s, %s), but its metadata could not be re-read for the response body",

@@ -13,7 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api.impl;
 
+import org.eclipse.emf.common.notify.NotificationChain;
+
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
@@ -59,7 +62,7 @@ public class WriteResultImpl extends MinimalEObjectImpl.Container implements Wri
 	protected WriteOutcome outcome = OUTCOME_EDEFAULT;
 
 	/**
-	 * The cached value of the '{@link #getMetadata() <em>Metadata</em>}' reference.
+	 * The cached value of the '{@link #getMetadata() <em>Metadata</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getMetadata()
@@ -122,9 +125,42 @@ public class WriteResultImpl extends MinimalEObjectImpl.Container implements Wri
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public NotificationChain basicSetMetadata(ObjectMetadata newMetadata, NotificationChain msgs) {
+		ObjectMetadata oldMetadata = metadata;
+		metadata = newMetadata;
+		return msgs;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	@Override
 	public void setMetadata(ObjectMetadata newMetadata) {
-		metadata = newMetadata;
+		if (newMetadata != metadata) {
+			NotificationChain msgs = null;
+			if (metadata != null)
+				msgs = ((InternalEObject)metadata).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.WRITE_RESULT__METADATA, null, msgs);
+			if (newMetadata != null)
+				msgs = ((InternalEObject)newMetadata).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - RegistryApiPackage.WRITE_RESULT__METADATA, null, msgs);
+			msgs = basicSetMetadata(newMetadata, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case RegistryApiPackage.WRITE_RESULT__METADATA:
+				return basicSetMetadata(null, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
 
 	/**

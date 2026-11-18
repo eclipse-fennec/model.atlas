@@ -12,6 +12,8 @@ Bundle-Description: The single entry point through which external clients (the R
 -buildpath: \
 	org.osgi.annotation.versioning;version=latest,\
 	org.osgi.annotation.bundle;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest,\
 	org.eclipse.fennec.model.atlas.management;version=project
 
 src=${^src},src-gen

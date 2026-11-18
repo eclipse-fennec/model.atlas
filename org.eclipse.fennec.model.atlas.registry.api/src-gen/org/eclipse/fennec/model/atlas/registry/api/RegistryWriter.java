@@ -13,9 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api;
 
-import java.util.List;
-import java.util.Map;
-
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -27,6 +24,8 @@ import org.osgi.annotation.versioning.ProviderType;
  * Changes registry content on behalf of an external client (issue #386).
  * 
  * Every operation applies the rules a client is held to, in the order the REST API has always applied them: the target is resolved, the content's type is checked (never derived content, always a root type of the registry), the existing object is looked up, its read-only state and the caller's Precondition are checked, and only then is the workflow asked to write. Package operations additionally keep the package search index in line with what was written.
+ * 
+ * Every call is atomic, and its requests and results are self-contained: a request contains its content, a result contains its own copies of the metadata. Nothing a call takes or returns refers to objects outside it, so the service can be offered remotely.
  * 
  * Operations are synchronous. Refusals raise RegistryAccessException; the stage machinery's own refusals (StagePolicyException, StageOccupiedException, StageGateRefusedException) and a malformed stage (IllegalArgumentException) propagate unwrapped. Anything else is a failure of the server, not of the request.
  * <!-- end-model-doc -->
@@ -74,7 +73,7 @@ public interface RegistryWriter {
 	 * @param precondition checked against the object before the operation; may be null
 	 * @return DELETED or NOT_FOUND
 	 * <!-- end-model-doc -->
-	 * @model preconditionDataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model
 	 * @generated
 	 */
 	WriteResult deleteObject(ObjectAddress address, boolean force, Precondition precondition);
@@ -90,7 +89,7 @@ public interface RegistryWriter {
 	 * @param precondition checked against the object before the operation; may be null
 	 * @return TRANSITIONED, ALREADY_IN_TARGET or NOT_FOUND
 	 * <!-- end-model-doc -->
-	 * @model preconditionDataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model
 	 * @generated
 	 */
 	WriteResult transitionObject(ObjectAddress address, String targetStage, boolean overwrite, Precondition precondition);
@@ -126,15 +125,13 @@ public interface RegistryWriter {
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * Changes metadata properties of a package without re-uploading it. Which properties a client may edit is the front end's decision; this operation only refuses inherited and read-only packages.
-	 * @param address the package
-	 * @param properties the properties to set
-	 * @param precondition checked against the object before the operation; may be null
+	 * @param update the package, the properties to set and the precondition
 	 * @return UPDATED or NOT_FOUND
 	 * <!-- end-model-doc -->
-	 * @model propertiesDataType="org.eclipse.fennec.model.atlas.registry.api.Map&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EString&gt;" preconditionDataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model
 	 * @generated
 	 */
-	WriteResult updatePackageProperties(PackageAddress address, Map<String, String> properties, Precondition precondition);
+	WriteResult updatePackageProperties(PackagePropertiesUpdate update);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -146,7 +143,7 @@ public interface RegistryWriter {
 	 * @param precondition checked against the object before the operation; may be null
 	 * @return DELETED or NOT_FOUND
 	 * <!-- end-model-doc -->
-	 * @model preconditionDataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model
 	 * @generated
 	 */
 	WriteResult deletePackage(PackageAddress address, boolean force, Precondition precondition);
@@ -164,7 +161,7 @@ public interface RegistryWriter {
 	 * @param precondition checked against the object before the operation; may be null
 	 * @return TRANSITIONED, ALREADY_IN_TARGET or NOT_FOUND
 	 * <!-- end-model-doc -->
-	 * @model preconditionDataType="org.eclipse.fennec.model.atlas.registry.api.Precondition"
+	 * @model
 	 * @generated
 	 */
 	WriteResult transitionPackage(String scope, String stage, String idOrNsUri, String targetStage, boolean overwrite, Precondition precondition);
@@ -175,26 +172,26 @@ public interface RegistryWriter {
 	 * <!-- begin-model-doc -->
 	 * Writes several instances as one unit: all of them, or none.
 	 * 
-	 * Every item is first checked as createObject would check it; an item without an objectId, or whose address occurs twice in the batch, is refused as INVALID. If any item is refused, nothing is written and every refusal is reported. Otherwise the items are written in order. Content an OVERWRITE item would replace by equal content is left alone and reported UNCHANGED. Should a write still be refused, everything the batch wrote so far is undone (created instances are deleted, replaced ones get their previous content back) and the batch is reported as not applied. A failure that is not a refusal is rethrown once the batch has been undone.
-	 * @param writes the instances, in the order they are written
+	 * Every item is first checked as createObject would check it; an item without an objectId (given or from an ID attribute), or whose address occurs twice in the batch, is refused as INVALID. If any item is refused, nothing is written and every refusal is reported. Otherwise the items are written in order. Content an OVERWRITE item would replace by equal content is left alone and reported UNCHANGED. Should a write still be refused, everything the batch wrote so far is undone (created instances are deleted, replaced ones get their previous content back) and the batch is reported as not applied. A failure that is not a refusal is rethrown once the batch has been undone.
+	 * @param batch the instances, in the order they are written
 	 * @return one result per item
 	 * <!-- end-model-doc -->
-	 * @model writesDataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.registry.api.ObjectWrite&gt;" writesMany="false"
+	 * @model
 	 * @generated
 	 */
-	BatchResult writeObjects(List<ObjectWrite> writes);
+	BatchResult writeObjects(ObjectBatch batch);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * Writes several packages as one unit: all of them, or none. Packages are matched by nsURI; otherwise the rules of writeObjects apply, each item checked as createPackage would check it.
-	 * @param writes the packages, in the order they are written
+	 * @param batch the packages, in the order they are written
 	 * @return one result per item, identified by nsURI
 	 * <!-- end-model-doc -->
-	 * @model writesDataType="org.eclipse.fennec.model.atlas.registry.api.List&lt;org.eclipse.fennec.model.atlas.registry.api.PackageWrite&gt;" writesMany="false"
+	 * @model
 	 * @generated
 	 */
-	BatchResult writePackages(List<PackageWrite> writes);
+	BatchResult writePackages(PackageBatch batch);
 
 } // RegistryWriter

@@ -13,15 +13,9 @@
  */
 package org.eclipse.fennec.model.atlas.registry.api.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EEnum;
-import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
@@ -34,12 +28,16 @@ import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
 import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectBatch;
 import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.PackageAddress;
+import org.eclipse.fennec.model.atlas.registry.api.PackageBatch;
+import org.eclipse.fennec.model.atlas.registry.api.PackagePropertiesUpdate;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
 import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
 import org.eclipse.fennec.model.atlas.registry.api.PackageWrite;
 import org.eclipse.fennec.model.atlas.registry.api.Precondition;
+import org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget;
 import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryApiFactory;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage;
@@ -88,6 +86,13 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	private EClass preconditionEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	private EClass objectWriteEClass = null;
 
 	/**
@@ -95,7 +100,28 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	private EClass objectBatchEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	private EClass packageWriteEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass packageBatchEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass packagePropertiesUpdateEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -158,28 +184,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EDataType preconditionEDataType = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EDataType listEDataType = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EDataType optionalEDataType = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EDataType mapEDataType = null;
+	private EEnum preconditionTargetEEnum = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -320,7 +325,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryWriter__UpdatePackageProperties__PackageAddress_Map_Precondition() {
+	public EOperation getRegistryWriter__UpdatePackageProperties__PackagePropertiesUpdate() {
 		return registryWriterEClass.getEOperations().get(6);
 	}
 
@@ -350,7 +355,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryWriter__WriteObjects__List() {
+	public EOperation getRegistryWriter__WriteObjects__ObjectBatch() {
 		return registryWriterEClass.getEOperations().get(9);
 	}
 
@@ -360,7 +365,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryWriter__WritePackages__List() {
+	public EOperation getRegistryWriter__WritePackages__PackageBatch() {
 		return registryWriterEClass.getEOperations().get(10);
 	}
 
@@ -590,6 +595,46 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
+	public EClass getPrecondition() {
+		return preconditionEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getPrecondition_Expected() {
+		return (EAttribute)preconditionEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getPrecondition_Target() {
+		return (EAttribute)preconditionEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getPrecondition__IsSatisfiedBy__ObjectMetadata() {
+		return preconditionEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getObjectWrite() {
 		return objectWriteEClass;
 	}
@@ -650,8 +695,28 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectWrite_Precondition() {
-		return (EAttribute)objectWriteEClass.getEStructuralFeatures().get(5);
+	public EReference getObjectWrite_Precondition() {
+		return (EReference)objectWriteEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getObjectBatch() {
+		return objectBatchEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getObjectBatch_Writes() {
+		return (EReference)objectBatchEClass.getEStructuralFeatures().get(0);
 	}
 
 	/**
@@ -760,8 +825,8 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EAttribute getPackageWrite_Precondition() {
-		return (EAttribute)packageWriteEClass.getEStructuralFeatures().get(9);
+	public EReference getPackageWrite_Precondition() {
+		return (EReference)packageWriteEClass.getEStructuralFeatures().get(9);
 	}
 
 	/**
@@ -772,6 +837,66 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	@Override
 	public EAttribute getPackageWrite_LenientVersion() {
 		return (EAttribute)packageWriteEClass.getEStructuralFeatures().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getPackageBatch() {
+		return packageBatchEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getPackageBatch_Writes() {
+		return (EReference)packageBatchEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getPackagePropertiesUpdate() {
+		return packagePropertiesUpdateEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getPackagePropertiesUpdate_Address() {
+		return (EReference)packagePropertiesUpdateEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getPackagePropertiesUpdate_Properties() {
+		return (EReference)packagePropertiesUpdateEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getPackagePropertiesUpdate_Precondition() {
+		return (EReference)packagePropertiesUpdateEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -1100,38 +1225,8 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 	 * @generated
 	 */
 	@Override
-	public EDataType getPrecondition() {
-		return preconditionEDataType;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EDataType getList() {
-		return listEDataType;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EDataType getOptional() {
-		return optionalEDataType;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EDataType getMap() {
-		return mapEDataType;
+	public EEnum getPreconditionTarget() {
+		return preconditionTargetEEnum;
 	}
 
 	/**
@@ -1170,11 +1265,11 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		createEOperation(registryWriterEClass, REGISTRY_WRITER___TRANSITION_OBJECT__OBJECTADDRESS_STRING_BOOLEAN_PRECONDITION);
 		createEOperation(registryWriterEClass, REGISTRY_WRITER___CREATE_PACKAGE__PACKAGEWRITE);
 		createEOperation(registryWriterEClass, REGISTRY_WRITER___UPDATE_PACKAGE__PACKAGEWRITE);
-		createEOperation(registryWriterEClass, REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEADDRESS_MAP_PRECONDITION);
+		createEOperation(registryWriterEClass, REGISTRY_WRITER___UPDATE_PACKAGE_PROPERTIES__PACKAGEPROPERTIESUPDATE);
 		createEOperation(registryWriterEClass, REGISTRY_WRITER___DELETE_PACKAGE__PACKAGEADDRESS_BOOLEAN_PRECONDITION);
 		createEOperation(registryWriterEClass, REGISTRY_WRITER___TRANSITION_PACKAGE__STRING_STRING_STRING_STRING_BOOLEAN_PRECONDITION);
-		createEOperation(registryWriterEClass, REGISTRY_WRITER___WRITE_OBJECTS__LIST);
-		createEOperation(registryWriterEClass, REGISTRY_WRITER___WRITE_PACKAGES__LIST);
+		createEOperation(registryWriterEClass, REGISTRY_WRITER___WRITE_OBJECTS__OBJECTBATCH);
+		createEOperation(registryWriterEClass, REGISTRY_WRITER___WRITE_PACKAGES__PACKAGEBATCH);
 
 		registryReaderEClass = createEClass(REGISTRY_READER);
 		createEOperation(registryReaderEClass, REGISTRY_READER___SCHEMA_REGISTRY__STRING);
@@ -1201,13 +1296,21 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		createEAttribute(packageAddressEClass, PACKAGE_ADDRESS__STAGE);
 		createEAttribute(packageAddressEClass, PACKAGE_ADDRESS__NS_URI);
 
+		preconditionEClass = createEClass(PRECONDITION);
+		createEAttribute(preconditionEClass, PRECONDITION__EXPECTED);
+		createEAttribute(preconditionEClass, PRECONDITION__TARGET);
+		createEOperation(preconditionEClass, PRECONDITION___IS_SATISFIED_BY__OBJECTMETADATA);
+
 		objectWriteEClass = createEClass(OBJECT_WRITE);
 		createEReference(objectWriteEClass, OBJECT_WRITE__ADDRESS);
 		createEReference(objectWriteEClass, OBJECT_WRITE__CONTENT);
 		createEAttribute(objectWriteEClass, OBJECT_WRITE__NAME);
 		createEAttribute(objectWriteEClass, OBJECT_WRITE__VERSION);
 		createEAttribute(objectWriteEClass, OBJECT_WRITE__ON_CONFLICT);
-		createEAttribute(objectWriteEClass, OBJECT_WRITE__PRECONDITION);
+		createEReference(objectWriteEClass, OBJECT_WRITE__PRECONDITION);
+
+		objectBatchEClass = createEClass(OBJECT_BATCH);
+		createEReference(objectBatchEClass, OBJECT_BATCH__WRITES);
 
 		packageWriteEClass = createEClass(PACKAGE_WRITE);
 		createEAttribute(packageWriteEClass, PACKAGE_WRITE__SCOPE);
@@ -1219,8 +1322,16 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		createEAttribute(packageWriteEClass, PACKAGE_WRITE__VERSION);
 		createEAttribute(packageWriteEClass, PACKAGE_WRITE__DCAT);
 		createEAttribute(packageWriteEClass, PACKAGE_WRITE__ON_CONFLICT);
-		createEAttribute(packageWriteEClass, PACKAGE_WRITE__PRECONDITION);
+		createEReference(packageWriteEClass, PACKAGE_WRITE__PRECONDITION);
 		createEAttribute(packageWriteEClass, PACKAGE_WRITE__LENIENT_VERSION);
+
+		packageBatchEClass = createEClass(PACKAGE_BATCH);
+		createEReference(packageBatchEClass, PACKAGE_BATCH__WRITES);
+
+		packagePropertiesUpdateEClass = createEClass(PACKAGE_PROPERTIES_UPDATE);
+		createEReference(packagePropertiesUpdateEClass, PACKAGE_PROPERTIES_UPDATE__ADDRESS);
+		createEReference(packagePropertiesUpdateEClass, PACKAGE_PROPERTIES_UPDATE__PROPERTIES);
+		createEReference(packagePropertiesUpdateEClass, PACKAGE_PROPERTIES_UPDATE__PRECONDITION);
 
 		packageSearchEClass = createEClass(PACKAGE_SEARCH);
 		createEAttribute(packageSearchEClass, PACKAGE_SEARCH__STAGE);
@@ -1260,12 +1371,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		conflictPolicyEEnum = createEEnum(CONFLICT_POLICY);
 		writeOutcomeEEnum = createEEnum(WRITE_OUTCOME);
 		refusalReasonEEnum = createEEnum(REFUSAL_REASON);
-
-		// Create data types
-		preconditionEDataType = createEDataType(PRECONDITION);
-		listEDataType = createEDataType(LIST);
-		optionalEDataType = createEDataType(OPTIONAL);
-		mapEDataType = createEDataType(MAP);
+		preconditionTargetEEnum = createEEnum(PRECONDITION_TARGET);
 	}
 
 	/**
@@ -1295,10 +1401,6 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		ManagementPackage theManagementPackage = (ManagementPackage)EPackage.Registry.INSTANCE.getEPackage(ManagementPackage.eNS_URI);
 
 		// Create type parameters
-		addETypeParameter(listEDataType, "T");
-		addETypeParameter(optionalEDataType, "T");
-		addETypeParameter(mapEDataType, "K");
-		addETypeParameter(mapEDataType, "V");
 
 		// Set bounds for type parameters
 
@@ -1330,15 +1432,8 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		op = initEOperation(getRegistryWriter__UpdatePackage__PackageWrite(), this.getWriteResult(), "updatePackage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getPackageWrite(), "write", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		op = initEOperation(getRegistryWriter__UpdatePackageProperties__PackageAddress_Map_Precondition(), this.getWriteResult(), "updatePackageProperties", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, this.getPackageAddress(), "address", 0, 1, IS_UNIQUE, IS_ORDERED);
-		EGenericType g1 = createEGenericType(this.getMap());
-		EGenericType g2 = createEGenericType(ecorePackage.getEString());
-		g1.getETypeArguments().add(g2);
-		g2 = createEGenericType(ecorePackage.getEString());
-		g1.getETypeArguments().add(g2);
-		addEParameter(op, g1, "properties", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, this.getPrecondition(), "precondition", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryWriter__UpdatePackageProperties__PackagePropertiesUpdate(), this.getWriteResult(), "updatePackageProperties", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, this.getPackagePropertiesUpdate(), "update", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getRegistryWriter__DeletePackage__PackageAddress_boolean_Precondition(), this.getWriteResult(), "deletePackage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getPackageAddress(), "address", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -1353,104 +1448,58 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		addEParameter(op, ecorePackage.getEBoolean(), "overwrite", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getPrecondition(), "precondition", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		op = initEOperation(getRegistryWriter__WriteObjects__List(), this.getBatchResult(), "writeObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(this.getObjectWrite());
-		g1.getETypeArguments().add(g2);
-		addEParameter(op, g1, "writes", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryWriter__WriteObjects__ObjectBatch(), this.getBatchResult(), "writeObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, this.getObjectBatch(), "batch", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		op = initEOperation(getRegistryWriter__WritePackages__List(), this.getBatchResult(), "writePackages", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(this.getPackageWrite());
-		g1.getETypeArguments().add(g2);
-		addEParameter(op, g1, "writes", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryWriter__WritePackages__PackageBatch(), this.getBatchResult(), "writePackages", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, this.getPackageBatch(), "batch", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEClass(registryReaderEClass, RegistryReader.class, "RegistryReader", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		op = initEOperation(getRegistryReader__SchemaRegistry__String(), ecorePackage.getEString(), "schemaRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		op = initEOperation(getRegistryReader__ListAll__String_String(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__ListAll__String_String(), theManagementPackage.getObjectMetadata(), "listAll", 0, -1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__ListFinal__String_String(), null, "listFinal", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__ListFinal__String_String(), theManagementPackage.getObjectMetadata(), "listFinal", 0, -1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__List__String_String_String(), null, "list", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__List__String_String_String(), theManagementPackage.getObjectMetadata(), "list", 0, -1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__ListByName__String_String_String_String(), null, "listByName", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__ListByName__String_String_String_String(), theManagementPackage.getObjectMetadata(), "listByName", 0, -1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "namePattern", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__Metadata__ObjectAddress(), null, "metadata", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__Metadata__ObjectAddress(), theManagementPackage.getObjectMetadata(), "metadata", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getObjectAddress(), "address", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__FinalMetadata__String_String_String(), null, "finalMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__FinalMetadata__String_String_String(), theManagementPackage.getObjectMetadata(), "finalMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__Content__ObjectAddress(), null, "content", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__Content__ObjectAddress(), ecorePackage.getEObject(), "content", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getObjectAddress(), "address", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(ecorePackage.getEObject());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__FinalContent__String_String_String(), null, "finalContent", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__FinalContent__String_String_String(), ecorePackage.getEObject(), "finalContent", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(ecorePackage.getEObject());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__PackageMetadata__PackageAddress(), null, "packageMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__PackageMetadata__PackageAddress(), theManagementPackage.getObjectMetadata(), "packageMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, this.getPackageAddress(), "address", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
-		op = initEOperation(getRegistryReader__FinalPackageMetadata__String_String(), null, "finalPackageMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getRegistryReader__FinalPackageMetadata__String_String(), theManagementPackage.getObjectMetadata(), "finalPackageMetadata", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "nsUri", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
 
 		op = initEOperation(getRegistryReader__SearchPackages__String_PackageSearch(), this.getPackageSearchResult(), "searchPackages", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -1467,26 +1516,44 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		initEAttribute(getPackageAddress_Stage(), ecorePackage.getEString(), "stage", null, 0, 1, PackageAddress.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageAddress_NsUri(), ecorePackage.getEString(), "nsUri", null, 0, 1, PackageAddress.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
+		initEClass(preconditionEClass, Precondition.class, "Precondition", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getPrecondition_Expected(), ecorePackage.getEString(), "expected", null, 0, -1, Precondition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getPrecondition_Target(), this.getPreconditionTarget(), "target", null, 0, 1, Precondition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		op = initEOperation(getPrecondition__IsSatisfiedBy__ObjectMetadata(), ecorePackage.getEBoolean(), "isSatisfiedBy", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, theManagementPackage.getObjectMetadata(), "current", 0, 1, IS_UNIQUE, IS_ORDERED);
+
 		initEClass(objectWriteEClass, ObjectWrite.class, "ObjectWrite", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getObjectWrite_Address(), this.getObjectAddress(), null, "address", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getObjectWrite_Content(), ecorePackage.getEObject(), null, "content", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getObjectWrite_Content(), ecorePackage.getEObject(), null, "content", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectWrite_Name(), ecorePackage.getEString(), "name", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectWrite_Version(), ecorePackage.getEString(), "version", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectWrite_OnConflict(), this.getConflictPolicy(), "onConflict", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getObjectWrite_Precondition(), this.getPrecondition(), "precondition", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getObjectWrite_Precondition(), this.getPrecondition(), null, "precondition", null, 0, 1, ObjectWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(objectBatchEClass, ObjectBatch.class, "ObjectBatch", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getObjectBatch_Writes(), this.getObjectWrite(), null, "writes", null, 0, -1, ObjectBatch.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(packageWriteEClass, PackageWrite.class, "PackageWrite", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getPackageWrite_Scope(), ecorePackage.getEString(), "scope", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_Registry(), ecorePackage.getEString(), "registry", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_Stage(), ecorePackage.getEString(), "stage", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getPackageWrite_Content(), ecorePackage.getEPackage(), null, "content", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getPackageWrite_Content(), ecorePackage.getEPackage(), null, "content", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_NsUri(), ecorePackage.getEString(), "nsUri", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_Name(), ecorePackage.getEString(), "name", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_Version(), ecorePackage.getEString(), "version", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_Dcat(), ecorePackage.getEBooleanObject(), "dcat", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_OnConflict(), this.getConflictPolicy(), "onConflict", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getPackageWrite_Precondition(), this.getPrecondition(), "precondition", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getPackageWrite_Precondition(), this.getPrecondition(), null, "precondition", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageWrite_LenientVersion(), ecorePackage.getEBoolean(), "lenientVersion", null, 0, 1, PackageWrite.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(packageBatchEClass, PackageBatch.class, "PackageBatch", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getPackageBatch_Writes(), this.getPackageWrite(), null, "writes", null, 0, -1, PackageBatch.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(packagePropertiesUpdateEClass, PackagePropertiesUpdate.class, "PackagePropertiesUpdate", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getPackagePropertiesUpdate_Address(), this.getPackageAddress(), null, "address", null, 0, 1, PackagePropertiesUpdate.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getPackagePropertiesUpdate_Properties(), ecorePackage.getEStringToStringMapEntry(), null, "properties", null, 0, -1, PackagePropertiesUpdate.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getPackagePropertiesUpdate_Precondition(), this.getPrecondition(), null, "precondition", null, 0, 1, PackagePropertiesUpdate.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(packageSearchEClass, PackageSearch.class, "PackageSearch", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getPackageSearch_Stage(), ecorePackage.getEString(), "stage", null, 0, 1, PackageSearch.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1502,17 +1569,17 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		initEAttribute(getPackageSearch_Offset(), ecorePackage.getEInt(), "offset", null, 0, 1, PackageSearch.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(packageSearchResultEClass, PackageSearchResult.class, "PackageSearchResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getPackageSearchResult_Hits(), theManagementPackage.getObjectMetadata(), null, "hits", null, 0, -1, PackageSearchResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getPackageSearchResult_Hits(), theManagementPackage.getObjectMetadata(), null, "hits", null, 0, -1, PackageSearchResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getPackageSearchResult_TotalHits(), ecorePackage.getELong(), "totalHits", null, 0, 1, PackageSearchResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(writeResultEClass, WriteResult.class, "WriteResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getWriteResult_Outcome(), this.getWriteOutcome(), "outcome", null, 0, 1, WriteResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getWriteResult_Metadata(), theManagementPackage.getObjectMetadata(), null, "metadata", null, 0, 1, WriteResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getWriteResult_Metadata(), theManagementPackage.getObjectMetadata(), null, "metadata", null, 0, 1, WriteResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(batchItemResultEClass, BatchItemResult.class, "BatchItemResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getBatchItemResult_Id(), ecorePackage.getEString(), "id", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getBatchItemResult_Outcome(), this.getWriteOutcome(), "outcome", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getBatchItemResult_Metadata(), theManagementPackage.getObjectMetadata(), null, "metadata", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getBatchItemResult_Metadata(), theManagementPackage.getObjectMetadata(), null, "metadata", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getBatchItemResult_Refusal(), this.getRefusalReason(), "refusal", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getBatchItemResult_Message(), ecorePackage.getEString(), "message", null, 0, 1, BatchItemResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
@@ -1522,11 +1589,7 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		initEAttribute(getBatchResult_Applied(), ecorePackage.getEBoolean(), "applied", null, 0, 1, BatchResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getBatchResult_Items(), this.getBatchItemResult(), null, "items", null, 0, -1, BatchResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		op = initEOperation(getBatchResult__FirstRefusal(), null, "firstRefusal", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(this.getOptional());
-		g2 = createEGenericType(this.getBatchItemResult());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
+		initEOperation(getBatchResult__FirstRefusal(), this.getBatchItemResult(), "firstRefusal", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		// Initialize enums and add enum literals
 		initEEnum(conflictPolicyEEnum, ConflictPolicy.class, "ConflictPolicy");
@@ -1557,11 +1620,9 @@ public class RegistryApiPackageImpl extends EPackageImpl implements RegistryApiP
 		addEEnumLiteral(refusalReasonEEnum, RefusalReason.PRECONDITION_FAILED);
 		addEEnumLiteral(refusalReasonEEnum, RefusalReason.INTERRUPTED);
 
-		// Initialize data types
-		initEDataType(preconditionEDataType, Precondition.class, "Precondition", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
-		initEDataType(listEDataType, List.class, "List", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
-		initEDataType(optionalEDataType, Optional.class, "Optional", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
-		initEDataType(mapEDataType, Map.class, "Map", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
+		initEEnum(preconditionTargetEEnum, PreconditionTarget.class, "PreconditionTarget");
+		addEEnumLiteral(preconditionTargetEEnum, PreconditionTarget.CONTENT);
+		addEEnumLiteral(preconditionTargetEEnum, PreconditionTarget.METADATA);
 
 		// Create resource
 		createResource(eNS_URI);

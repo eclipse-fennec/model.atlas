@@ -14,17 +14,20 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
 import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
 import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
 import org.eclipse.fennec.model.atlas.registry.api.Precondition;
+import org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget;
 import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
 import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.BatchItem;
@@ -76,18 +79,16 @@ final class ResourceSupport {
 	 * @param target  which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
 	 *                for writes that replace the content, {@link ObjectMetadataResponseFilter.CacheTarget#METADATA}
 	 *                for writes that only change metadata (e.g. a stage transition)
-	 * @return the precondition; never {@code null}
+	 * @return the precondition, or {@code null} without an {@code If-Match} header or for {@code *}
 	 */
 	static Precondition ifMatch(HttpHeaders headers, ObjectMetadataResponseFilter.CacheTarget target) {
-		String ifMatch = headers.getHeaderString("If-Match");
-		if (ifMatch == null) {
-			return Precondition.NONE; // No precondition — proceed normally
+		List<String> validators = ObjectMetadataResponseFilter.ifMatchValidators(headers.getHeaderString("If-Match"));
+		if (validators == null) {
+			return null; // no precondition, or "*": the writer only checks objects that exist
 		}
-		return current -> {
-			String base = ObjectMetadataResponseFilter.baseValidator(current, target);
-			// No validator yet — cannot validate, proceed
-			return base == null || ObjectMetadataResponseFilter.ifMatchSatisfied(ifMatch, base);
-		};
+		return RegistryRequests.precondition(validators,
+				target == ObjectMetadataResponseFilter.CacheTarget.METADATA ? PreconditionTarget.METADATA
+						: PreconditionTarget.CONTENT);
 	}
 
 	/**
@@ -134,21 +135,30 @@ final class ResourceSupport {
 	}
 
 	/**
-	 * The objectId a root object of a batch is stored under: its EMF ID attribute, as the initial
-	 * model loader derives it, or else the id the resource gives it ({@code xmi:id}).
+	 * Puts a write of an uploaded batch at the scope, registry and stage of the request path.
 	 *
-	 * @param root the root object
-	 * @return the id, or {@code null} if the object has neither
+	 * @return {@code null}, or the reason the write's address names another place
 	 */
-	static String batchObjectId(EObject root) {
-		String id = EcoreUtil.getID(root);
-		if (id != null && !id.isBlank()) {
-			return id;
+	static String placeInPath(ObjectWrite write, String scope, String registry, String stage) {
+		ObjectAddress address = write.getAddress();
+		if (address == null) {
+			address = RegistryRequests.objectAddress(null, null, null, null);
+			write.setAddress(address);
 		}
-		if (root.eResource() instanceof XMLResource xmlResource) {
-			id = xmlResource.getID(root);
+		if (!fits(address.getScope(), scope) || !fits(address.getRegistry(), registry)
+				|| !fits(address.getStage(), stage)) {
+			return String.format("The write for %s addresses (%s, %s, %s), not the request's (%s, %s, %s)",
+					address.getObjectId(), address.getScope(), address.getRegistry(), address.getStage(), scope,
+					registry, stage);
 		}
-		return id == null || id.isBlank() ? null : id;
+		address.setScope(scope);
+		address.setRegistry(registry);
+		address.setStage(stage);
+		return null;
+	}
+
+	private static boolean fits(String given, String expected) {
+		return given == null || given.isEmpty() || given.equals(expected);
 	}
 
 	/**
@@ -177,7 +187,8 @@ final class ResourceSupport {
 			}
 			response.getItems().add(item);
 		}
-		Status status = result.firstRefusal().map(refused -> status(refused.getRefusal())).orElse(Status.OK);
+		BatchItemResult refused = result.firstRefusal();
+		Status status = refused == null ? Status.OK : status(refused.getRefusal());
 		return Response.status(status).entity(response).header("Content-Type", resolvedMediaType(requestContext))
 				.build();
 	}

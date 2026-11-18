@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
 import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
@@ -73,7 +72,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal with an address answers 409 with the source-stage metadata as body")
     void refusalWithAddressCarriesTheMetadata() {
-        when(reader.metadata(announceInDraft())).thenReturn(Optional.of(metadata));
+        when(reader.metadata(announceInDraft())).thenReturn(metadata);
 
         Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 
@@ -85,7 +84,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal inside a failed promise is found, and the body takes the request's media type")
     void wrappedRefusalFollowsTheRequest() {
-        when(reader.metadata(announceInDraft())).thenReturn(Optional.of(metadata));
+        when(reader.metadata(announceInDraft())).thenReturn(metadata);
         ContainerRequestContext requestContext = mock(ContainerRequestContext.class);
         when(requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE)).thenReturn("application/xmi");
 
@@ -100,7 +99,7 @@ class GateRefusalsTest {
     @Test
     @DisplayName("A refusal whose object cannot be re-read keeps the 409 with the plain error body")
     void unreadableObjectFallsBackToTheErrorBody() {
-        when(reader.metadata(any())).thenReturn(Optional.empty());
+        when(reader.metadata(any())).thenReturn(null);
 
         Response response = GateRefusals.conflict(refusal(), reader, "s", null);
 

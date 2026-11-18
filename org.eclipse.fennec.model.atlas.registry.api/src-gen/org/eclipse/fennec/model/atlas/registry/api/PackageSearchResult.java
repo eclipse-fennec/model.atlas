@@ -43,16 +43,16 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface PackageSearchResult {
 	/**
-	 * Returns the value of the '<em><b>Hits</b></em>' reference list.
+	 * Returns the value of the '<em><b>Hits</b></em>' containment reference list.
 	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * the metadata of the hits on this page that still resolve; a hit from an ancestor scope is marked read-only
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Hits</em>' reference list.
+	 * @return the value of the '<em>Hits</em>' containment reference list.
 	 * @see org.eclipse.fennec.model.atlas.registry.api.RegistryApiPackage#getPackageSearchResult_Hits()
-	 * @model resolveProxies="false"
+	 * @model containment="true"
 	 * @generated
 	 */
 	EList<ObjectMetadata> getHits();
