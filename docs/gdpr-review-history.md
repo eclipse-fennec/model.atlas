@@ -190,15 +190,19 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
-**Only the file image takes the scope from the environment.** There, the scope in
+**Every variant takes the scope from the environment** (issue #316). The scope in
 `trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
 of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
-DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
-`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the image's own
-health check on that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the
-tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the
-fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
-it. Otherwise reviews are triggered in one scope and looked for in another.
+DataInMotion/fennec-gdpr#7 is deployed), and the name of the variant's own `ScopeService~…` are all
+`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=…]]`. So is its health check on
+that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the tenant scope
+and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the fennec-gdpr MCP
+half, which reads the model under review from that scope and seals the report into it. Otherwise
+reviews are triggered in one scope and looked for in another.
+
+Each variant keeps its own name as the default, so nothing changes for a deployment that does not
+set the variable: `jena` for the file, git and local-jena runtimes, `civitas` for the local runtime,
+`dimcity` for the jena image and the DCAT compose that mounts its configuration.
 
 Three things change with the name. The scope is part of the stored state: the file backend lays
 objects out as `STORAGE_ROOT/<scope>/<registry>/<stage>/`, and both Lucene indexes carry the scope
@@ -211,9 +215,8 @@ give the variable a plain name or leave it unset. The default applies only while
 (`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
 `(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
 
-The jena image (`configs/jena.json`) and the local jena runtime keep their scope name as a literal,
-as shown below, and do not read the variable. The image's scope is `dimcity`; the local runtime's is
-still `jena`.
+The excerpt below is from the jena image (`configs/jena.json`), whose default is `dimcity`; it is
+shown with the name resolved rather than as the interpolation, which is what the file now holds.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {

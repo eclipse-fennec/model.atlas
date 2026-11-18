@@ -13,18 +13,18 @@
         // tag, and the Felix default ("systemalive") alone would drop this check out of
         // /atlas/system/health - which would then report OK while the scope is missing.
         "hc.tags": ["atlas", "systemalive"],
-                // Distinct from the Felix default ("Services Ready Check"), which every
+        // Distinct from the Felix default ("Services Ready Check"), which every
         // ServicesCheck would otherwise share with the one in the runtime.config bundle:
         // two checks of the same name are indistinguishable in the endpoint output, and a
         // "?tags=" query collapses them into one, so a scope that is down can be hidden by
         // a scope that is up.
-        "hc.name": "Scope Ready Check: jena",
-        "services.list": ["(scope.name=jena)"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"]
     },
     "ScopeService~jena": {
-        "atlas.scope": "jena",
-        "scope.name": "jena",
-        "scope.description": "Jena Scope",
+        "atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=default))",
         "registryService.cardinality.minimum:int": 1
@@ -92,7 +92,7 @@
         "resourceSet.target": "(emf.name=ecore)"
     },
     "GitObjectStorage~jena": {
-        "scope": "jena",
+        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "type.registry.map": [
             "http://www.eclipse.org/emf/2002/Ecore#//EPackage:schema",
             "http://www.eclipse.org/emf/2002/Ecore#//EObject:default"

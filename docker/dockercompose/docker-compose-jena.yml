@@ -25,6 +25,15 @@ services:
       # already carries one configuration of that PID (runtime.config.docker), and a second
       # provider of the same singleton PID is decided by Configurator ranking, not by intent.
       - INITIAL_MODELS_FOLDER=/opt/modelatlas/runtime/initial-models
+      # The tenant scope this image defines, and the scope the GDPR review runs in. Must match
+      # MODEL_ATLAS_SCOPE on the GDPR MCP server, or reviews are triggered in one scope and the
+      # model is looked for in another.
+      # It also names the seed folder: ./initial-models/scopes/<scope>/ is what gets loaded, so
+      # rename scopes/dimcity/ with it. Leave it unset rather than empty - an empty value is not
+      # replaced by the default and registers a scope with no name.
+      # Pick it before the first start: stored objects live under STORAGE_ROOT/<scope>/, so
+      # renaming it on a volume that already holds data leaves that data under the old name.
+      - MODEL_ATLAS_SCOPE=${MODEL_ATLAS_SCOPE:-dimcity}
     volumes:
       - ./configs:/opt/modelatlas/runtime/load:ro
       # Seeded once on first start by InitialModelLoader: the ComplianceContext catalogue, as

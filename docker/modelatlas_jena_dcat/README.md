@@ -44,6 +44,7 @@ docker run -d -p 8080:8080 \
 
 | variable | default | meaning |
 |---|---|---|
+| `MODEL_ATLAS_SCOPE` | `dimcity` | the tenant scope DCAT publishes from. It must name the scope the mounted `configs/jena.json` registers - both read this variable, so they follow it together. A publisher pointed at a scope that does not exist publishes nothing and says nothing. Pick it before the first start: stored objects live under `STORAGE_ROOT/<scope>/`. |
 | `DCAT_PORTAL_BASE_URI` | *(required)* | the portal's REST base, as reachable from this container |
 | `ATLAS_PUBLIC_BASE_URI` | *(required)* | the public prefix a harvester fetches models from; loopback refused |
 | `DCAT_PUBLISHER_NAME` | *(required)* | `dct:publisher`, the Agent's name |

@@ -248,7 +248,7 @@ Shown from
 `org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json` for the local
 runtime and in `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`,
 which is baked into the file image rather than mounted — change one and the others do not follow.
-The file image takes its scope from `MODEL_ATLAS_SCOPE`, as
+Every variant takes its scope from `MODEL_ATLAS_SCOPE`, each defaulting to its own current name, as
 [the history document's configuration](gdpr-review-history.md#configuration) describes in full.
 
 ```jsonc

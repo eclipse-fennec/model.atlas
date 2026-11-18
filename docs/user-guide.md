@@ -63,7 +63,7 @@ docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
 | Variable | Default | Variant | Description |
 |----------|---------|---------|-------------|
 | `STORAGE_ROOT` | `/tmp/mac` | File | Root directory for file-based storage |
-| `MODEL_ATLAS_SCOPE` | `jena` | File | Name of the image's tenant scope, which the GDPR review also runs in. Chosen at first deployment: `STORAGE_ROOT/<scope>/` holds the data, so renaming it later does not move what is stored. It also renames the initial-models folder that is seeded (`scopes/<name>/`). Use a plain name or leave it unset: an empty value does not fall back to the default. See [GDPR review history](gdpr-review-history.md#configuration) |
+| `MODEL_ATLAS_SCOPE` | per variant | All | Name of the variant's tenant scope, which the GDPR review also runs in. Defaults to the name that variant already used: `jena` for File, Git and local-jena, `civitas` for local, `dimcity` for the Jena image and the DCAT compose. Chosen at first deployment: `STORAGE_ROOT/<scope>/` holds the data, so renaming it later does not move what is stored. It also renames the initial-models folder that is seeded (`scopes/<name>/`). Use a plain name or leave it unset: an empty value does not fall back to the default. See [GDPR review history](gdpr-review-history.md#configuration) |
 | `INITIAL_MODELS_FOLDER` | `/initial-models` | File | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |
 
 > For more details on Docker setup, see the [Docker File variant](../docker/modelatlas_file/README.md) documentation.

@@ -14,21 +14,21 @@
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
         "report.stages": ["draft", "approved", "release"],
-        "trigger.scopes": ["jena"],
-        "scope.target": "(atlas.scope=jena)",
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
         "document.registry": "gdprdoc"
     },
     "GDPRMetadataDiagnosticsStageAction~schema": {
         "target.registry": "schema",
         "subject.type": "PackageSubject",
         "report.stages": ["draft", "approved", "release"],
-        "trigger.scopes": ["jena"],
-        "scope.target": "(atlas.scope=jena)",
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
         "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
-        "scope": "jena",
+        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "registry": "gdpr",
         "allowed.stages": [
             "draft",
@@ -41,26 +41,26 @@
     "GDPRAtlasRequestStatusStore": {
         "registry": "gdpr",
         "stage": "draft",
-        "scope.target": "(atlas.scope=jena)",
-        "publisher.target": "(&(scope=jena)(registry=gdpr))"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
+        "publisher.target": "(&(scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])(registry=gdpr))"
     },
     "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
         // Must carry "atlas": the health servlet filters its default endpoint by that
         // tag, and the Felix default ("systemalive") alone would drop this check out of
         // /atlas/system/health - which would then report OK while the scope is missing.
         "hc.tags": ["atlas", "systemalive"],
-                // Distinct from the Felix default ("Services Ready Check"), which every
+        // Distinct from the Felix default ("Services Ready Check"), which every
         // ServicesCheck would otherwise share with the one in the runtime.config bundle:
         // two checks of the same name are indistinguishable in the endpoint output, and a
         // "?tags=" query collapses them into one, so a scope that is down can be hidden by
         // a scope that is up.
-        "hc.name": "Scope Ready Check: jena",
-        "services.list": ["(scope.name=jena)"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"]
     },
     "ScopeService~jena": {
-    	"atlas.scope": "jena",
-        "scope.name": "jena",
-        "scope.description": "City Jena Scope",
+    	"atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory))",
         "registryService.cardinality.minimum:int": 1
