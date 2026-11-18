@@ -55,6 +55,9 @@ def sbomTasks = sbomBndruns.findResults { projectName, bndrunName ->
     bndrun = p.file(bndrunName)
     exporter = 'bnd.sbom'
     destinationDirectory = p.layout.projectDirectory.dir('generated/sbom')
+    // The inputs Gradle sees are the bndrun file only, not its -include chain nor the
+    // repository contents behind it, so an up-to-date check would hand out a stale SBOM.
+    outputs.upToDateWhen { false }
   }
 }
 tasks.register('sbom') {
