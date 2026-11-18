@@ -1,12 +1,88 @@
+import aQute.bnd.gradle.Export
+
 plugins {
   id "org.sonarqube" version "6.2.0.5505"
   id 'jacoco'
   id 'java'
+  id 'org.geckoprojects.bnd.update'
 }
 
 // We need to define a repository for the root project, otherwise Jacoco dependencies cannot be resolved
 repositories {
   mavenCentral()
+  // Only for the SBOM exporter, which has no release yet (see sbomExporter below).
+  maven {
+    url = 'https://central.sonatype.com/repository/maven-snapshots/'
+    mavenContent {
+      snapshotsOnly()
+      includeGroup 'org.geckoprojects.bnd'
+    }
+  }
+}
+
+// SBOM of the resolved application: `./gradlew sbom` writes a CycloneDX SBOM per bndrun to
+// <project>/generated/sbom/ (options in the bndrun's -sbom instruction). The exporter is a bnd
+// plugin (org.gecko.bnd.sbom); Gradle fetches it into cnf/cache/sbom-exporter/, and only then
+// do the bndruns include it (cnf/sbom/plugin.bnd). The ordinary build never loads it.
+configurations {
+  sbomExporter {
+    canBeConsumed = false
+    transitive = false
+  }
+}
+dependencies {
+  // TODO switch to the first release once org.gecko.bnd.sbom is on Maven Central
+  sbomExporter 'org.geckoprojects.bnd:org.gecko.bnd.sbom:0.1.0-SNAPSHOT'
+}
+def sbomExporter = tasks.register('sbomExporter', Sync) {
+  description = 'Fetches the SBOM exporter into cnf/cache/sbom-exporter/, where the bndruns pick it up.'
+  from configurations.sbomExporter
+  into 'cnf/cache/sbom-exporter'
+  rename { 'org.gecko.bnd.sbom.jar' }
+}
+
+def sbomBndruns = [
+  // the runtime of the published docker image (docker/modelatlas_file)
+  'org.eclipse.fennec.model.atlas.runtime': 'modelatlas.runtime_docker_file.bndrun'
+]
+// Register only for the projects that are part of this build.
+def sbomTasks = sbomBndruns.findResults { projectName, bndrunName ->
+  def p = findProject(":${projectName}")
+  p?.tasks?.register('sbom', Export) {
+    description = "Writes the SBOM of ${bndrunName} (CycloneDX) to generated/sbom/."
+    group = 'export'
+    dependsOn sbomExporter
+    bndrun = p.file(bndrunName)
+    exporter = 'bnd.sbom'
+    destinationDirectory = p.layout.projectDirectory.dir('generated/sbom')
+    // The inputs Gradle sees are the bndrun file only, not its -include chain nor the
+    // repository contents behind it, so an up-to-date check would hand out a stale SBOM.
+    outputs.upToDateWhen { false }
+  }
+}
+tasks.register('sbom') {
+  description = 'Writes the SBOMs of the Model Atlas runtimes (see sbomBndruns).'
+  group = 'export'
+  dependsOn sbomTasks
+}
+
+// bnd update (org.gecko.bnd.update): reports only, nothing is changed.
+//   ./gradlew bndUpdates                    newer versions in the .mvn indexes, within the policy
+//   ./gradlew bndVulnerabilities -PbndUpdateTrivy=<trivy.json> -PbndUpdateSbom=<sbom.cdx.json>
+//                                           for each library of the Trivy report of that SBOM:
+//                                           the smallest fixing version within the policy
+// Reports in build/bnd-update/. The policy is micro updates unless -PbndUpdateScope says
+// otherwise. Findings never fail the build here; the gate is the Trivy step in sbom.yml.
+bndUpdate {
+  scope = providers.gradleProperty('bndUpdateScope').orElse('micro')
+  format = providers.gradleProperty('bndUpdateFormat').orElse('markdown')
+  failOnFindings = false
+  if (providers.gradleProperty('bndUpdateTrivy').isPresent()) {
+    trivyReport = file(providers.gradleProperty('bndUpdateTrivy').get())
+  }
+  if (providers.gradleProperty('bndUpdateSbom').isPresent()) {
+    sbom = file(providers.gradleProperty('bndUpdateSbom').get())
+  }
 }
 
 subprojects {
