@@ -714,7 +714,8 @@ public class RegistryWriterImpl implements RegistryWriter {
 
 	/**
 	 * Settles the id an instance is stored under: the id the address gives, else the value of the
-	 * content's ID attribute. An id given for content with an ID attribute must equal its value.
+	 * content's ID attribute. A given id wins over the ID attribute, as uploads have always named
+	 * the stored object independently of its content (issue #333: a file name as object id).
 	 * Content without an ID attribute needs an explicit id; an {@code xmi:id} is never used.
 	 */
 	private static void resolveObjectId(ObjectWrite write) {
@@ -734,10 +735,6 @@ public class RegistryWriterImpl implements RegistryWriter {
 						EcoreUtil.getURI(content.eClass())));
 			}
 			address.setObjectId(fromContent);
-		} else if (fromContent != null && !fromContent.isBlank() && !fromContent.equals(given)) {
-			throw new RegistryAccessException(RefusalReason.INVALID, String.format(
-					"Object id %s does not match the value %s of the object's ID attribute %s", given, fromContent,
-					idAttribute.getName()));
 		}
 	}
 

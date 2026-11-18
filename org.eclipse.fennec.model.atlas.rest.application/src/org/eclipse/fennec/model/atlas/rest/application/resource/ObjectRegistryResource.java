@@ -330,7 +330,7 @@ public class ObjectRegistryResource {
     @Produces
     @Operation(summary = "Write several objects at once", description = "The body is an ObjectBatch document (XMI or JSON, model http://eclipse.org/fennec/model/atlas/registry/api/1.0.0): "
             + "one ObjectWrite per object, with the object as its contained content and its id in address/objectId. An object whose class has an ID attribute may leave "
-            + "the id out; an id given as well must equal the attribute's value. Scope, registry and stage are taken from the path; an address naming others is refused. "
+            + "the id out; a given id takes precedence over the attribute. Scope, registry and stage are taken from the path; an address naming others is refused. "
             + "All objects are written, or none: every object is checked first, and should a write still be refused, what the batch wrote is undone. "
             + "The response lists one result per write, in document order.", responses = {
                     @ApiResponse(responseCode = "200", description = "All objects written", content = @Content(schema = @Schema(implementation = BatchResponse.class))),

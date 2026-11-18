@@ -209,7 +209,7 @@
     </eStructuralFeatures>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="objectId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="the object id. A write may leave it null when the content's class has an ID attribute: the id is then taken from that attribute, and an id given as well must equal it. Content without an ID attribute needs an explicit id"/>
+        <details key="documentation" value="the object id. A write may leave it null when the content's class has an ID attribute: the id is then taken from that attribute. A given id takes precedence over the attribute. Content without an ID attribute needs an explicit id"/>
       </eAnnotations>
     </eStructuralFeatures>
   </eClassifiers>
