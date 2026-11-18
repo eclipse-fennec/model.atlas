@@ -26,7 +26,9 @@ COPY content/runtime/ "${RUNTIME_DIR}/"
 
 RUN chown -R 65532:65532 "${APP_HOME}"
 
-FROM gcr.io/distroless/java21-debian12:nonroot
+# debian13: the debian12 variant still ships Temurin 21.0.10, debian13 follows the current
+# Temurin 21 release.
+FROM gcr.io/distroless/java21-debian13:nonroot
 
 ARG APP_HOME
 ARG RUNTIME_DIR
@@ -50,7 +52,11 @@ COPY --from=builder --chown=65532:65532 ${TMPDIR} ${TMPDIR}
 EXPOSE 8080
 WORKDIR ${APP_HOME}
 
+# -XX:-UseBASE64Intrinsics: mitigates Java4Shell (CVE-2026-114938), an out-of-bounds write in
+# the AVX-512 Base64 decoder intrinsic. Remove it once the base image ships Temurin 21.0.13.1
+# or later.
 ENTRYPOINT ["java", \
+    "-XX:-UseBASE64Intrinsics", \
     "-Dgosh.args=--noshutdown",\
     "-Ddata=/opt/modelatlas/runtime/data", \
     "-Datlas.log.dir=/opt/modelatlas/runtime/log", \
