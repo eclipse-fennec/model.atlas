@@ -89,6 +89,24 @@ public interface RestFactory extends EFactory {
 	Container createContainer();
 
 	/**
+	 * Returns a new object of class '<em>Batch Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Batch Response</em>'.
+	 * @generated
+	 */
+	BatchResponse createBatchResponse();
+
+	/**
+	 * Returns a new object of class '<em>Batch Item</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Batch Item</em>'.
+	 * @generated
+	 */
+	BatchItem createBatchItem();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

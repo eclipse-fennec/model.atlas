@@ -338,6 +338,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             throws IOException {
 
         validateMetadata(objectId, metadata);
+        MetadataHash.update(metadata);
         String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
         URI metadataUri = createStorageURI(scope, registry, stage, metadataPath);
 

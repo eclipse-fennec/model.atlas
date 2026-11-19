@@ -37,5 +37,16 @@
     <genClasses ecoreClass="rest-response.ecore#//Container">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//Container/elements"/>
     </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//BatchResponse">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//BatchResponse/applied"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//BatchResponse/items"/>
+    </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//BatchItem">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//BatchItem/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//BatchItem/outcome"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//BatchItem/refusal"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//BatchItem/message"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//BatchItem/metadata"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

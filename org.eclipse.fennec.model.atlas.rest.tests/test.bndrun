@@ -22,6 +22,7 @@
 
 -runrequires: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.application',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.registry.impl',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.ecore.xmi',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.jsonschema',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.xsdschema',\
@@ -97,6 +98,8 @@
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.mediatypes.impl;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.application;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.impl;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.ecore.xmi;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.filter;version=snapshot,\

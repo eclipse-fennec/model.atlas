@@ -52,6 +52,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getUploadTime <em>Upload Time</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getSourceChannel <em>Source Channel</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getContentHash <em>Content Hash</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getMetadataHash <em>Metadata Hash</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getObjectType <em>Object Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getReviewUser <em>Review User</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getReviewTime <em>Review Time</em>}</li>
@@ -159,6 +160,26 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @ordered
 	 */
 	protected String contentHash = CONTENT_HASH_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getMetadataHash() <em>Metadata Hash</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getMetadataHash()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String METADATA_HASH_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getMetadataHash() <em>Metadata Hash</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getMetadataHash()
+	 * @generated
+	 * @ordered
+	 */
+	protected String metadataHash = METADATA_HASH_EDEFAULT;
 
 	/**
 	 * The default value of the '{@link #getObjectType() <em>Object Type</em>}' attribute.
@@ -699,6 +720,29 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		contentHash = newContentHash;
 		if (eNotificationRequired())
 			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__CONTENT_HASH, oldContentHash, contentHash));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getMetadataHash() {
+		return metadataHash;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setMetadataHash(String newMetadataHash) {
+		String oldMetadataHash = metadataHash;
+		metadataHash = newMetadataHash;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__METADATA_HASH, oldMetadataHash, metadataHash));
 	}
 
 	/**
@@ -1259,6 +1303,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return getSourceChannel();
 			case ManagementPackage.OBJECT_METADATA__CONTENT_HASH:
 				return getContentHash();
+			case ManagementPackage.OBJECT_METADATA__METADATA_HASH:
+				return getMetadataHash();
 			case ManagementPackage.OBJECT_METADATA__OBJECT_TYPE:
 				return getObjectType();
 			case ManagementPackage.OBJECT_METADATA__REVIEW_USER:
@@ -1331,6 +1377,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return;
 			case ManagementPackage.OBJECT_METADATA__CONTENT_HASH:
 				setContentHash((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_METADATA__METADATA_HASH:
+				setMetadataHash((String)newValue);
 				return;
 			case ManagementPackage.OBJECT_METADATA__OBJECT_TYPE:
 				setObjectType((String)newValue);
@@ -1426,6 +1475,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__CONTENT_HASH:
 				setContentHash(CONTENT_HASH_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_METADATA__METADATA_HASH:
+				setMetadataHash(METADATA_HASH_EDEFAULT);
+				return;
 			case ManagementPackage.OBJECT_METADATA__OBJECT_TYPE:
 				setObjectType(OBJECT_TYPE_EDEFAULT);
 				return;
@@ -1515,6 +1567,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return SOURCE_CHANNEL_EDEFAULT == null ? sourceChannel != null : !SOURCE_CHANNEL_EDEFAULT.equals(sourceChannel);
 			case ManagementPackage.OBJECT_METADATA__CONTENT_HASH:
 				return CONTENT_HASH_EDEFAULT == null ? contentHash != null : !CONTENT_HASH_EDEFAULT.equals(contentHash);
+			case ManagementPackage.OBJECT_METADATA__METADATA_HASH:
+				return METADATA_HASH_EDEFAULT == null ? metadataHash != null : !METADATA_HASH_EDEFAULT.equals(metadataHash);
 			case ManagementPackage.OBJECT_METADATA__OBJECT_TYPE:
 				return OBJECT_TYPE_EDEFAULT == null ? objectType != null : !OBJECT_TYPE_EDEFAULT.equals(objectType);
 			case ManagementPackage.OBJECT_METADATA__REVIEW_USER:
@@ -1583,6 +1637,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		result.append(sourceChannel);
 		result.append(", contentHash: ");
 		result.append(contentHash);
+		result.append(", metadataHash: ");
+		result.append(metadataHash);
 		result.append(", objectType: ");
 		result.append(objectType);
 		result.append(", reviewUser: ");

@@ -1,0 +1,21 @@
+Bundle-Name: Model Atlas Registry Implementation
+Bundle-Description: Implements the client-facing registry access of \
+ org.eclipse.fennec.model.atlas.registry.api on top of the workflow scope and registry \
+ services. Issue #386.
+
+-workingset: workflow
+
+-library: enableEMF
+
+-buildpath: \
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.eclipse.fennec.model.atlas.registry.api;version=project,\
+	org.eclipse.fennec.model.atlas.emf.common;version=project,\
+	org.eclipse.fennec.model.atlas.management;version=project,\
+	org.eclipse.fennec.model.atlas.management.lucene;version=project,\
+	org.eclipse.fennec.model.atlas.workflow;version=project,\
+	org.eclipse.fennec.model.atlas.scope.api;version=project
+
+-testpath: junit-jupiter-api

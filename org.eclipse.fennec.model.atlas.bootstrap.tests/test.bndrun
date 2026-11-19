@@ -3,6 +3,7 @@
 -runrequires: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.bootstrap.tests',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.bootstrap',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.registry.impl',\
 	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.file',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.lucene',\
@@ -49,6 +50,8 @@
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.impl;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.objectweb.asm;version='[9.10.1,9.10.2)',\

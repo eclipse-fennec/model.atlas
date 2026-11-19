@@ -13,12 +13,30 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.model.atlas.registry.api.BatchItemResult;
+import org.eclipse.fennec.model.atlas.registry.api.BatchResult;
+import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectAddress;
+import org.eclipse.fennec.model.atlas.registry.api.ObjectWrite;
+import org.eclipse.fennec.model.atlas.registry.api.Precondition;
+import org.eclipse.fennec.model.atlas.registry.api.PreconditionTarget;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
+import org.eclipse.fennec.model.atlas.rest.model.BatchItem;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
+import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -51,32 +69,127 @@ final class ResourceSupport {
 	}
 
 	/**
-	 * Checks the {@code If-Match} header for an optimistic-concurrency precondition against the current
-	 * state of {@code metadata}, using the same validator the response filter emits as the ETag.
-	 * Returns a {@code 412 Precondition Failed} response if the precondition is not satisfied, or
-	 * {@code null} if it is satisfied, if no {@code If-Match} header was sent, or if there is no
-	 * validator to compare against.
+	 * The {@code If-Match} header as a {@link Precondition} the {@code RegistryWriter} checks
+	 * against the object it is about to change, using the same validator the response filter
+	 * emits as the ETag. Without an {@code If-Match} header, or when the object has no validator
+	 * yet, every state is acceptable; a mismatch makes the writer refuse with
+	 * {@link RefusalReason#PRECONDITION_FAILED}, answered as {@code 412 Precondition Failed}.
 	 *
-	 * @param headers  the request headers
-	 * @param metadata the current metadata of the object being written
-	 * @param target   which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
-	 *                 for writes that replace the content, {@link ObjectMetadataResponseFilter.CacheTarget#METADATA}
-	 *                 for writes that only change metadata (e.g. a stage transition)
+	 * @param headers the request headers
+	 * @param target  which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
+	 *                for writes that replace the content, {@link ObjectMetadataResponseFilter.CacheTarget#METADATA}
+	 *                for writes that only change metadata (e.g. a stage transition)
+	 * @return the precondition, or {@code null} without an {@code If-Match} header or for {@code *}
 	 */
-	static Response checkIfMatch(HttpHeaders headers, ObjectMetadata metadata,
-			ObjectMetadataResponseFilter.CacheTarget target) {
-		String ifMatch = headers.getHeaderString("If-Match");
-		if (ifMatch == null) {
-			return null; // No precondition — proceed normally
+	static Precondition ifMatch(HttpHeaders headers, ObjectMetadataResponseFilter.CacheTarget target) {
+		List<String> validators = ObjectMetadataResponseFilter.ifMatchValidators(headers.getHeaderString("If-Match"));
+		if (validators == null) {
+			return null; // no precondition, or "*": the writer only checks objects that exist
 		}
-		String base = ObjectMetadataResponseFilter.baseValidator(metadata, target);
-		if (base == null) {
-			return null; // No validator yet — cannot validate, proceed
+		return RegistryRequests.precondition(validators,
+				target == ObjectMetadataResponseFilter.CacheTarget.METADATA ? PreconditionTarget.METADATA
+						: PreconditionTarget.CONTENT);
+	}
+
+	/**
+	 * The answer to a request the {@code RegistryWriter} refused: the status its reason stands
+	 * for, with the writer's client-facing message as a plain body — the shape these endpoints
+	 * have always answered refusals in.
+	 *
+	 * @param refusal the writer's refusal
+	 * @return the response to return
+	 */
+	static Response refusal(RegistryAccessException refusal) {
+		return Response.status(status(refusal.reason())).entity(refusal.getMessage()).build();
+	}
+
+	/** The status a refusal of the given reason is answered with. */
+	private static Status status(RefusalReason reason) {
+		return switch (reason) {
+		case INVALID, INCOMPATIBLE_TYPE, UNKNOWN_SCOPE, UNKNOWN_REGISTRY -> Status.BAD_REQUEST;
+		case NO_SCHEMA_REGISTRY -> Status.NOT_FOUND;
+		case ALREADY_EXISTS, INHERITED -> Status.CONFLICT;
+		case READ_ONLY, DERIVED_CONTENT -> Status.FORBIDDEN;
+		case PRECONDITION_FAILED -> Status.PRECONDITION_FAILED;
+		case INTERRUPTED -> Status.SERVICE_UNAVAILABLE;
+		};
+	}
+
+	/**
+	 * The {@code onConflict} query parameter of a batch request.
+	 *
+	 * @param value the parameter, case-insensitive; {@code null} means {@link ConflictPolicy#FAIL}
+	 * @return the policy
+	 * @throws RegistryAccessException {@link RefusalReason#INVALID} for an unknown value
+	 */
+	static ConflictPolicy conflictPolicy(String value) {
+		if (value == null || value.isBlank()) {
+			return ConflictPolicy.FAIL;
 		}
-		if (!ObjectMetadataResponseFilter.ifMatchSatisfied(ifMatch, base)) {
-			return Response.status(Response.Status.PRECONDITION_FAILED)
-					.entity("Resource has been modified. ETag mismatch.").build();
+		try {
+			return ConflictPolicy.valueOf(value.trim().toUpperCase(Locale.ROOT));
+		} catch (IllegalArgumentException e) {
+			throw new RegistryAccessException(RefusalReason.INVALID, String.format(
+					"Query parameter onConflict '%s' must be one of %s", value, Arrays.toString(ConflictPolicy.values())));
 		}
+	}
+
+	/**
+	 * Puts a write of an uploaded batch at the scope, registry and stage of the request path.
+	 *
+	 * @return {@code null}, or the reason the write's address names another place
+	 */
+	static String placeInPath(ObjectWrite write, String scope, String registry, String stage) {
+		ObjectAddress address = write.getAddress();
+		if (address == null) {
+			address = RegistryRequests.objectAddress(null, null, null, null);
+			write.setAddress(address);
+		}
+		if (!fits(address.getScope(), scope) || !fits(address.getRegistry(), registry)
+				|| !fits(address.getStage(), stage)) {
+			return String.format("The write for %s addresses (%s, %s, %s), not the request's (%s, %s, %s)",
+					address.getObjectId(), address.getScope(), address.getRegistry(), address.getStage(), scope,
+					registry, stage);
+		}
+		address.setScope(scope);
+		address.setRegistry(registry);
+		address.setStage(stage);
 		return null;
+	}
+
+	private static boolean fits(String given, String expected) {
+		return given == null || given.isEmpty() || given.equals(expected);
+	}
+
+	/**
+	 * The answer to a batch write: {@code 200} with one item per root when the batch was applied,
+	 * otherwise the status of the first refusal, with the same body naming every refusal.
+	 *
+	 * @param result         what the writer did
+	 * @param requestContext the current request
+	 * @return the response to return
+	 */
+	static Response batch(BatchResult result, ContainerRequestContext requestContext) {
+		BatchResponse response = RestFactory.eINSTANCE.createBatchResponse();
+		response.setApplied(result.isApplied());
+		for (BatchItemResult itemResult : result.getItems()) {
+			BatchItem item = RestFactory.eINSTANCE.createBatchItem();
+			item.setId(itemResult.getId());
+			if (itemResult.isSetOutcome()) {
+				item.setOutcome(itemResult.getOutcome().name());
+			}
+			if (itemResult.isSetRefusal()) {
+				item.setRefusal(itemResult.getRefusal().name());
+			}
+			item.setMessage(itemResult.getMessage());
+			if (itemResult.getMetadata() != null) {
+				item.setMetadata(EcoreUtil.copy(itemResult.getMetadata()));
+			}
+			response.getItems().add(item);
+		}
+		BatchItemResult refused = result.firstRefusal();
+		Status status = refused == null ? Status.OK : status(refused.getRefusal());
+		return Response.status(status).entity(response).header("Content-Type", resolvedMediaType(requestContext))
+				.build();
 	}
 }

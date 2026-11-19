@@ -21,6 +21,8 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
+import org.eclipse.fennec.model.atlas.rest.model.BatchItem;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageInfo;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageListResponse;
 import org.eclipse.fennec.model.atlas.rest.model.ErrorResponse;
@@ -79,6 +81,20 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	private EClass containerEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass batchResponseEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass batchItemEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -370,6 +386,96 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getBatchResponse() {
+		return batchResponseEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getBatchResponse_Applied() {
+		return (EAttribute)batchResponseEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getBatchResponse_Items() {
+		return (EReference)batchResponseEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getBatchItem() {
+		return batchItemEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getBatchItem_Id() {
+		return (EAttribute)batchItemEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getBatchItem_Outcome() {
+		return (EAttribute)batchItemEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getBatchItem_Refusal() {
+		return (EAttribute)batchItemEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getBatchItem_Message() {
+		return (EAttribute)batchItemEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getBatchItem_Metadata() {
+		return (EReference)batchItemEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public RestFactory getRestFactory() {
 		return (RestFactory)getEFactoryInstance();
 	}
@@ -420,6 +526,17 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 
 		containerEClass = createEClass(CONTAINER);
 		createEReference(containerEClass, CONTAINER__ELEMENTS);
+
+		batchResponseEClass = createEClass(BATCH_RESPONSE);
+		createEAttribute(batchResponseEClass, BATCH_RESPONSE__APPLIED);
+		createEReference(batchResponseEClass, BATCH_RESPONSE__ITEMS);
+
+		batchItemEClass = createEClass(BATCH_ITEM);
+		createEAttribute(batchItemEClass, BATCH_ITEM__ID);
+		createEAttribute(batchItemEClass, BATCH_ITEM__OUTCOME);
+		createEAttribute(batchItemEClass, BATCH_ITEM__REFUSAL);
+		createEAttribute(batchItemEClass, BATCH_ITEM__MESSAGE);
+		createEReference(batchItemEClass, BATCH_ITEM__METADATA);
 	}
 
 	/**
@@ -447,6 +564,7 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 
 		// Obtain other dependent packages
 		WorkflowApiPackage theWorkflowApiPackage = (WorkflowApiPackage)EPackage.Registry.INSTANCE.getEPackage(WorkflowApiPackage.eNS_URI);
+		ManagementPackage theManagementPackage = (ManagementPackage)EPackage.Registry.INSTANCE.getEPackage(ManagementPackage.eNS_URI);
 
 		// Create type parameters
 
@@ -483,6 +601,17 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		initEClass(containerEClass, org.eclipse.fennec.model.atlas.rest.model.Container.class, "Container", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getContainer_Elements(), ecorePackage.getEObject(), null, "elements", null, 0, -1, org.eclipse.fennec.model.atlas.rest.model.Container.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
+		initEClass(batchResponseEClass, BatchResponse.class, "BatchResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getBatchResponse_Applied(), ecorePackage.getEBoolean(), "applied", null, 0, 1, BatchResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getBatchResponse_Items(), this.getBatchItem(), null, "items", null, 0, -1, BatchResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(batchItemEClass, BatchItem.class, "BatchItem", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getBatchItem_Id(), ecorePackage.getEString(), "id", null, 0, 1, BatchItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getBatchItem_Outcome(), ecorePackage.getEString(), "outcome", null, 0, 1, BatchItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getBatchItem_Refusal(), ecorePackage.getEString(), "refusal", null, 0, 1, BatchItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getBatchItem_Message(), ecorePackage.getEString(), "message", null, 0, 1, BatchItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getBatchItem_Metadata(), theManagementPackage.getObjectMetadata(), null, "metadata", null, 0, 1, BatchItem.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
 		// Create resource
 		createResource(eNS_URI);
 
@@ -509,6 +638,18 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 			   "basePackage", "org.eclipse.fennec.model.atlas.rest",
 			   "resource", "XMI",
 			   "fileExtensions", "rest"
+		   });
+		addAnnotation
+		  (batchResponseEClass,
+		   source,
+		   new String[] {
+			   "documentation", "The answer to a batch write: all items were applied, or none."
+		   });
+		addAnnotation
+		  (batchItemEClass,
+		   source,
+		   new String[] {
+			   "documentation", "What a batch did with one item: written (outcome and metadata set), refused (refusal and message set), or not applied because another item was refused (neither set)."
 		   });
 	}
 
