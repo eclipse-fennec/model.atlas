@@ -90,7 +90,7 @@
         "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.parent": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory)(registry.name=governance-estates)(registry.name=vulnerability-reports)(registry.name=triage-policies)(registry.name=vulnerability-decisions))",
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~transformations": {
@@ -497,6 +497,170 @@
         ],
         "root.eclass.uri": [
             "https://org.eclipse/fennec/compliance/inventory/1.0.0#//Inventory"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~governance-estates": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/deployment/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "governance-estates",
+        "registry.description": "The Registry holding the estates of a tenant: its hosts, their deployment models and the owners of images (governance)",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/deployment/1.0.0#//EstateConfiguration"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~vulnerability-reports": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/report/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "vulnerability-reports",
+        "registry.description": "The Registry holding scan reports of artifacts and asset reports with ranked findings (governance)",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/report/1.0.0#//ComplianceReport"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~triage-policies": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/vulnerability/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "triage-policies",
+        "registry.description": "The Registry holding the triage policy of a tenant: ranking rules, automatic decisions, deadlines (governance)",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/vulnerability/1.0.0#//TriagePolicy"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~vulnerability-decisions": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/vulnerability/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "vulnerability-decisions",
+        "registry.description": "The Registry holding the decisions people took on vulnerabilities (governance)",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/vulnerability/1.0.0#//DecisionLog"
         ],
         "resourceSet.target": "(emf.name=ecore)"
     },

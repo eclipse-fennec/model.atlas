@@ -66,13 +66,13 @@
 	net.datafaker;version='[2.5.4,2.5.5)';startlevel=1019,\
 	org.antlr.antlr4-runtime;version='[4.13.2,4.13.3)';startlevel=1020,\
 	org.apache.aries.component-dsl.component-dsl;version='[1.2.2,1.2.3)';startlevel=1021,\
-	org.apache.aries.spifly.dynamic.bundle;version='[1.3.7,1.3.8)';startlevel=1022,\
+	org.apache.aries.spifly.dynamic.framework.extension;version='[1.3.8,1.3.9)';startlevel=1022,\
 	org.apache.aries.typedevent.bus;version='[1.0.1,1.0.2)';startlevel=1023,\
 	org.apache.commons.commons-codec;version='[1.22.0,1.22.1)';startlevel=1024,\
 	org.apache.commons.commons-fileupload;version='[1.6.0,1.6.1)';startlevel=1025,\
 	org.apache.commons.commons-io;version='[2.22.0,2.22.1)';startlevel=1026,\
 	org.apache.felix.cm.json;version='[2.0.8,2.0.9)';startlevel=1027,\
-	org.apache.felix.configadmin;version='[1.9.26,1.9.27)';startlevel=1028,\
+	org.apache.felix.configadmin;version='[1.10.0,1.10.1)';startlevel=1028,\
 	org.apache.felix.configadmin.plugin.interpolation;version='[1.2.8,1.2.9)';startlevel=1029,\
 	org.apache.felix.configurator;version='[1.0.18,1.0.19)';startlevel=1030,\
 	org.apache.felix.eventadmin;version='[1.6.4,1.6.5)';startlevel=1031,\
@@ -91,9 +91,9 @@
 	org.apache.lucene.queryparser;version='[9.12.3,9.12.4)';startlevel=1044,\
 	org.apache.sshd.osgi;version='[2.19.0,2.19.1)';startlevel=1045,\
 	org.apache.sshd.sftp;version='[2.19.0,2.19.1)';startlevel=1046,\
-	org.eclipse.emf.common;version='[2.44.0,2.44.1)';startlevel=1047,\
-	org.eclipse.emf.ecore;version='[2.41.0,2.41.1)';startlevel=1048,\
-	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)';startlevel=1049,\
+	org.eclipse.emf.common;version='[2.46.0,2.46.1)';startlevel=1047,\
+	org.eclipse.emf.ecore;version='[2.43.0,2.43.1)';startlevel=1048,\
+	org.eclipse.emf.ecore.xmi;version='[2.41.0,2.41.1)';startlevel=1049,\
 	org.eclipse.emf.mapping.ecore2xml;version='[2.13.0,2.13.1)';startlevel=1050,\
 	org.eclipse.fennec.codec;version='[0.1.0,0.1.1)';startlevel=1051,\
 	org.eclipse.fennec.codec.api;version='[0.1.0,0.1.1)';startlevel=1052,\
@@ -195,16 +195,14 @@
 	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)';startlevel=1148,\
 	org.objectweb.asm.util;version='[9.10.1,9.10.2)';startlevel=1149,\
 	org.osgi.service.component;version='[1.5.1,1.5.2)';startlevel=1150,\
-	org.osgi.service.event;version='[1.4.1,1.4.2)';startlevel=1151,\
-	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1152,\
-	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1153,\
-	org.osgi.service.servlet;version='[2.0.0,2.0.1)';startlevel=1154,\
-	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1155,\
-	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1156,\
-	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1157,\
-	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1158,\
-	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1159,\
-	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1160,\
-	tools.jackson.core.jackson-core;version='[3.3.0,3.3.1)';startlevel=1161,\
-	tools.jackson.core.jackson-databind;version='[3.3.0,3.3.1)';startlevel=1162,\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.3.0,3.3.1)';startlevel=1163
+	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1151,\
+	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1152,\
+	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1153,\
+	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1154,\
+	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1155,\
+	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1156,\
+	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1157,\
+	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1158,\
+	tools.jackson.core.jackson-core;version='[3.3.0,3.3.1)';startlevel=1159,\
+	tools.jackson.core.jackson-databind;version='[3.3.0,3.3.1)';startlevel=1160,\
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.3.0,3.3.1)';startlevel=1161
