@@ -15,10 +15,23 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot,\
 	org.mockito.mockito-core;version=latest,\
-	org.mockito.junit-jupiter;version=latest
+	org.mockito.junit-jupiter;version=latest,\
+	tools.jackson.core.jackson-core;version=latest,\
+	tools.jackson.core.jackson-databind;version=latest
 
 Private-Package: \
 	org.eclipse.fennec.model.atlas.healthcheck.tests
+
+# The shipped configuration files, so HealthServletConfigurationIT reads the real ones
+# (issue #312) instead of a copy that can drift. They are the single source: nothing is
+# checked in here, the build picks them up from the config projects.
+-includeresource: \
+	configs/runtime.config.json=../org.eclipse.fennec.model.atlas.runtime.config/configs/runtime.json,\
+	configs/local.json=../org.eclipse.fennec.model.atlas.runtime.config.local/configs/workflow.json,\
+	configs/local.jena.json=../org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json,\
+	configs/docker.git.json=../org.eclipse.fennec.model.atlas.runtime.config.docker.git/configs/workflow.json,\
+	configs/docker.file.json=../org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json,\
+	configs/jena.image.json=../docker/dockercompose/configs/jena.json
 
 
 -dependson: \

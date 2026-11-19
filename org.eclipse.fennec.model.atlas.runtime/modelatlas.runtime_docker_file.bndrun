@@ -1,4 +1,10 @@
--include: modelatlas.runtime_docker.bndrun
+# The second entry is the SBOM exporter for `./gradlew sbom`, included only once it has been
+# fetched (see cnf/sbom/plugin.bnd); until then it expands to nothing, and resolve, the build
+# and the export ignore it as well as -sbom.
+-include: \
+	modelatlas.runtime_docker.bndrun,\
+	${if;${isfile;${workspace}/cnf/cache/sbom-exporter/org.gecko.bnd.sbom.jar};${workspace}/cnf/sbom/plugin.bnd}
+-sbom: level=medium, format=cyclonedx
 
 # The GDPR review trigger, deployed here because the workflow fires stage actions through the
 # OSGi whiteboard and only reaches services in its own framework. gdpr.check comes with it
@@ -45,6 +51,8 @@
 	org.eclipse.fennec.compliance.context.model,\
 	org.eclipse.fennec.compliance.corpus.model,\
 	org.eclipse.fennec.compliance.inventory.model,\
+	org.eclipse.fennec.compliance.deployment.model,\
+	org.eclipse.fennec.compliance.vulnerability.model,\
 	org.eclipse.fennec.gdpr.action,\
 	org.eclipse.fennec.gdpr.check,\
 	org.eclipse.fennec.ai.apis.meta.model,\

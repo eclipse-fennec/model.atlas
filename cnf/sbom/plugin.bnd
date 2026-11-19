@@ -1,0 +1,10 @@
+# Registers the SBOM exporter (org.gecko.bnd.sbom) for `./gradlew sbom`.
+#
+# Included by the bndruns that have an SBOM (-sbom), and only once the root build.gradle's
+# sbomExporter task has fetched the exporter into cnf/cache/sbom-exporter/. Until then the
+# include is empty, so resolve, testOSGi and the release neither load nor need it. It sits
+# in the bndruns rather than in cnf/ext because Gradle loads the workspace before the
+# exporter is fetched; a bndrun is read when the export runs.
+-plugin.sbom: \
+	org.gecko.bnd.sbom.SbomExporter;\
+		path:="${workspace}/cnf/cache/sbom-exporter/org.gecko.bnd.sbom.jar"

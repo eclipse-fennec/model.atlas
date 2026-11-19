@@ -7,20 +7,35 @@
 		"jersey.context.path": "rest",
 		"osgi.http.whiteboard.target": "(id=atlasHttp)"
 	},
+	// Only the ids of HealthCheckExecutorServletConfiguration (healthcheck.core 2.3.0) are
+	// read here; anything else is silently ignored. The servlet is NOT a whiteboard servlet:
+	// it registers its own Servlet services from servletContextName and servletPath, so
+	// osgi.http.whiteboard.* set here would do nothing. servletContextName stays unset
+	// because no ServletContextHelper is named in this runtime - the single whiteboard's
+	// default context is the right one, and selecting a name nothing publishes would leave
+	// the endpoint unregistered.
 	"org.apache.felix.hc.core.impl.servlet.HealthCheckExecutorServlet~atlas": {
-		"osgi.http.whiteboard.servlet.pattern": "/health/*",
-		"osgi.http.whiteboard.target": "(id=atlasHttp)",
-		"hc.tags": ["atlas"],
+		// Served below the "atlas/" context path of org.apache.felix.http~atlasHtpp,
+		// hence /atlas/system/health (and /atlas/system/health.json, .html, .txt).
+		"servletPath": "/system/health",
+		// The default endpoint runs the checks tagged "atlas" - every Atlas check declares
+		// it, and so must every ServicesCheck configured for a scope (see below).
+		"tags": ["atlas"],
 		"format": "json",
-		"includeExecutionResult": true,
-		"httpStatus.ok": 200,
-		"httpStatus.warn": 200,
-		"httpStatus.critical": 503,
-		"httpStatus.temporarilyUnavailable": 503
+		// Stated rather than inherited from the metatype default: the 503 on CRITICAL is what
+		// the Kubernetes probes documented in README.md depend on.
+		"httpStatusMapping": "OK:200,WARN:200,CRITICAL:503,TEMPORARILY_UNAVAILABLE:503,HEALTH_CHECK_ERROR:500"
 	},
 	"org.apache.felix.hc.generalchecks.ServicesCheck~atlas": {
-	   "services.list" : [
-               "(scope.name=atlas)"
-           ]
+		// Must carry "atlas": the servlet above filters by that tag, and the Felix default
+		// ("systemalive") alone would drop this check out of /atlas/system/health - which
+		// would then report OK while the atlas root scope is missing.
+		"hc.tags": ["atlas", "systemalive"],
+		// Distinct from the Felix default ("Services Ready Check"), which every
+		// ServicesCheck would otherwise share: two checks of the same name are
+		// indistinguishable in the endpoint output, and a "?tags=" query collapses
+		// them into one, so a scope that is down can be hidden by one that is up.
+		"hc.name": "Scope Ready Check: atlas",
+		"services.list": ["(scope.name=atlas)"]
 	}
 }
