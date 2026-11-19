@@ -24,9 +24,9 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)",
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])",
         "document.registry": "gdprdoc"
     },
     "GDPRMetadataDiagnosticsStageAction~schema": {
@@ -38,9 +38,9 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)",
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])",
         "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
     },
     "GDPRMetadataDiagnosticsStageAction~transformations": {
@@ -52,14 +52,14 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)",
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])",
         "stage.action.name": "GDPRMetadataDiagnosticsStageAction~transformations"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
-        "scope": "dimcity",
+        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]",
         "registry": "gdpr",
         "allowed.stages": [
             "draft",
@@ -72,8 +72,8 @@
     "GDPRAtlasRequestStatusStore": {
         "registry": "gdpr",
         "stage": "draft",
-        "scope.target": "(atlas.scope=dimcity)",
-        "publisher.target": "(&(scope=dimcity)(registry=gdpr))"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])",
+        "publisher.target": "(&(scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])(registry=gdpr))"
     },
     "StorageScopesHealthCheck": {
         "storage.root": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]"
@@ -88,18 +88,18 @@
         // tag, and the Felix default ("systemalive") alone would drop this check out of
         // /atlas/system/health - which would then report OK while the scope is missing.
         "hc.tags": ["atlas", "systemalive"],
-                // Distinct from the Felix default ("Services Ready Check"), which every
+        // Distinct from the Felix default ("Services Ready Check"), which every
         // ServicesCheck would otherwise share with the one in the runtime.config bundle:
         // two checks of the same name are indistinguishable in the endpoint output, and a
         // "?tags=" query collapses them into one, so a scope that is down can be hidden by
         // a scope that is up.
-        "hc.name": "Scope Ready Check: dimcity",
-        "services.list": ["(scope.name=dimcity)"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])"]
     },
     "ScopeService~dimcity": {
-        "scope.name": "dimcity",
-        "atlas.scope": "dimcity",
-        "scope.description": "DIM City Scope",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]",
+        "atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory))",
         "registryService.cardinality.minimum:int": 1
@@ -515,9 +515,9 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])"
     },
     "QvtFlowFindingsStageAction": {
         "target.registry": "schema",
@@ -527,9 +527,9 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])"
     },
     "QvtGdprFlowStageAction": {
         "report.registry": "gdpr",
@@ -539,9 +539,9 @@
             "release"
         ],
         "trigger.scopes": [
-            "dimcity"
+            "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"
         ],
-        "scope.target": "(atlas.scope=dimcity)"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]])"
     },
     "QvtStageActionService": {
         "trigger.stages": [
