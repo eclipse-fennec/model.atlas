@@ -14,12 +14,11 @@
 package org.eclipse.fennec.model.atlas.bootstrap;
 
 import java.io.IOException;
-import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.System.Logger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -28,10 +27,9 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,12 +54,18 @@ import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.emf.common.configurator.DynamicEPackageConfigurator;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EClassResolvingDynamicEFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
+import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
+import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -157,6 +161,9 @@ public class InitialModelLoader {
 
     private static final Logger LOG = System.getLogger(InitialModelLoader.class.getName());
 
+    /** How long a seeding unit waits before retrying while the RegistryWriter catches up. */
+    private static final long TARGET_RETRY_MILLIS = 250;
+
     @ObjectClassDefinition(name = "Atlas Initial Model Loader Configuration")
     public @interface Config {
 
@@ -194,6 +201,7 @@ public class InitialModelLoader {
     private final BundleContext bundleContext;
     private final ResourceSet resourceSet;
     private final ConfigurationAdmin configAdmin;
+    private final RegistryWriter registryWriter;
 
     private final List<ServiceRegistration<?>> registrations = new ArrayList<>();
     private final List<Configuration> qvtConfigurations = new ArrayList<>();
@@ -242,12 +250,14 @@ public class InitialModelLoader {
             @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED,
                     target = "(" + EMFNamespaces.EMF_MODEL_FILE_EXT + "=jsonschema)") ResourceSet resourceSet,
             @Reference ConfigurationAdmin configAdmin,
+            @Reference RegistryWriter registryWriter,
             @Reference(name = "requiredModels", target = "(" + Condition.CONDITION_ID + "="
                     + RequiredModelsCondition.CONDITION_ID + ")") Condition requiredModels,
             Config config) {
         this.bundleContext = bundleContext;
         this.resourceSet = resourceSet;
         this.configAdmin = configAdmin;
+        this.registryWriter = registryWriter;
         this.config = config;
         try {
             loadInitial(config.initial_models_folder());
@@ -385,6 +395,22 @@ public class InitialModelLoader {
                         + registryName + "') was interrupted by deactivation; the next activation completes it.");
                 return;
             } catch (RuntimeException e) {
+                if (isWaitingForTargets(e)) {
+                    // This component's own references saw the scope and registry first; the
+                    // RegistryWriter finds them through the collectors, which bind the same
+                    // services a moment later. The unit is still pending - try again shortly,
+                    // the watchdog bounds the wait.
+                    String waitingScope = scopeName;
+                    LOG.log(Level.DEBUG, () -> "InitialModelLoader: scope '" + waitingScope
+                            + "' or its registry is not yet visible to the RegistryWriter; retrying.");
+                    try {
+                        scopeSeedingExecutor.schedule(this::seedReadyUnits, TARGET_RETRY_MILLIS,
+                                TimeUnit.MILLISECONDS);
+                    } catch (RejectedExecutionException rejected) {
+                        // component is deactivating
+                    }
+                    return;
+                }
                 boolean servicesReplaced;
                 synchronized (pendingScopes) {
                     servicesReplaced = scopeServices.get(scopeName) != scopeService
@@ -790,34 +816,39 @@ public class InitialModelLoader {
             instanceIds.add(objectId);
         }
 
+        // Upload through the RegistryWriter (issue #386): the same rules as a REST upload -
+        // type gate incl. derived content, package identity and version, search index. A
+        // package or object already present in the stage is skipped, which keeps the seeding
+        // idempotent across restarts. A write request contains its content, so it gets a copy:
+        // the loaded packages stay registered and the instances stay in their resources.
         List<ObjectMetadata> uploaded = new ArrayList<>();
         int skipped = 0;
         try {
             for (EPackage ePackage : packageRoots) {
-                String nsURI = ePackage.getNsURI();
-                if (!scopeService.getMetadataByPropertyFromStageForRegistry(registry, stage,
-                        WorkflowConstants.NS_URI_METADATA_PROPERTY, nsURI).isEmpty()) {
-                    LOG.log(Level.INFO, () -> "InitialModelLoader: '" + nsURI + "' is already present in scope '"
-                            + scopeName + "' stage '" + stage + "', skipping.");
+                // lenient: a one-shot loader must not abort start-up over a junk Version annotation
+                WriteResult result = registryWriter.createPackage(RegistryRequests.packageWrite(scopeName, registry, stage,
+                        EcoreUtil.copy(ePackage), null, null, null, null, ConflictPolicy.SKIP, null, true));
+                if (result.getOutcome() == WriteOutcome.SKIPPED) {
+                    LOG.log(Level.INFO, () -> "InitialModelLoader: '" + ePackage.getNsURI()
+                            + "' is already present in scope '" + scopeName + "' stage '" + stage + "', skipping.");
                     skipped++;
-                    continue;
+                } else {
+                    uploaded.add(result.getMetadata());
                 }
-                ObjectMetadata metadata = createScopeMetadata(scopeName, registry, stage, ePackage);
-                uploaded.add(scopeService.uploadToStageForRegistry(registry, stage, ePackage, metadata).getValue());
             }
             for (int i = 0; i < instanceRoots.size(); i++) {
                 String objectId = instanceIds.get(i);
-                if (scopeService.getMetadataFromStageForRegistry(registry, stage, objectId) != null) {
+                WriteResult result = registryWriter.createObject(RegistryRequests.objectWrite(
+                        RegistryRequests.objectAddress(scopeName, registry, stage, objectId), EcoreUtil.copy(instanceRoots.get(i)),
+                        fileBaseName(instanceFiles.get(i)), null, ConflictPolicy.SKIP, null));
+                if (result.getOutcome() == WriteOutcome.SKIPPED) {
                     LOG.log(Level.INFO, () -> "InitialModelLoader: object '" + objectId + "' is already present in "
                             + "scope '" + scopeName + "' registry '" + registry + "' stage '" + stage
                             + "', skipping.");
                     skipped++;
-                    continue;
+                } else {
+                    uploaded.add(result.getMetadata());
                 }
-                ObjectMetadata metadata = createInstanceMetadata(scopeName, registry, stage, objectId,
-                        instanceFiles.get(i), instanceRoots.get(i));
-                uploaded.add(scopeService
-                        .uploadToStageForRegistry(registry, stage, instanceRoots.get(i), metadata).getValue());
             }
         } catch (Exception e) {
             if (isCausedByInterrupt(e)) {
@@ -829,9 +860,14 @@ public class InitialModelLoader {
                 Thread.currentThread().interrupt();
                 throw new SeedingInterrupted();
             }
-            for (ObjectMetadata metadata : uploaded) {
+            // Undo in reverse, instances before the packages they depend on. Forced, because a
+            // delete gate guarding a package against its dependents must not keep half a
+            // deployment alive - the dependents are this deployment's own and go first.
+            for (int i = uploaded.size() - 1; i >= 0; i--) {
+                ObjectMetadata metadata = uploaded.get(i);
                 try {
-                    scopeService.deleteFromStageForRegistry(registry, stage, metadata.getObjectId()).getValue();
+                    registryWriter.deleteObject(RegistryRequests.objectAddress(scopeName, registry, stage, metadata.getObjectId()),
+                            true, null);
                 } catch (Exception cleanupFailure) {
                     LOG.log(Level.WARNING, "InitialModelLoader: failed to delete '" + metadata.getObjectId()
                             + "' while compensating the failed seeding of scope '" + scopeName + "'.",
@@ -850,6 +886,19 @@ public class InitialModelLoader {
     /** Thrown when an in-flight seeding was interrupted by the component's own deactivation. */
     private static final class SeedingInterrupted extends RuntimeException {
         private static final long serialVersionUID = 1L;
+    }
+
+    /**
+     * Whether the RegistryWriter refused because it does not see the target scope or registry
+     * yet - a binding race with this component's own references, not a failure.
+     */
+    private static boolean isWaitingForTargets(Throwable t) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            if (cause instanceof RegistryAccessException refusal) {
+                return refusal.reason() == RefusalReason.UNKNOWN_SCOPE || refusal.reason() == RefusalReason.UNKNOWN_REGISTRY;
+            }
+        }
+        return false;
     }
 
     private static boolean isCausedByInterrupt(Throwable t) {
@@ -891,24 +940,6 @@ public class InitialModelLoader {
     }
 
     /**
-     * Builds instance metadata the same way {@code ObjectRegistryResource.createObject}
-     * does for a REST upload, so seeded and uploaded objects are
-     * indistinguishable downstream.
-     */
-    private ObjectMetadata createInstanceMetadata(String scopeName, String registry, String stage, String objectId,
-            Path file, EObject root) {
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectId(objectId);
-        metadata.setObjectName(fileBaseName(file));
-        metadata.setUploadTime(Instant.now());
-        metadata.setStage(stage);
-        metadata.setScope(scopeName);
-        metadata.setRegistry(registry);
-        metadata.setObjectType(EcoreUtil.getURI(root.eClass()).toString());
-        return metadata;
-    }
-
-    /**
      * Creates a Resource for an instance {@code .xmi} file, pinning the standard
      * XMI factory on the component-private ResourceSet so a wildcard codec
      * factory can never claim the extension.
@@ -917,25 +948,6 @@ public class InitialModelLoader {
         resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
                 .putIfAbsent("xmi", new XMIResourceFactoryImpl());
         return resourceSet.createResource(URI.createURI(uri));
-    }
-
-    /**
-     * Builds the metadata the same way {@code SchemaPackagesResource.createPackage}
-     * does for a REST upload, so seeded and uploaded packages are
-     * indistinguishable downstream.
-     */
-    private ObjectMetadata createScopeMetadata(String scopeName, String registry, String stage, EPackage ePackage) {
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectId(UUID.randomUUID().toString());
-        metadata.setObjectName(ePackage.getName());
-        metadata.setUploadTime(Instant.now());
-        metadata.setStage(stage);
-        metadata.setScope(scopeName);
-        metadata.setRegistry(registry);
-        metadata.setVersion(extractVersion(ePackage));
-        metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
-        metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, ePackage.getNsURI());
-        return metadata;
     }
 
     /**

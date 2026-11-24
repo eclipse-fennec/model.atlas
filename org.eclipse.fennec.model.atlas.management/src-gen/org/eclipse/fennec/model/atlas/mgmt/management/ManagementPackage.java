@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:872bed7b7a976d9f873238e39e863a8ca1466b01d78523774dc8ea7ae262e840", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
+@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:38d9695721011ed66d113ee87f033d5b40cacdfdf0626eb9702787861b0fd0b9", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
 public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -123,13 +123,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__CONTENT_HASH = 3;
 
 	/**
+	 * The feature id for the '<em><b>Metadata Hash</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__METADATA_HASH = 4;
+
+	/**
 	 * The feature id for the '<em><b>Object Type</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__OBJECT_TYPE = 4;
+	int OBJECT_METADATA__OBJECT_TYPE = 5;
 
 	/**
 	 * The feature id for the '<em><b>Review User</b></em>' attribute.
@@ -138,7 +147,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__REVIEW_USER = 5;
+	int OBJECT_METADATA__REVIEW_USER = 6;
 
 	/**
 	 * The feature id for the '<em><b>Review Time</b></em>' attribute.
@@ -147,7 +156,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__REVIEW_TIME = 6;
+	int OBJECT_METADATA__REVIEW_TIME = 7;
 
 	/**
 	 * The feature id for the '<em><b>Review Reason</b></em>' attribute.
@@ -156,7 +165,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__REVIEW_REASON = 7;
+	int OBJECT_METADATA__REVIEW_REASON = 8;
 
 	/**
 	 * The feature id for the '<em><b>Generation Trigger Fingerprint</b></em>' attribute.
@@ -165,7 +174,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__GENERATION_TRIGGER_FINGERPRINT = 8;
+	int OBJECT_METADATA__GENERATION_TRIGGER_FINGERPRINT = 9;
 
 	/**
 	 * The feature id for the '<em><b>Compliance Check Time</b></em>' attribute.
@@ -174,7 +183,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__COMPLIANCE_CHECK_TIME = 9;
+	int OBJECT_METADATA__COMPLIANCE_CHECK_TIME = 10;
 
 	/**
 	 * The feature id for the '<em><b>Compliance Status</b></em>' attribute.
@@ -183,7 +192,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__COMPLIANCE_STATUS = 10;
+	int OBJECT_METADATA__COMPLIANCE_STATUS = 11;
 
 	/**
 	 * The feature id for the '<em><b>Governance Documentation Id</b></em>' attribute.
@@ -192,7 +201,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__GOVERNANCE_DOCUMENTATION_ID = 11;
+	int OBJECT_METADATA__GOVERNANCE_DOCUMENTATION_ID = 12;
 
 	/**
 	 * The feature id for the '<em><b>Properties</b></em>' map.
@@ -201,7 +210,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__PROPERTIES = 12;
+	int OBJECT_METADATA__PROPERTIES = 13;
 
 	/**
 	 * The feature id for the '<em><b>Last Change User</b></em>' attribute.
@@ -210,7 +219,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__LAST_CHANGE_USER = 13;
+	int OBJECT_METADATA__LAST_CHANGE_USER = 14;
 
 	/**
 	 * The feature id for the '<em><b>Last Change Time</b></em>' attribute.
@@ -219,7 +228,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__LAST_CHANGE_TIME = 14;
+	int OBJECT_METADATA__LAST_CHANGE_TIME = 15;
 
 	/**
 	 * The feature id for the '<em><b>Status</b></em>' attribute.
@@ -228,7 +237,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__STATUS = 15;
+	int OBJECT_METADATA__STATUS = 16;
 
 	/**
 	 * The feature id for the '<em><b>Version</b></em>' attribute.
@@ -237,7 +246,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__VERSION = 16;
+	int OBJECT_METADATA__VERSION = 17;
 
 	/**
 	 * The feature id for the '<em><b>Object Ref</b></em>' reference.
@@ -246,7 +255,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__OBJECT_REF = 17;
+	int OBJECT_METADATA__OBJECT_REF = 18;
 
 	/**
 	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
@@ -255,7 +264,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__OBJECT_ID = 18;
+	int OBJECT_METADATA__OBJECT_ID = 19;
 
 	/**
 	 * The feature id for the '<em><b>Object Name</b></em>' attribute.
@@ -264,7 +273,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__OBJECT_NAME = 19;
+	int OBJECT_METADATA__OBJECT_NAME = 20;
 
 	/**
 	 * The feature id for the '<em><b>Stage</b></em>' attribute.
@@ -273,7 +282,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__STAGE = 20;
+	int OBJECT_METADATA__STAGE = 21;
 
 	/**
 	 * The feature id for the '<em><b>Last Change Reason</b></em>' attribute.
@@ -282,7 +291,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__LAST_CHANGE_REASON = 21;
+	int OBJECT_METADATA__LAST_CHANGE_REASON = 22;
 
 	/**
 	 * The feature id for the '<em><b>Scope</b></em>' attribute.
@@ -291,7 +300,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__SCOPE = 22;
+	int OBJECT_METADATA__SCOPE = 23;
 
 	/**
 	 * The feature id for the '<em><b>Is Read Only</b></em>' attribute.
@@ -300,7 +309,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__IS_READ_ONLY = 23;
+	int OBJECT_METADATA__IS_READ_ONLY = 24;
 
 	/**
 	 * The feature id for the '<em><b>Registry</b></em>' attribute.
@@ -309,7 +318,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__REGISTRY = 24;
+	int OBJECT_METADATA__REGISTRY = 25;
 
 	/**
 	 * The feature id for the '<em><b>Fingerprint</b></em>' attribute.
@@ -318,7 +327,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__FINGERPRINT = 25;
+	int OBJECT_METADATA__FINGERPRINT = 26;
 
 	/**
 	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
@@ -327,7 +336,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__DIAGNOSTICS = 26;
+	int OBJECT_METADATA__DIAGNOSTICS = 27;
 
 	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
@@ -336,7 +345,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 27;
+	int OBJECT_METADATA_FEATURE_COUNT = 28;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -1075,6 +1084,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getObjectMetadata_ContentHash();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getMetadataHash <em>Metadata Hash</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Metadata Hash</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getMetadataHash()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_MetadataHash();
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectType <em>Object Type</em>}'.
@@ -2058,6 +2078,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_METADATA__CONTENT_HASH = eINSTANCE.getObjectMetadata_ContentHash();
+
+		/**
+		 * The meta object literal for the '<em><b>Metadata Hash</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__METADATA_HASH = eINSTANCE.getObjectMetadata_MetadataHash();
 
 		/**
 		 * The meta object literal for the '<em><b>Object Type</b></em>' attribute feature.

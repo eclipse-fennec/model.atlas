@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.resource;
+package org.eclipse.fennec.model.atlas.registry.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,12 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.Version;
 
-import jakarta.ws.rs.WebApplicationException;
 
 /**
  * A package's version is <em>declared</em> — by the caller, or by the model itself — and only
@@ -127,11 +128,11 @@ class PackageVersionsTest {
 		void unparseableAnnotationIsRejected() {
 			EPackage ePackage = ePackage("http://example.org/model/1.0.0", "not-a-version");
 
-			WebApplicationException failure = assertThrows(WebApplicationException.class,
+			RegistryAccessException failure = assertThrows(RegistryAccessException.class,
 					() -> PackageVersions.resolve(ePackage, null, ePackage.getNsURI()));
 
-			assertEquals(400, failure.getResponse().getStatus());
-			assertTrue(String.valueOf(failure.getResponse().getEntity()).contains("not-a-version"),
+			assertEquals(RefusalReason.INVALID, failure.reason());
+			assertTrue(failure.getMessage().contains("not-a-version"),
 					"the message must quote what the package declared");
 		}
 	}
@@ -166,10 +167,10 @@ class PackageVersionsTest {
 		void unparseableIsRejected() {
 			EPackage ePackage = ePackage("http://example.org/model/1.0.0", null);
 
-			WebApplicationException failure = assertThrows(WebApplicationException.class,
+			RegistryAccessException failure = assertThrows(RegistryAccessException.class,
 					() -> PackageVersions.resolve(ePackage, "not-a-version", ePackage.getNsURI()));
 
-			assertEquals(400, failure.getResponse().getStatus());
+			assertEquals(RefusalReason.INVALID, failure.reason());
 		}
 
 		@Test

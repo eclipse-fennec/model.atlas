@@ -25,6 +25,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.api;version=project,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 
 
@@ -33,6 +34,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 -dependson: \
 	org.eclipse.fennec.model.atlas.bootstrap,\
+	org.eclipse.fennec.model.atlas.registry.api,\
+	org.eclipse.fennec.model.atlas.registry.impl,\
 	org.eclipse.fennec.model.atlas.workflow,\
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.fennec.model.atlas.management.file,\

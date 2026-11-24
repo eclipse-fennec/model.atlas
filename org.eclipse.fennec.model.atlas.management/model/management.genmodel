@@ -62,6 +62,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/uploadTime"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/sourceChannel"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/contentHash"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/metadataHash"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/objectType"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/reviewUser"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/reviewTime"/>

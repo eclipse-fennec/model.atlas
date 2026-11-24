@@ -39,6 +39,11 @@
         <details key="documentation" value="SHA-256 hash of XMI content"/>
       </eAnnotations>
     </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="metadataHash" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="SHA-256 hash of the metadata state a client can observe: content hash, version, status, last change time and diagnostics. Recomputed whenever the metadata is stored; a client compares it to notice a change and sends it back to make a write conditional on the state it has seen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="objectType" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

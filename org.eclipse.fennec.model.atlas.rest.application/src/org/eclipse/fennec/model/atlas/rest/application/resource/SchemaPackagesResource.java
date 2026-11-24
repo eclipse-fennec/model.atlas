@@ -13,39 +13,35 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchHit;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchResult;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
-import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
-import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
-import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
-import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
-import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
-import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
+import org.eclipse.fennec.model.atlas.registry.api.ConflictPolicy;
+import org.eclipse.fennec.model.atlas.registry.api.PackageSearch;
+import org.eclipse.fennec.model.atlas.registry.api.PackageSearchResult;
+import org.eclipse.fennec.model.atlas.registry.api.PackageWrite;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryApiFactory;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryReader;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryRequests;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryWriter;
+import org.eclipse.fennec.model.atlas.registry.api.WriteOutcome;
+import org.eclipse.fennec.model.atlas.registry.api.WriteResult;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
+import org.eclipse.fennec.model.atlas.rest.model.BatchResponse;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
+import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -77,7 +73,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import org.eclipse.fennec.codec.constants.CodecOptions;
 import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
@@ -97,13 +92,13 @@ import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 public class SchemaPackagesResource {
 
     @Reference
-    private ScopeServiceCollector scopeCollector;
-
-    @Reference
     private ManagementFactory mgmtFactory;
     
     @Reference
-    EPackageLuceneIndex ePackageIndex;
+    private RegistryWriter registryWriter;
+
+    @Reference
+    private RegistryReader registryReader;
 
     @Context
     private ContainerRequestContext requestContext;
@@ -111,7 +106,6 @@ public class SchemaPackagesResource {
     @Context
     private HttpHeaders headers;
     
-    private static final Logger LOGGER = Logger.getLogger(SchemaPackagesResource.class.getName());
 
     @GET
     @Path("hello")
@@ -145,14 +139,15 @@ public class SchemaPackagesResource {
     public Response listAllPackages(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(schemaRegistry(scopeService));
+            List<ObjectMetadata> objectsMetadata = registryReader.listAll(scopeName, registryReader.schemaRegistry(scopeName));
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
             return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -185,12 +180,11 @@ public class SchemaPackagesResource {
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "Exact namespace URI of the package to retrieve from the final stage") @QueryParam("nsUri") String nsUri) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             if (nsUri != null) {
                 // Stage-free final-stage metadata for one package (hierarchy-aware), mirroring the
                 // stage-explicit listing's nsUri branch — used by the client's resolve() (P5-7).
-                ObjectMetadata metadata = findByNsUriInFinalStage(scopeService, nsUri);
+                ObjectMetadata metadata = registryReader.finalPackageMetadata(scopeName, nsUri);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -199,12 +193,14 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.OK).entity(metadata)
                         .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
-            List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(schemaRegistry(scopeService));
+            List<ObjectMetadata> objectsMetadata = registryReader.listFinal(scopeName, registryReader.schemaRegistry(scopeName));
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
             return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -244,10 +240,9 @@ public class SchemaPackagesResource {
             @Parameter(description = "Exact namespace URI of the package to retrieve") @QueryParam("nsUri") String nsUri,
             @Parameter(description = "Package name filter (supports wildcards, e.g., *Billing*)") @QueryParam("name") String name) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             if (nsUri != null) {
-                ObjectMetadata metadata = findByNsUriInStage(scopeService, stageName, nsUri);
+                ObjectMetadata metadata = registryReader.packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri));
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -258,8 +253,8 @@ public class SchemaPackagesResource {
                     return rb.build();
                 }
             } else if (name != null) {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(schemaRegistry(scopeService),
-                        stageName, name);
+                List<ObjectMetadata> objectsMetadata = registryReader.listByName(scopeName, registryReader.schemaRegistry(scopeName), stageName,
+                        name);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -267,7 +262,7 @@ public class SchemaPackagesResource {
                 container.getMetadata().addAll(objectsMetadata);
                 return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             } else {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(schemaRegistry(scopeService), stageName);
+                List<ObjectMetadata> objectsMetadata = registryReader.list(scopeName, registryReader.schemaRegistry(scopeName), stageName);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -275,6 +270,8 @@ public class SchemaPackagesResource {
                 container.getMetadata().addAll(objectsMetadata);
                 return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -294,7 +291,6 @@ public class SchemaPackagesResource {
      * @param ePackage  the schema package content
      * @return SchemaPackage metadata
      */
-    @SuppressWarnings("unchecked")
     @POST
     @PUT
     @Path("/stages/{stageName}")
@@ -322,85 +318,88 @@ public class SchemaPackagesResource {
                     + "On create, absent means false. On an overwrite, absent leaves the stored flag untouched — only an explicit value changes it.", required = false) @QueryParam("dcat") Boolean dcat,
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
-        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
-
         try {
-            String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = PackageVersions.resolve(ePackage, version, validatedNsUri);
-            // Check uniqueness across visibility chain
-            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
-            if (existingMetadata != null) {
-                if (!overwrite) {
-                    return Response.status(Response.Status.CONFLICT)
-                            .entity(String.format(
-                                    "Schema %s already exists and overwrite flag is false. Cannot update object.",
-                                    nsUri))
-                            .build();
-                } else {
-                    if (existingMetadata.isIsReadOnly()) {
-                        return Response.status(Response.Status.FORBIDDEN)
-                                .entity(String.format("Schema %s is read-only. Cannot update it.", nsUri)).build();
-                    }
-                    // If-Match validation (optimistic locking via the content ETag — overwrite replaces
-                    // the content of an existing package).
-                    Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                            ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-                    if (preconditionResponse != null) {
-                        return preconditionResponse;
-                    }
-                    ObjectMetadata metadata = scopeService
-                            .updateInStageForRegistry(schemaRegistry(scopeService), stageName, ePackage,
-                                    existingMetadata.getObjectId(), resolvedVersion)
-                            .getValue();
-                    // An absent ?dcat leaves the stored flag alone: an overwrite that says nothing
-                    // about publication must not unpublish the model. Only an explicit value moves it.
-                    if (dcat != null) {
-                        metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
-                                existingMetadata.getObjectId(),
-                                Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
-                                        Boolean.toString(dcat))).getValue();
-                    }
-                    ePackageIndex.index(metadata, ePackage);
-                    Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                            .location(packageLocation(scopeName, stageName, validatedNsUri))
-                            .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-                    ObjectMetadataResponseFilter.attach(requestContext, metadata,
-                            ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                    return rb.build();
-                }
-            }
-            // Create package and return metadata with Location header. The objectId is a
-            // random UUID assigned once at upload and stable across stage transitions (it is
-            // the lifecycle audit trail); the nsURI is carried only by the nsUri property.
-            ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
-            metadata.setObjectId(UUID.randomUUID().toString());
-            metadata.setObjectName(name == null ? ePackage.getName() : name);
-            metadata.setUploadTime(Instant.now());
-            metadata.setStage(stageName);
-            metadata.setScope(scopeName);
-            metadata.setRegistry(schemaRegistry(scopeService));
-            metadata.setVersion(resolvedVersion);
-            metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
-            metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, validatedNsUri);
-            // "true"/"false", not a Boolean: a property is text, so that it can be read and edited
-            // in the stored metadata and by a client that is not Java (issue #354). The publisher
-            // parses it. Absent means false.
-            metadata.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
-                    Boolean.toString(Boolean.TRUE.equals(dcat)));
-
-            metadata = scopeService.uploadToStageForRegistry(schemaRegistry(scopeService), stageName, ePackage, metadata).getValue();
-            ePackageIndex.index(metadata, ePackage);
-
-            Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
-                    .location(packageLocation(scopeName, stageName, validatedNsUri))
+            WriteResult result = registryWriter.createPackage(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage,
+                    nsUri, name, version, dcat, overwrite ? ConflictPolicy.OVERWRITE : ConflictPolicy.FAIL,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
+            ObjectMetadata metadata = result.getMetadata();
+            Response.ResponseBuilder rb = Response
+                    .status(result.getOutcome() == WriteOutcome.CREATED ? Response.Status.CREATED : Response.Status.OK)
+                    .location(packageLocation(scopeName, stageName, ePackage.getNsURI()))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
+            throw e;
+        } catch (Exception e) {
+            throw EndpointFailures.propagate(e);
+        }
+    }
+
+    /**
+     * Write several schema packages at once: every root of the uploaded resource must be an
+     * EPackage and becomes one package of the scope's schema registry, matched by its nsURI. All
+     * packages are written, or none.
+     *
+     * @param scopeName  the scope name
+     * @param stageName  the stage name
+     * @param onConflict what to do with a package whose nsURI is already taken
+     * @param dcat       the publication flag for every package of the batch
+     * @param resource   the packages, one per root
+     * @return one result per root, identified by nsURI
+     */
+    @POST
+    @Path("/stages/{stageName}/batch")
+    @Consumes
+    @Produces
+    @Operation(summary = "Write several schema packages at once", description = "Every root of the uploaded resource (XMI or JSON) must be an EPackage and becomes one package of the scope's schema registry, matched by its nsURI. "
+            + "Each version is taken from the package's own Version annotation, otherwise from the last segment of the nsURI when that segment looks like a version. "
+            + "All packages are written, or none: every package is checked first, and should a write still be refused, what the batch wrote is undone. "
+            + "The body lists one result per root, in document order. Instances whose types live in these packages go in a separate batch afterwards.", responses = {
+                    @ApiResponse(responseCode = "200", description = "All packages written", content = @Content(schema = @Schema(implementation = BatchResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Empty resource, a root that is not an EPackage, a missing or duplicate nsURI, an invalid version, an unknown onConflict value or scope; nothing written"),
+                    @ApiResponse(responseCode = "403", description = "A package is read-only; nothing written"),
+                    @ApiResponse(responseCode = "404", description = "The scope has no schema registry"),
+                    @ApiResponse(responseCode = "409", description = "A package already exists and onConflict is FAIL; nothing written"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported media type"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    public Response writePackages(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "What to do with a package whose nsURI is already taken: FAIL (default) refuses the batch, OVERWRITE replaces the package, SKIP leaves it alone") @QueryParam("onConflict") String onConflict,
+            @Parameter(description = "Assert that the packages may be published to a DCAT portal, as on the single upload", required = false) @QueryParam("dcat") Boolean dcat,
+            @RequestBody(description = "A resource with one EPackage per root", required = true) Resource resource) {
+
+        try {
+            ConflictPolicy policy = ResourceSupport.conflictPolicy(onConflict);
+            List<EObject> roots = resource == null ? List.of() : List.copyOf(resource.getContents());
+            if (roots.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("The batch contains no packages").build();
+            }
+            List<PackageWrite> writes = new ArrayList<>(roots.size());
+            for (int i = 0; i < roots.size(); i++) {
+                if (!(roots.get(i) instanceof EPackage ePackage)) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(String.format("Root %d is a %s, not an EPackage", i,
+                                    roots.get(i).eClass().getName()))
+                            .build();
+                }
+                writes.add(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage, null, null, null, dcat, policy,
+                        null, false));
+            }
+            return ResourceSupport.batch(registryWriter.writePackages(RegistryRequests.packageBatch(writes)), requestContext);
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (WebApplicationException e) {
             throw e;
         } catch (Exception e) {
             throw EndpointFailures.propagate(e);
@@ -434,11 +433,11 @@ public class SchemaPackagesResource {
             @Parameter(description = "Optional precondition: the model fingerprint the caller expects. "
                     + "Omitted, the request behaves exactly as before.") @QueryParam("fingerprint") String fingerprint) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
-            ObjectMetadata contentMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
+            ObjectMetadata contentMetadata = registryReader
+                    .packageMetadata(RegistryRequests.packageAddress(scopeName, stageName, nsUri));
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -446,8 +445,8 @@ public class SchemaPackagesResource {
             if (mismatch != null) {
                 return mismatch;
             }
-            EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(schemaRegistry(scopeService), stageName,
-                    contentMetadata.getObjectId());
+            EPackage ePackage = (EPackage) registryReader.content(RegistryRequests.objectAddress(scopeName,
+                    registryReader.schemaRegistry(scopeName), stageName, contentMetadata.getObjectId()));
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -459,6 +458,8 @@ public class SchemaPackagesResource {
             }
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -491,11 +492,10 @@ public class SchemaPackagesResource {
             @Parameter(description = "Optional precondition: the model fingerprint the caller expects. "
                     + "Omitted, the request behaves exactly as before.") @QueryParam("fingerprint") String fingerprint) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
-            ObjectMetadata contentMetadata = findByNsUriInFinalStage(scopeService, nsUri);
+            ObjectMetadata contentMetadata = registryReader.finalPackageMetadata(scopeName, nsUri);
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -503,11 +503,12 @@ public class SchemaPackagesResource {
             if (mismatch != null) {
                 return mismatch;
             }
-            Optional<?> ePackageContent = scopeService.get(schemaRegistry(scopeService), contentMetadata.getObjectId());
-            if (ePackageContent.isEmpty()) {
+            EObject ePackageContent = registryReader.finalContent(scopeName,
+                    registryReader.schemaRegistry(scopeName), contentMetadata.getObjectId());
+            if (ePackageContent == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent.get())
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent)
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
@@ -515,6 +516,8 @@ public class SchemaPackagesResource {
             }
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -531,7 +534,6 @@ public class SchemaPackagesResource {
      * @param ePackage  the new schema package content
      * @return Updated SchemaPackage metadata
      */
-    @SuppressWarnings("unchecked")
     @PUT
     @POST
     @Path("/stages/{stageName}/content")
@@ -555,54 +557,21 @@ public class SchemaPackagesResource {
             @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
             @RequestBody(description = "The new schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
-        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
-            String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = PackageVersions.resolve(ePackage, version, validatedNsUri);
-            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
-            if (existingMetadata == null) {
+            WriteResult result = registryWriter.updatePackage(RegistryRequests.packageWrite(scopeName, null, stageName, ePackage,
+                    nsUri, null, version, null, null,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT), false));
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            // We might want to check if the metadata is read only (e.g. if it was retrieved
-            // from a parent final stage
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Schema %s is in read-only state", nsUri)).build();
-            }
-
-            // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                    ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-
-            // Content-aware skip: if content hasn't changed, skip the update
-            String newContentHash = AbstractEObjectStorageService.computeContentHash(ePackage);
-            if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
-                Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                        .entity(existingMetadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-                ObjectMetadataResponseFilter.attach(requestContext, existingMetadata,
-                        ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                return rb.build();
-            }
-
-            EcoreUtil.resolveAll(ePackage);
-            if(ePackage.eResource() != null) {
-        	ePackage.eResource().setURI(URI.createURI(ePackage.getNsURI()));
-            }
-
-            ObjectMetadata metadata = scopeService
-                    .updateInStageForRegistry(schemaRegistry(scopeService), stageName, ePackage, existingMetadata.getObjectId(),
-                            resolvedVersion)
-                    .getValue();
-            ePackageIndex.index(metadata, ePackage);
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
-            ObjectMetadataResponseFilter.attach(requestContext, metadata,
+                    .entity(result.getMetadata()).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (WebApplicationException e) {
@@ -685,7 +654,6 @@ public class SchemaPackagesResource {
                     + "the published Dataset; setting it publishes the package if its scope and stage are "
                     + "configured for a portal.", required = false) @QueryParam("dcat") Boolean dcat) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             requireNsUri(nsUri);
             Response refusal = refuseNonEditableFields();
@@ -697,47 +665,23 @@ public class SchemaPackagesResource {
                         .entity("Nothing to change: pass at least one editable field, e.g. ?dcat=true").build();
             }
 
-            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
-            if (existingMetadata == null) {
+            WriteResult result = registryWriter.updatePackageProperties(RegistryRequests.propertiesUpdate(
+                    RegistryRequests.packageAddress(scopeName, stageName, nsUri),
+                    Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.toString(dcat)),
+                    // metadata state, not content: the precondition belongs over the metadata validator
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA)));
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))
                         .build();
             }
-            // An inherited package's record belongs to the scope that defines it. Editing it through
-            // a child scope's URL would write to the parent's metadata under a name that does not
-            // say so, which is worse than refusing.
-            if (existingMetadata.getScope() != null && !existingMetadata.getScope().equals(scopeName)) {
-                return Response.status(Response.Status.CONFLICT)
-                        .entity(String.format("Schema %s is inherited from scope %s; edit its metadata there", nsUri,
-                                existingMetadata.getScope()))
-                        .build();
-            }
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Schema %s is in read-only state", nsUri)).build();
-            }
-
-            // Metadata state, not content: this edit changes neither the bytes nor their hash, so
-            // the precondition belongs over the metadata validator.
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-
-            ObjectMetadata metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
-                    existingMetadata.getObjectId(),
-                    Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.toString(dcat))).getValue();
-            if (metadata == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))
-                        .build();
-            }
-            ObjectMetadataResponseFilter.attach(requestContext, metadata,
-                    ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(metadata)
+            return Response.status(Response.Status.OK).entity(result.getMetadata())
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
 
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -820,41 +764,21 @@ public class SchemaPackagesResource {
             @Parameter(description = "The namespace URI of the package to delete", required = true) @QueryParam("nsUri") String nsUri,
             @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            requireNsUri(nsUri);
-            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
-            if (existingMetadata == null) {
+            WriteResult result = registryWriter.deletePackage(RegistryRequests.packageAddress(scopeName, stageName, nsUri), force,
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.CONTENT));
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Schema %s is in read-only state", nsUri)).build();
-            }
+            return Response.status(Response.Status.OK).build();
 
-            // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
-                    ObjectMetadataResponseFilter.CacheTarget.CONTENT);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-
-            boolean deleted = scopeService.deleteFromStageForRegistry(schemaRegistry(scopeService), stageName,
-                    existingMetadata.getObjectId(), force).getValue();
-            if (deleted) {
-            	// Only this stage's copy is gone: the same id may be held by other stages
-            	// of this registry, and those entries must stay searchable (issue #252)
-            	ePackageIndex.remove(RegistryAddress.of(existingMetadata));
-            	return Response.status(Response.Status.OK).build();
-            }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(String.format("Schema %s deletion failed but causes are unknown", nsUri)).build();
-
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             // a gate's refusal is answered with the package's metadata as the 409 body (issue #295)
-            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            Response refused = GateRefusals.conflict(e, registryReader, scopeName, requestContext);
             if (refused != null) {
                 return refused;
             }
@@ -887,117 +811,32 @@ public class SchemaPackagesResource {
             @Parameter(description = "Overwrite option. If the target stage holds a different package under this objectId, false (the default) rejects the transition with a 409 and true replaces that package. Replacing an earlier copy of the package being promoted needs no flag - that is what a promotion is for", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content()) StageTransitionRequest transitionRequest) {
 
-        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            String requestedId = transitionRequest.getObjectId();
-            if (requestedId == null || requestedId.isBlank()) {
-                throw new IllegalArgumentException("Transition request must carry an objectId");
-            }
-            String targetStage = transitionRequest.getTargetStage();
-            ObjectMetadata existingMetadata = resolvePackageInStage(scopeService, stageName, requestedId);
-            if (existingMetadata == null) {
-                // Package not in source stage — check if already in target (idempotent retry)
-                ObjectMetadata targetMetadata = resolvePackageInStage(scopeService, targetStage, requestedId);
-                if (targetMetadata != null) {
-                    ObjectMetadataResponseFilter.attach(requestContext, targetMetadata,
-                            ObjectMetadataResponseFilter.CacheTarget.METADATA);
-                    return Response.status(Response.Status.OK).entity(targetMetadata)
-                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
-                }
+            WriteResult result = registryWriter.transitionPackage(scopeName, stageName,
+                    transitionRequest.getObjectId(), transitionRequest.getTargetStage(), overwrite,
+                    // a transition changes metadata, not content
+                    ResourceSupport.ifMatch(headers, ObjectMetadataResponseFilter.CacheTarget.METADATA));
+            if (result.getOutcome() == WriteOutcome.NOT_FOUND) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            if (existingMetadata.isIsReadOnly()) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(String.format("Schema %s is in read-only state", transitionRequest.getObjectId()))
-                        .build();
-            }
-            // If-Match validation (optimistic locking via the metadata ETag — a transition changes
-            // metadata, not content).
-            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
+            ObjectMetadataResponseFilter.attach(requestContext, result.getMetadata(),
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            if (preconditionResponse != null) {
-                return preconditionResponse;
-            }
-            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(schemaRegistry(scopeService),
-                    existingMetadata.getObjectId(), stageName, targetStage, overwrite);
-            reindexAfterTransition(scopeService, metadata, stageName, targetStage);
-            ObjectMetadataResponseFilter.attach(requestContext, metadata,
-                    ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+            return Response.status(Response.Status.OK).entity(result.getMetadata())
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+        } catch (RegistryAccessException e) {
+            return ResourceSupport.refusal(e);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             // a gate's refusal is answered with the source-stage metadata as the 409 body (issue #295)
-            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            Response refused = GateRefusals.conflict(e, registryReader, scopeName, requestContext);
             if (refused != null) {
                 return refused;
             }
             throw EndpointFailures.propagate(e);
         }
-
     }
 
-    /**
-     * Brings the search index in line with a transition that has just happened. The index doc
-     * records the stage a hit must be resolved against, so both ends need attention: the
-     * target stage gains a doc for the copy it now holds, and the source stage keeps or loses
-     * its own doc depending on whether the registry deleted the source copy
-     * ({@code delete.after.transition}). An id is unique per stage, not across stages (issue
-     * #211), so the two docs coexist for a copying transition.
-     *
-     * <p>
-     * A transition that succeeded must not be reported as failed because the search index
-     * could not be updated: the index is a derived view, so a failure here is logged and the
-     * target entry removed, leaving the package absent from search rather than present under
-     * the wrong stage.
-     * </p>
-     */
-    private void reindexAfterTransition(ScopeService<?> scopeService, ObjectMetadata metadata, String sourceStage,
-            String targetStage) {
-        String objectId = metadata.getObjectId();
-        try {
-            Object content = scopeService.getContentFromStageForRegistry(schemaRegistry(scopeService), targetStage, objectId);
-            if (content instanceof EPackage ePackage) {
-                ePackageIndex.index(metadata, ePackage);
-            } else {
-                LOGGER.log(Level.WARNING,
-                        "Could not re-index object {0} after its transition to stage {1}: no EPackage content in the target stage. Removing its stale index entry.",
-                        new Object[] { objectId, targetStage });
-                ePackageIndex.remove(addressIn(metadata, targetStage));
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, e,
-                    () -> "Could not re-index object " + objectId + " after its transition to stage " + targetStage
-                            + "; removing its stale index entry");
-            ePackageIndex.remove(addressIn(metadata, targetStage));
-        }
-        dropSourceEntryIfMoved(scopeService, metadata, sourceStage);
-    }
-
-    /**
-     * Drops the source stage's index entry when the transition was a move rather than a copy.
-     * Whether the source copy survives is the registry's configuration, not the caller's, so
-     * it is read back from the stage itself. A failure to look it up leaves the entry in
-     * place: a search hit that no longer resolves is dropped from the results, while removing
-     * a document of a package that is still there would hide it for good.
-     */
-    private void dropSourceEntryIfMoved(ScopeService<?> scopeService, ObjectMetadata metadata, String sourceStage) {
-        String objectId = metadata.getObjectId();
-        try {
-            if (scopeService.getMetadataFromStageForRegistry(schemaRegistry(scopeService), sourceStage, objectId) == null) {
-                ePackageIndex.remove(addressIn(metadata, sourceStage));
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, e, () -> "Could not check whether object " + objectId
-                    + " still lives in stage " + sourceStage + "; leaving its index entry in place");
-        }
-    }
-
-    /** The address the given object has in the given stage of this registry. */
-    private static RegistryAddress addressIn(ObjectMetadata metadata, String stage) {
-        return new RegistryAddress(metadata.getScope(), metadata.getRegistry(), stage, metadata.getObjectId());
-    }
-    
     @GET
     @Path("/search")
     @Produces
@@ -1021,141 +860,29 @@ public class SchemaPackagesResource {
         @QueryParam("limit") @DefaultValue("50") int limit,
         @QueryParam("offset") @DefaultValue("0") int offset) {
 
-        // 1. Resolve scope chain
-        Set<String> scopeChain = resolveScopeChain(scopeName);
-
-        // 2. Build search query
-        EPackageSearchQuery query = EPackageSearchQuery.create()
-            .scopes(scopeChain)
-            .stage(stage)
-            .nsUri(nsUri)
-            .nsUriExact(nsUriExact)
-            .name(name)
-            .nsPrefix(prefix)
-            .classifier(classifier)
-            .featureName(featureName)
-            .featureType(featureType)
-            .featureNameTypePair(featureNameTypePair)
-            .limit(limit)
-            .offset(offset)
-            .build();
-
-        // 3. Search EPackage index
-        SearchResult result = ePackageIndex.search(query);
-
-        if (result.hits().isEmpty()) {
+        PackageSearch search = RegistryApiFactory.eINSTANCE.createPackageSearch();
+        search.setStage(stage);
+        search.setNsUri(nsUri);
+        search.setNsUriExact(nsUriExact);
+        search.setName(name);
+        search.setPrefix(prefix);
+        search.setClassifier(classifier);
+        search.setFeatureName(featureName);
+        search.setFeatureType(featureType);
+        search.setFeatureNameTypePair(featureNameTypePair);
+        search.setLimit(limit);
+        search.setOffset(offset);
+        PackageSearchResult result = registryReader.searchPackages(scopeName, search);
+        if (result.getHits().isEmpty()) {
             return Response.noContent().build();
         }
-
-        // 4. Retrieve ObjectMetadata for each hit using scope/stage from the index
-        List<ObjectMetadata> metadataList = resolveMetadata(result.hits(), scopeName);
-
-        // 5. Build response
         ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
-        container.getMetadata().addAll(metadataList);
+        container.getMetadata().addAll(result.getHits());
         return Response.ok(container)
-            .header("X-Total-Count", result.totalHits())
+            .header("X-Total-Count", result.getTotalHits())
             .header("X-Offset", offset)
             .header("X-Limit", limit)
             .build();
-    }
-    
-
-	/**
-	 * @param hits
-	 * @return
-	 */
-	private List<ObjectMetadata> resolveMetadata(List<SearchHit> hits, String scopeName) {
-		List<ObjectMetadata> allMetadata = new LinkedList<>();
-		hits.forEach(hit -> {
-			
-			ScopeService<?> scopeService = getScopeServiceByScopeName(hit.scope());
-			ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(hit.registry(), hit.stage(), hit.objectId());
-			
-			if(metadata != null) {
-				if (!scopeName.equals(metadata.getScope())) {
-	                metadata.setIsReadOnly(true);
-	            }
-				allMetadata.add(metadata);
-			}
-		});
-		return allMetadata;
-	}
-
-	private Set<String> resolveScopeChain(String scopeName) {
-        Set<String> chain = new LinkedHashSet<>();
-        String current = scopeName;
-        while (current != null) {
-            chain.add(current);
-            Scope scope = scopeCollector.getScopeByName(current);
-            current = (scope != null) ? scope.getParentScope() : null;
-        }
-        return chain;
-    }
-    
-
-    /**
-     * The name of this scope's schema registry, resolved by
-     * {@link org.eclipse.fennec.model.atlas.scope.api.RegistryType#SCHEMA} rather than
-     * assumed to be {@code "schema"}.
-     *
-     * <p>
-     * {@code /{scopeName}/schema} is a URL literal naming the kind of registry the request
-     * is about; the registry itself may be called anything, and it used to be that a scope
-     * whose schema registry was called {@code models} could not be reached through this
-     * resource at all (issue #179). Requests normally never get here without one — the
-     * request filter answers {@code 404} first — so this is the same answer for the paths
-     * that reach the resource directly.
-     * </p>
-     */
-    private static String schemaRegistry(ScopeService<?> scopeService) {
-        ScopeInfo scope = scopeService.getScopeInfo();
-        return ScopeRegistries.schemaRegistryName(scope)
-                .orElseThrow(() -> new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                        .entity(String.format("Scope [%s] has no schema registry.",
-                                scope == null ? "?" : scope.getName()))
-                        .build()));
-    }
-
-    private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
-        ScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Scope [" + scopeName + "] not found.").build());
-        }
-        return scopeService;
-    }
-
-    /**
-     * Resolves the single package with the given nsURI in a stage via the nsUri metadata
-     * property (hierarchy-aware, works for all storage backends including git). The upload
-     * conflict check keeps the nsURI unique per (scope, registry, stage), so the property
-     * lookup yields at most one element.
-     */
-    private ObjectMetadata findByNsUriInStage(ScopeService<?> scopeService, String stageName, String nsUri) {
-        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromStageForRegistry(schemaRegistry(scopeService), stageName,
-                WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
-        return matches.isEmpty() ? null : matches.get(0);
-    }
-
-    /**
-     * Resolves a package in a stage by the identifier a transition request carries: first as a
-     * real objectId, then — for legacy clients that still send the raw nsURI (the objectId used
-     * to be derived from it) — via the nsUri property lookup.
-     */
-    private ObjectMetadata resolvePackageInStage(ScopeService<?> scopeService, String stageName, String idOrNsUri) {
-        ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(schemaRegistry(scopeService), stageName, idOrNsUri);
-        if (metadata == null) {
-            metadata = findByNsUriInStage(scopeService, stageName, idOrNsUri);
-        }
-        return metadata;
-    }
-
-    /** Final-stage variant of {@link #findByNsUriInStage(ScopeService, String, String)}. */
-    private ObjectMetadata findByNsUriInFinalStage(ScopeService<?> scopeService, String nsUri) {
-        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromFinalStageForRegistry(schemaRegistry(scopeService),
-                WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
-        return matches.isEmpty() ? null : matches.get(0);
     }
 
     /**
@@ -1174,39 +901,6 @@ public class SchemaPackagesResource {
         if (nsUri == null || nsUri.isBlank()) {
             throw new IllegalArgumentException("Query parameter nsUri is required");
         }
-    }
-
-    /**
-     * Validates and resolves the namespace URI for a package. If nsUri parameter is
-     * not provided, uses the URI from the ePackage. If nsUri is provided, validates
-     * that it matches the ePackage's URI.
-     *
-     * @param nsUri    the namespace URI parameter (may be null)
-     * @param ePackage the EPackage containing the URI
-     * @return the validated namespace URI
-     * @throws WebApplicationException if validation fails
-     */
-    private String validateAndResolveNsUri(String nsUri, EPackage ePackage) {
-        String packageNsUri = ePackage.getNsURI();
-        if (packageNsUri == null || packageNsUri.isBlank()) {
-            throw new WebApplicationException(
-                    Response.status(Status.BAD_REQUEST).entity("EPackage must have a non-empty nsURI set").build());
-        }
-
-        if (nsUri == null || nsUri.isBlank()) {
-            // No parameter provided, use the ePackage's URI
-            return packageNsUri;
-        }
-        nsUri = URI.decode(nsUri);
-
-        // Parameter provided, validate it matches
-        if (!nsUri.equals(packageNsUri)) {
-            throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity(
-                    String.format("Query parameter nsUri '%s' does not match EPackage nsURI '%s'", nsUri, packageNsUri))
-                    .build());
-        }
-
-        return nsUri;
     }
 
 }

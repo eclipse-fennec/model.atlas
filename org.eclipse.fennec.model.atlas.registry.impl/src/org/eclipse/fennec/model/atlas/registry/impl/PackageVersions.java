@@ -11,15 +11,17 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.resource;
+package org.eclipse.fennec.model.atlas.registry.impl;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EPackageVersions;
+import org.eclipse.fennec.model.atlas.registry.api.RefusalReason;
+import org.eclipse.fennec.model.atlas.registry.api.RegistryAccessException;
 import org.osgi.framework.Version;
 
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 /**
  * Decides the version a schema package is stored under.
@@ -68,6 +70,8 @@ import jakarta.ws.rs.core.Response.Status;
  */
 final class PackageVersions {
 
+	private static final Logger LOGGER = Logger.getLogger(PackageVersions.class.getName());
+
 	private PackageVersions() {
 	}
 
@@ -80,7 +84,7 @@ final class PackageVersions {
 	 * @param nsUri        the package's namespace URI
 	 * @return the resolved version, or {@code null} when no version was declared and none can
 	 *         be read from the nsURI
-	 * @throws WebApplicationException {@code 400} if the parameter, or the version the package
+	 * @throws RegistryAccessException {@link RefusalReason#INVALID} if the parameter, or the version the package
 	 *                                 declares, cannot be parsed
 	 */
 	static String resolve(EPackage ePackage, String versionParam, String nsUri) {
@@ -100,11 +104,41 @@ final class PackageVersions {
 	}
 
 	/**
+	 * Like {@link #resolve(EPackage, String, String)}, but with {@code lenient} a Version annotation
+	 * that is not a version is logged and passed over instead of refused — for a loader that must
+	 * not abort over a junk annotation. An explicit {@code versionParam} is checked either way.
+	 */
+	static String resolve(EPackage ePackage, String versionParam, String nsUri, boolean lenient) {
+		if (!lenient || (versionParam != null && !versionParam.isBlank())) {
+			return resolve(ePackage, versionParam, nsUri);
+		}
+		String declared = EPackageVersions.declared(ePackage);
+		if (declared != null && isVersion(declared)) {
+			return declared;
+		}
+		if (declared != null) {
+			LOGGER.log(Level.WARNING, () -> nsUri + " declares the version '" + declared
+					+ "' in its Version annotation, which is not a valid version - ignoring it");
+		}
+		Version inferred = fromNsUri(nsUri);
+		return inferred == null ? null : inferred.toString();
+	}
+
+	private static boolean isVersion(String version) {
+		try {
+			Version.parseVersion(version);
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
+	/**
 	 * The version the model declares through its {@code Version} annotation.
 	 *
 	 * @param ePackage the package to inspect; may be {@code null}
 	 * @return the declared version verbatim, or {@code null} when the package declares none
-	 * @throws WebApplicationException {@code 400} if what it declares is not a version — a
+	 * @throws RegistryAccessException {@link RefusalReason#INVALID} if what it declares is not a version — a
 	 *                                 declaration that cannot be honoured is reported rather
 	 *                                 than quietly ignored
 	 */
@@ -133,7 +167,7 @@ final class PackageVersions {
 		try {
 			Version.parseVersion(version);
 		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity(message).build());
+			throw new RegistryAccessException(RefusalReason.INVALID, message);
 		}
 	}
 }

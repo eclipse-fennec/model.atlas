@@ -39,7 +39,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = RestPackage.eNS_URI, fingerprint = "fp1:e73560a7db52c1f546772264f58fc2c5fa3d13f7886bb04cfa1ee82ab7135d76", genModel = "/model/rest-response.genmodel", genModelSourceLocations = {"model/rest-response.genmodel","org.eclipse.fennec.model.atlas.rest.model/model/rest-response.genmodel"}, ecore = "/model/rest-response.ecore", ecoreSourceLocations = "/model/rest-response.ecore")
+@EPackage(uri = RestPackage.eNS_URI, fingerprint = "fp1:7dec75b3bc41f0a634d3d5c5dd9c8cc1c3ed3506bb4138def6104285795e574b", genModel = "/model/rest-response.genmodel", genModelSourceLocations = {"model/rest-response.genmodel","org.eclipse.fennec.model.atlas.rest.model/model/rest-response.genmodel"}, ecore = "/model/rest-response.ecore", ecoreSourceLocations = "/model/rest-response.ecore")
 public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -385,6 +385,125 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 */
 	int CONTAINER_OPERATION_COUNT = 0;
 
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.BatchResponseImpl <em>Batch Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.BatchResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getBatchResponse()
+	 * @generated
+	 */
+	int BATCH_RESPONSE = 6;
+
+	/**
+	 * The feature id for the '<em><b>Applied</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_RESPONSE__APPLIED = 0;
+
+	/**
+	 * The feature id for the '<em><b>Items</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_RESPONSE__ITEMS = 1;
+
+	/**
+	 * The number of structural features of the '<em>Batch Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_RESPONSE_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Batch Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_RESPONSE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.BatchItemImpl <em>Batch Item</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.BatchItemImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getBatchItem()
+	 * @generated
+	 */
+	int BATCH_ITEM = 7;
+
+	/**
+	 * The feature id for the '<em><b>Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM__ID = 0;
+
+	/**
+	 * The feature id for the '<em><b>Outcome</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM__OUTCOME = 1;
+
+	/**
+	 * The feature id for the '<em><b>Refusal</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM__REFUSAL = 2;
+
+	/**
+	 * The feature id for the '<em><b>Message</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM__MESSAGE = 3;
+
+	/**
+	 * The feature id for the '<em><b>Metadata</b></em>' containment reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM__METADATA = 4;
+
+	/**
+	 * The number of structural features of the '<em>Batch Item</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM_FEATURE_COUNT = 5;
+
+	/**
+	 * The number of operations of the '<em>Batch Item</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_ITEM_OPERATION_COUNT = 0;
+
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.EPackageInfo <em>EPackage Info</em>}'.
@@ -623,6 +742,103 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getContainer_Elements();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.BatchResponse <em>Batch Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Batch Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchResponse
+	 * @generated
+	 */
+	EClass getBatchResponse();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.BatchResponse#isApplied <em>Applied</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Applied</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchResponse#isApplied()
+	 * @see #getBatchResponse()
+	 * @generated
+	 */
+	EAttribute getBatchResponse_Applied();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.rest.model.BatchResponse#getItems <em>Items</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Items</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchResponse#getItems()
+	 * @see #getBatchResponse()
+	 * @generated
+	 */
+	EReference getBatchResponse_Items();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem <em>Batch Item</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Batch Item</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem
+	 * @generated
+	 */
+	EClass getBatchItem();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem#getId <em>Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem#getId()
+	 * @see #getBatchItem()
+	 * @generated
+	 */
+	EAttribute getBatchItem_Id();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem#getOutcome <em>Outcome</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Outcome</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem#getOutcome()
+	 * @see #getBatchItem()
+	 * @generated
+	 */
+	EAttribute getBatchItem_Outcome();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem#getRefusal <em>Refusal</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Refusal</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem#getRefusal()
+	 * @see #getBatchItem()
+	 * @generated
+	 */
+	EAttribute getBatchItem_Refusal();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem#getMessage <em>Message</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Message</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem#getMessage()
+	 * @see #getBatchItem()
+	 * @generated
+	 */
+	EAttribute getBatchItem_Message();
+
+	/**
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.rest.model.BatchItem#getMetadata <em>Metadata</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference '<em>Metadata</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.BatchItem#getMetadata()
+	 * @see #getBatchItem()
+	 * @generated
+	 */
+	EReference getBatchItem_Metadata();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -832,6 +1048,82 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference CONTAINER__ELEMENTS = eINSTANCE.getContainer_Elements();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.BatchResponseImpl <em>Batch Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.BatchResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getBatchResponse()
+		 * @generated
+		 */
+		EClass BATCH_RESPONSE = eINSTANCE.getBatchResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Applied</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute BATCH_RESPONSE__APPLIED = eINSTANCE.getBatchResponse_Applied();
+
+		/**
+		 * The meta object literal for the '<em><b>Items</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference BATCH_RESPONSE__ITEMS = eINSTANCE.getBatchResponse_Items();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.BatchItemImpl <em>Batch Item</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.BatchItemImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getBatchItem()
+		 * @generated
+		 */
+		EClass BATCH_ITEM = eINSTANCE.getBatchItem();
+
+		/**
+		 * The meta object literal for the '<em><b>Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute BATCH_ITEM__ID = eINSTANCE.getBatchItem_Id();
+
+		/**
+		 * The meta object literal for the '<em><b>Outcome</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute BATCH_ITEM__OUTCOME = eINSTANCE.getBatchItem_Outcome();
+
+		/**
+		 * The meta object literal for the '<em><b>Refusal</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute BATCH_ITEM__REFUSAL = eINSTANCE.getBatchItem_Refusal();
+
+		/**
+		 * The meta object literal for the '<em><b>Message</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute BATCH_ITEM__MESSAGE = eINSTANCE.getBatchItem_Message();
+
+		/**
+		 * The meta object literal for the '<em><b>Metadata</b></em>' containment reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference BATCH_ITEM__METADATA = eINSTANCE.getBatchItem_Metadata();
 
 	}
 

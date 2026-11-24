@@ -72,6 +72,8 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 			case RestPackage.STAGE_TRANSITION_REQUEST: return createStageTransitionRequest();
 			case RestPackage.SCOPE_LIST_RESPONSE: return createScopeListResponse();
 			case RestPackage.CONTAINER: return createContainer();
+			case RestPackage.BATCH_RESPONSE: return createBatchResponse();
+			case RestPackage.BATCH_ITEM: return createBatchItem();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -141,6 +143,28 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 	public org.eclipse.fennec.model.atlas.rest.model.Container createContainer() {
 		ContainerImpl container = new ContainerImpl();
 		return container;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public BatchResponse createBatchResponse() {
+		BatchResponseImpl batchResponse = new BatchResponseImpl();
+		return batchResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public BatchItem createBatchItem() {
+		BatchItemImpl batchItem = new BatchItemImpl();
+		return batchItem;
 	}
 
 	/**

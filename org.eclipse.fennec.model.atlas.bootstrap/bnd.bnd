@@ -15,6 +15,7 @@ Bundle-Description: One-shot loader that scans a configured folder on startup (e
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.registry.api;version=project,\
 	org.eclipse.fennec.codec;version=latest,\
 	org.eclipse.fennec.codec.jsonschema;version=latest
 
