@@ -13,18 +13,18 @@
         // tag, and the Felix default ("systemalive") alone would drop this check out of
         // /atlas/system/health - which would then report OK while the scope is missing.
         "hc.tags": ["atlas", "systemalive"],
-                // Distinct from the Felix default ("Services Ready Check"), which every
+        // Distinct from the Felix default ("Services Ready Check"), which every
         // ServicesCheck would otherwise share with the one in the runtime.config bundle:
         // two checks of the same name are indistinguishable in the endpoint output, and a
         // "?tags=" query collapses them into one, so a scope that is down can be hidden by
         // a scope that is up.
-        "hc.name": "Scope Ready Check: jena",
-        "services.list": ["(scope.name=jena)"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])"]
     },
-    "ScopeService~jena": {
-        "atlas.scope": "jena",
-        "scope.name": "jena",
-        "scope.description": "Jena Scope",
+    "ScopeService~tenant": {
+        "atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=default))",
         "registryService.cardinality.minimum:int": 1
@@ -91,33 +91,33 @@
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
         "resourceSet.target": "(emf.name=ecore)"
     },
-    "GitObjectStorage~jena": {
-        "scope": "jena",
+    "GitObjectStorage~tenant": {
+        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
         "type.registry.map": [
             "http://www.eclipse.org/emf/2002/Ecore#//EPackage:schema",
             "http://www.eclipse.org/emf/2002/Ecore#//EObject:default"
         ],
-        "gitservice.target": "(id=jena)",
+        "gitservice.target": "(id=models)",
         "poll.interval.seconds:Integer": 60,
         "storage.type": "git",
         "registry.target": "(registry=main)"
     },
-    "GitConfig~jena-draft": {
-        "id": "jena",
+    "GitConfig~models-draft": {
+        "id": "models",
         "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
         "branch": "draft",
         "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
         "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
     },
-    "GitConfig~jena-approved": {
-        "id": "jena",
+    "GitConfig~models-approved": {
+        "id": "models",
         "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
         "branch": "approved",
         "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
         "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
     },
-    "GitConfig~jena-release": {
-        "id": "jena",
+    "GitConfig~models-release": {
+        "id": "models",
         "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
         "branch": "release",
         "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",

@@ -82,11 +82,11 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * {@code docker/dockercompose/configs/jena.json};</li>
  * <li>drive the {@code rest.client.osgi} ConfigAdmin factory at the container →
  * {@code RemoteScopeServicePublisher} (P5-4) publishes a
- * {@code ReadableScopeService(atlas.scope=dimcity, atlas.remote=true)} the collector binds;</li>
+ * {@code ReadableScopeService(atlas.scope=fennec, atlas.remote=true)} the collector binds;</li>
  * <li>seed an {@code OclConstraintSet} into {@code jena/cocl} at the final stage through the
  * writable REST endpoint ({@code ObjectRegistryResource.createObject}) — the remote client is
  * read-only, so the object must exist on the server;</li>
- * <li>call {@code ValidationService.validateWithOcl(company, coclId, "dimcity", rs)}; the constraint
+ * <li>call {@code ValidationService.validateWithOcl(company, coclId, "fennec", rs)}; the constraint
  * set is fetched from the <em>remote</em> scope (P5-0 content endpoint) and applied.</li>
  * </ol>
  * Skipped automatically when Docker or the local {@code jena-snapshot} image is absent (so a
@@ -103,7 +103,7 @@ public class RemoteValidationIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String TENANT_SCOPE = "dimcity";
+	private static final String TENANT_SCOPE = "fennec";
 	private static final String COCL_REGISTRY = "cocl";
 	/** jena's final (and writable) stage, per jena.json. */
 	private static final String FINAL_STAGE = "release";
@@ -150,7 +150,7 @@ public class RemoteValidationIT {
 			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories,
 			@InjectService ServiceAware<ValidationService> validationServices) throws Exception {
 
-		// 1. Activate the remote client → P5-4 publishes ReadableScopeService(atlas.scope=dimcity).
+		// 1. Activate the remote client → P5-4 publishes ReadableScopeService(atlas.scope=fennec).
 		//    LAZY: no EPackage prefetch needed; scope publication is independent of the mode.
 		Hashtable<String, Object> props = new Hashtable<>();
 		props.put("base.uri", baseUri.toString());

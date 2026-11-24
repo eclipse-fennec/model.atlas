@@ -395,8 +395,8 @@ image. From `docker/dockercompose/configs/jena.json`:
                                              // goes into the unit's stage, and the metamodels are
                                              // looked for along the visibility ladder from there
     "trigger.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["dimcity"],           // empty means every scope that binds the registry
-    "scope.target": "(atlas.scope=dimcity)"
+    "trigger.scopes": ["fennec"],            // empty means every scope that binds the registry
+    "scope.target": "(atlas.scope=fennec)"
 },
 "RegistryService~transformations": {
     // The action is triggered by a compiled unit, so it binds to the TRANSFORMATION registry, not
@@ -415,16 +415,16 @@ image. From `docker/dockercompose/configs/jena.json`:
     // the gdpr registry; target.registry only says where the findings are then written
     "target.registry": "schema",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["dimcity"],
-    "scope.target": "(atlas.scope=dimcity)"
+    "trigger.scopes": ["fennec"],
+    "scope.target": "(atlas.scope=fennec)"
 },
 "QvtGdprReanalysisStageAction": {
     // Re-derives a transformation when a review it rests on changes. Also triggered by a REPORT,
     // so it binds to the gdpr registry; unit.registry is where the stale units are looked up
     "unit.registry": "transformations",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["dimcity"],
-    "scope.target": "(atlas.scope=dimcity)"
+    "trigger.scopes": ["fennec"],
+    "scope.target": "(atlas.scope=fennec)"
 },
 "RegistryService~gdpr": {
     "stageActionService.target":

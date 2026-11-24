@@ -117,7 +117,7 @@ public class AtlasClientOsgiIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String TENANT_SCOPE = "dimcity";
+	private static final String TENANT_SCOPE = "fennec";
 	/** jena's schema registry final stage is {@code release}, not the client default {@code released}. */
 	private static final String JENA_VIEW = "release";
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";

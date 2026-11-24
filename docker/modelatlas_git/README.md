@@ -36,6 +36,7 @@ Set `GIT_WEBHOOK_GITHUB_SECRET` / `GIT_WEBHOOK_GITLAB_TOKEN` and flip `requireSi
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `MODEL_ATLAS_SCOPE` | `fennec` | Name of the tenant scope this image serves the repository under. Pick it before the first start: it names the scope in the REST paths and in the Lucene index, so renaming it later leaves what is already indexed under the old name. It also names the initial-models seed folder (`scopes/<name>/`). Leave it unset rather than empty - an empty value is not replaced by the default and registers a scope with no name. Not the same thing as the git correlation id in `GitConfig~models-*`, which keeps its own name. |
 | `GIT_REPO` | `git@github.com:acme/models.git` | URL of the repository to serve (SSH, `https://` or `git://`) |
 | `GIT_PRIVATE_KEY` | `/opt/modelatlas/runtime/secrets/git_deploy_key` | Path to the SSH private key (only used for SSH remotes) |
 | `GIT_PRIVATE_KEY_PASSPHRASE` | *(empty)* | Passphrase for the key, if any |

@@ -138,7 +138,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		@AttributeDefinition(name = "Scope service target", //
 				description = "Which scope the reports are read from and the document is written to, as an "
 						+ "OSGi target filter.")
-		String scope_target() default "(atlas.scope=jena)";
+		String scope_target() default "(atlas.scope=fennec)";
 
 		@AttributeDefinition(name = "Document registry", //
 				description = "The object registry the derived ComplianceReportHistory documents are written to. "

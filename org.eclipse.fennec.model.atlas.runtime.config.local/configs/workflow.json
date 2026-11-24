@@ -20,13 +20,13 @@
         // ServicesCheck would otherwise share: two checks of the same name are
         // indistinguishable in the endpoint output, and a "?tags=" query collapses
         // them into one, so a scope that is down can be hidden by one that is up.
-        "hc.name": "Scope Ready Check: civitas",
-        "services.list": ["(scope.name=civitas)"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])"]
     },
-    "ScopeService~civitas": {
-        "atlas.scope": "civitas",
-        "scope.name": "civitas",
-        "scope.description": "Civitas Scope",
+    "ScopeService~tenant": {
+        "atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=default)(registry.name=transformations))",
         "registryService.cardinality.minimum:int": 1

@@ -150,7 +150,7 @@ representation the content endpoint serves on demand — which also gives CSV, X
 
 ```bash
 curl -o gdpr-history.ods \
-  'http://localhost:8080/atlas/rest/dimcity/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-https---example-org-clinic-1-0-0-a1b2c3d4-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
+  'http://localhost:8080/atlas/rest/fennec/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-https---example-org-clinic-1-0-0-a1b2c3d4-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
 ```
 
 No `Codec-Options` header is needed. The two options the spreadsheet depends on -
@@ -165,7 +165,7 @@ and you get the JSON.
 To find the documents a scope holds:
 
 ```bash
-curl 'http://localhost:8080/atlas/rest/dimcity/registries/gdprdoc/stages/draft' -H 'Accept: application/json'
+curl 'http://localhost:8080/atlas/rest/fennec/registries/gdprdoc/stages/draft' -H 'Accept: application/json'
 ```
 
 ### The two save options are mandatory, not cosmetic
@@ -190,15 +190,22 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
-**Only the file image takes the scope from the environment.** There, the scope in
+**Every variant takes the scope from the environment** (issue #316). The scope in
 `trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
 of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
-DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
-`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the image's own
-health check on that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the
-tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the
-fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
-it. Otherwise reviews are triggered in one scope and looked for in another.
+DataInMotion/fennec-gdpr#7 is deployed), and the scope name in the variant's own
+`ScopeService~tenant` are all
+`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]`. So is its health check on
+that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the tenant scope
+and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the fennec-gdpr MCP
+half, which reads the model under review from that scope and seals the report into it. Otherwise
+reviews are triggered in one scope and looked for in another.
+
+Every variant defaults to the same vendor-neutral name, `fennec`; a deployment that wants its
+tenant called something else sets the variable. An existing deployment that was relying on the
+former per-variant default — `jena` for the file, git and local-jena runtimes, `dimcity` for the
+jena image and the DCAT compose, `civitas` for the local runtime — keeps reading its own data only
+by setting `MODEL_ATLAS_SCOPE` to that name: the rename does not move what is already stored.
 
 Three things change with the name. The scope is part of the stored state: the file backend lays
 objects out as `STORAGE_ROOT/<scope>/<registry>/<stage>/`, and both Lucene indexes carry the scope
@@ -211,16 +218,15 @@ give the variable a plain name or leave it unset. The default applies only while
 (`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
 `(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
 
-The jena image (`configs/jena.json`) and the local jena runtime keep their scope name as a literal,
-as shown below, and do not read the variable. The image's scope is `dimcity`; the local runtime's is
-still `jena`.
+The excerpt below is from the jena image (`configs/jena.json`), shown with the default name
+resolved rather than as the interpolation, which is what the file actually holds.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {
     "reports.registry": "gdpr",              // where the ComplianceReport objects are
     "report.stages": ["draft", "approved", "release"],  // every stage holding reviews; each triggers
-    "trigger.scopes": ["dimcity"],           // empty means every scope (see below)
-    "scope.target": "(atlas.scope=dimcity)",
+    "trigger.scopes": ["fennec"],            // empty means every scope (see below)
+    "scope.target": "(atlas.scope=fennec)",
     "document.registry": "gdprdoc"           // where the derived document goes; the stage is the
                                              // stage of the reviews, not a configured one
 },

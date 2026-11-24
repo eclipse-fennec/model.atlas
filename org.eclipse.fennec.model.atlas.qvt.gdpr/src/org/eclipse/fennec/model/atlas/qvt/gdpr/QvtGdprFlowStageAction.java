@@ -145,7 +145,7 @@ public class QvtGdprFlowStageAction implements StageActionService {
 
 		@AttributeDefinition(name = "Scope service target", //
 				description = "The scope the compiled units and the reports live in, as an OSGi target filter.")
-		String scope_target() default "(atlas.scope=jena)";
+		String scope_target() default "(atlas.scope=fennec)";
 	}
 
 	private final WritableScopeService<EObject> scope;

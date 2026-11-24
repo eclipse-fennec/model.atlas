@@ -14,7 +14,7 @@ scopes/<scope>/<registry>/<objectId>.xmi
 Everything below this README is ignored by git. These are generated documents, not source, and
 not all of them are ours to redistribute — see the licences below.
 
-## `scopes/dimcity/compliance-context/`
+## `scopes/fennec/compliance-context/`
 
 The `ComplianceContext` catalogue: the requirements, taxonomies and corpora a review is made
 against (issue #332). One file per context, each one self-contained — contexts refer to each other
@@ -38,7 +38,7 @@ for readers and for contexts other than the GDPR.
 Where to get them: they are produced by the compliance data generator
 (`scripts/compliance/generate.sh`) from the corpora, alongside `crosswalks/` and `inventory/`,
 which this mount does not seed. Ask for the generated bundle, or regenerate it, and copy
-`contexts/*.xmi` to `scopes/dimcity/compliance-context/`.
+`contexts/*.xmi` to `scopes/fennec/compliance-context/`.
 
 ## Pointing the loader here
 

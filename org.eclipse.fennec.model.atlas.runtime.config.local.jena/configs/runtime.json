@@ -1,6 +1,6 @@
 {
 	":configurator:resource-version": 1,
-	":configurator:symbolicname": "org.civitas.meter.runtime",
+	":configurator:symbolicname": "org.eclipse.fennec.model.atlas.runtime.config.local.jena",
 	":configurator:version": "0.0.0",
 	"org.apache.felix.http~atlasHttp": {
 		"org.osgi.service.http.port": "8086",
