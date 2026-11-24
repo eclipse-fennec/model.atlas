@@ -19,7 +19,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 /**
  * Configuration of an {@link AtlasEObjectProviderComponent} instance. Standard DS
  * reference-target properties complete the wiring: {@code atlasScope.target} selects the
- * atlas scope (e.g. {@code (atlas.scope=jena)}), {@code writer.target} selects the
+ * atlas scope (e.g. {@code (atlas.scope=fennec)}), {@code writer.target} selects the
  * target registry by name (e.g. {@code (emf.eobject.registry.name=sensinact-mappings)}),
  * and {@code packageRegistry.target} selects the registry the {@code required.nsuris}
  * gate resolves through (the framework one by default).
@@ -30,7 +30,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  */
 @ObjectClassDefinition(name = "Model Atlas - EObject Registry Provider", //
 		description = "Feeds a named emf.osgi EObject registry from a Model Atlas scope. The scope is "
-				+ "selected via the atlasScope.target property (e.g. (atlas.scope=jena)), the target "
+				+ "selected via the atlasScope.target property (e.g. (atlas.scope=fennec)), the target "
 				+ "registry via the writer.target property (e.g. (emf.eobject.registry.name=my-registry)).")
 public @interface AtlasEObjectProviderConfig {
 

@@ -18,7 +18,7 @@
 		// which are not open data. Adding "atlas" here does work — verified — and would then give
 		// the tenant Catalog every atlas Dataset as well, since a descendant serves what it inherits
 		// (O4: one Dataset, linked into every descendant Catalog).
-		"scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+		"scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]"],
 		"language": "de",
 		"publisher.name": "Stadt Jena",
 		"publisher.about": "https://www.jena.de",

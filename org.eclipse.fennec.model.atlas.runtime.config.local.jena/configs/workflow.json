@@ -14,21 +14,21 @@
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
         "report.stages": ["draft", "approved", "release"],
-        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
-        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])",
         "document.registry": "gdprdoc"
     },
     "GDPRMetadataDiagnosticsStageAction~schema": {
         "target.registry": "schema",
         "subject.type": "PackageSubject",
         "report.stages": ["draft", "approved", "release"],
-        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
-        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])",
         "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
-        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+        "scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
         "registry": "gdpr",
         "allowed.stages": [
             "draft",
@@ -41,8 +41,8 @@
     "GDPRAtlasRequestStatusStore": {
         "registry": "gdpr",
         "stage": "draft",
-        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
-        "publisher.target": "(&(scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])(registry=gdpr))"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])",
+        "publisher.target": "(&(scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])(registry=gdpr))"
     },
     "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
         // Must carry "atlas": the health servlet filters its default endpoint by that
@@ -54,13 +54,13 @@
         // two checks of the same name are indistinguishable in the endpoint output, and a
         // "?tags=" query collapses them into one, so a scope that is down can be hidden by
         // a scope that is up.
-        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
-        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"]
+        "hc.name": "Scope Ready Check: $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "services.list": ["(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]])"]
     },
-    "ScopeService~jena": {
-    	"atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
-        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
-        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
+    "ScopeService~tenant": {
+    	"atlas.scope": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
+        "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]",
         "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context)(registry.name=compliance-crosswalks)(registry.name=compliance-inventory))",
         "registryService.cardinality.minimum:int": 1

@@ -162,7 +162,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 		@AttributeDefinition(name = "Scope service target", //
 				description = "The scope the reports are read from and the findings are written to, as an OSGi "
 						+ "target filter.")
-		String scope_target() default "(atlas.scope=jena)";
+		String scope_target() default "(atlas.scope=fennec)";
 	}
 
 	private final WritableScopeService<EObject> scope;

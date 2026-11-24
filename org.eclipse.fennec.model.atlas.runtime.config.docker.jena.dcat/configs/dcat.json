@@ -28,7 +28,7 @@
 		"allow.local.base.uri": "$[env:DCAT_ALLOW_LOCAL_BASE_URI;default=false]",
 		// The atlas root scope is deliberately absent: its registry holds the system schemas,
 		// which are not open data.
-		"scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=dimcity]]"],
+		"scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=fennec]]"],
 		"language": "$[env:DCAT_LANGUAGE;default=de]",
 		"publisher.name": "$[env:DCAT_PUBLISHER_NAME]",
 		"publisher.about": "$[env:DCAT_PUBLISHER_ABOUT]",

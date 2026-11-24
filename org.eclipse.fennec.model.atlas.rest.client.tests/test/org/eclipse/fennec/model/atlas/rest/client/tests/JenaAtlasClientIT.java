@@ -59,7 +59,7 @@ class JenaAtlasClientIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String TENANT_SCOPE = "dimcity";
+	private static final String TENANT_SCOPE = "fennec";
 
 	/** Mount target matching {@code docker-compose-jena.yml} (./configs:/opt/modelatlas/runtime/load). */
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";
@@ -79,7 +79,7 @@ class JenaAtlasClientIT {
 		assumeTrue(atlasImageAvailableLocally(),
 				"Image " + IMAGE + " not present locally — skipping (build it to run this IT)");
 		// The bare jena image only exposes the root 'atlas' scope. The 'jena' scope is a
-		// ConfigAdmin factory config (ScopeService~jena) that the compose stack supplies by
+		// ConfigAdmin factory config (ScopeService~tenant) that the compose stack supplies by
 		// mounting ./configs -> /opt/modelatlas/runtime/load. Replicate that here, otherwise
 		// /scopes never lists jena and the readiness probe below times out.
 		String configsDir = resolveConfigsDir();

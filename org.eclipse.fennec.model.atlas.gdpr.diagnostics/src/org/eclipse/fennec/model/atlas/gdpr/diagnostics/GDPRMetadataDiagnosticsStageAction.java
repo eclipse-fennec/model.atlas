@@ -172,7 +172,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		@AttributeDefinition(name = "Scope service target", //
 				description = "The scope the reports are read from and the diagnostics are written to, as an OSGi "
 						+ "target filter.")
-		String scope_target() default "(atlas.scope=jena)";
+		String scope_target() default "(atlas.scope=fennec)";
 
 	}
 

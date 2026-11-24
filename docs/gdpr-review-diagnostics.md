@@ -131,7 +131,7 @@ subject it answers for with `subject.type`.
 written, and a miss is logged and dropped rather than searched for elsewhere:
 
 ```
-No object with fingerprint 'fp1:b55ae564…' is in stage 'draft' of registry 'schema' in scope 'dimcity',
+No object with fingerprint 'fp1:b55ae564…' is in stage 'draft' of registry 'schema' in scope 'fennec',
 so the GDPR review's findings were not written. They land when the reviewed object and its review
 are in the same stage.
 ```
@@ -248,7 +248,7 @@ Shown from
 `org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json` for the local
 runtime and in `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`,
 which is baked into the file image rather than mounted — change one and the others do not follow.
-Every variant takes its scope from `MODEL_ATLAS_SCOPE`, each defaulting to its own current name, as
+Every variant takes its scope from `MODEL_ATLAS_SCOPE`, defaulting to `fennec`, as
 [the history document's configuration](gdpr-review-history.md#configuration) describes in full.
 
 ```jsonc
@@ -258,16 +258,16 @@ Every variant takes its scope from `MODEL_ATLAS_SCOPE`, each defaulting to its o
     "subject.type": "PackageSubject",        // and which reports those are. Every report reaches
                                              // every instance; this is what keeps them apart
     "report.stages": ["draft", "approved", "release"],  // the report stages this answers for
-    "trigger.scopes": ["dimcity"],           // empty means every scope that binds the registry
-    "scope.target": "(atlas.scope=dimcity)",
+    "trigger.scopes": ["fennec"],            // empty means every scope that binds the registry
+    "scope.target": "(atlas.scope=fennec)",
     "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
 },
 "GDPRMetadataDiagnosticsStageAction~transformations": {
     "target.registry": "transformations",    // the same action again, for reviews of compiled units
     "subject.type": "TransformationSubject",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["dimcity"],
-    "scope.target": "(atlas.scope=dimcity)",
+    "trigger.scopes": ["fennec"],
+    "scope.target": "(atlas.scope=fennec)",
     "stage.action.name": "GDPRMetadataDiagnosticsStageAction~transformations"
 },
 "RegistryService~gdpr": {
@@ -307,11 +307,11 @@ does not start writing them by having the bundle installed.
 
 ```bash
 # everything this producer says about one model
-curl -s "http://localhost:8080/atlas/rest/dimcity/registries/schema/stages/approved?objectId=<objectId>" \
+curl -s "http://localhost:8080/atlas/rest/fennec/registries/schema/stages/approved?objectId=<objectId>" \
   | jq '.diagnostics[] | select(.producer=="gdpr.review")'
 
 # every reviewed object in a stage, one line per finding
-curl -s "http://localhost:8080/atlas/rest/dimcity/registries/schema/stages/approved" \
+curl -s "http://localhost:8080/atlas/rest/fennec/registries/schema/stages/approved" \
   | jq -r '.metadata[] | select(.diagnostics) | . as $m | .diagnostics[]
            | select(.producer=="gdpr.review")
            | "\($m.properties.nsUri)\t\(.severity)\t\(.message)"'

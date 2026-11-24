@@ -93,7 +93,7 @@ public class StagedPackageVisibilityIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String TENANT_SCOPE = "dimcity";
+	private static final String TENANT_SCOPE = "fennec";
 	private static final String FINAL_STAGE = "release";
 	private static final String STAGED = "approved";
 	/** The stage a package is authored at, non-final and not in {@code eager.stages}. */

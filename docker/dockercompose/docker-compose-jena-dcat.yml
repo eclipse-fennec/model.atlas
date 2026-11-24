@@ -33,7 +33,7 @@ services:
       # Pick it before the first start: stored objects live under STORAGE_ROOT/<scope>/, so
       # renaming it on a volume that already holds data leaves that data under the old name.
       # Leave it unset rather than empty - an empty value is not replaced by the default.
-      - MODEL_ATLAS_SCOPE=${MODEL_ATLAS_SCOPE:-dimcity}
+      - MODEL_ATLAS_SCOPE=${MODEL_ATLAS_SCOPE:-fennec}
     volumes:
       - ./configs:/opt/modelatlas/runtime/load:ro
       - atlas-data:/opt/modelatlas/runtime/data

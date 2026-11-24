@@ -112,7 +112,7 @@ class AtlasTelemetryTest {
         RegistryRuntimeDTO transformations = typedRegistry("transformations", "TRANSFORMATION", "draft", "approved");
 
         Map<Attributes, Long> points = AtlasTelemetry
-                .packagesPerStage(snapshot(scope("civitas", schema, transformations)), ATLAS);
+                .packagesPerStage(snapshot(scope("fennec", schema, transformations)), ATLAS);
 
         assertEquals(1, points.size(),
                 "a transformation registry holds no schema packages; reporting zero of them is a category error");
